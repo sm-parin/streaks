@@ -1,14 +1,17 @@
--- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
--- Streaks ΓÇô Supabase PostgreSQL Schema
--- Run this in the Supabase SQL Editor (Dashboard ΓåÆ SQL Editor ΓåÆ New query)
--- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+-- =============================================================================
+-- Streaks -- Supabase PostgreSQL Schema
+-- Run this in the Supabase SQL Editor (Dashboard -> SQL Editor -> New query)
+-- Safe to re-run: all statements use IF NOT EXISTS / OR REPLACE / DROP...IF EXISTS
+-- =============================================================================
 
--- ΓöÇΓöÇΓöÇ Extensions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-- Extensions
 create extension if not exists "uuid-ossp";
 
--- ΓöÇΓöÇΓöÇ profiles ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-- =============================================================================
+-- profiles
 -- One row per authenticated user. Created automatically via a DB trigger
 -- when a new user signs up through Supabase Auth.
+-- =============================================================================
 
 create table if not exists public.profiles (
   id           uuid primary key references auth.users (id) on delete cascade,
@@ -39,9 +42,11 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- ΓöÇΓöÇΓöÇ tasks ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-- =============================================================================
+-- tasks
 -- A habit / recurring task configured by the user.
--- active_days stores an array of JS day-of-week ints: 0=Sun ΓÇª 6=Sat
+-- active_days stores an array of JS day-of-week ints: 0=Sun ... 6=Sat
+-- =============================================================================
 
 create table if not exists public.tasks (
   id          uuid primary key default uuid_generate_v4(),
@@ -57,9 +62,11 @@ create table if not exists public.tasks (
 
 create index if not exists tasks_user_id_idx on public.tasks (user_id);
 
--- ΓöÇΓöÇΓöÇ task_completions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-- =============================================================================
+-- task_completions
 -- Records each day a task was marked complete.
 -- The unique constraint prevents duplicate completions for the same task+date.
+-- =============================================================================
 
 create table if not exists public.task_completions (
   id             uuid primary key default uuid_generate_v4(),
@@ -77,16 +84,19 @@ create index if not exists task_completions_task_id_idx
 create index if not exists task_completions_user_date_idx
   on public.task_completions (user_id, completed_date desc);
 
--- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+-- =============================================================================
 -- Row Level Security (RLS)
 -- Every user can only access their own rows.
--- ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+-- =============================================================================
 
-alter table public.profiles       enable row level security;
-alter table public.tasks           enable row level security;
-alter table public.task_completions enable row level security;
+alter table public.profiles         enable row level security;
+alter table public.tasks             enable row level security;
+alter table public.task_completions  enable row level security;
 
 -- profiles
+drop policy if exists "Users can view own profile"   on public.profiles;
+drop policy if exists "Users can update own profile" on public.profiles;
+
 create policy "Users can view own profile"
   on public.profiles for select using (auth.uid() = id);
 
@@ -94,6 +104,11 @@ create policy "Users can update own profile"
   on public.profiles for update using (auth.uid() = id);
 
 -- tasks
+drop policy if exists "Users can view own tasks"   on public.tasks;
+drop policy if exists "Users can insert own tasks" on public.tasks;
+drop policy if exists "Users can update own tasks" on public.tasks;
+drop policy if exists "Users can delete own tasks" on public.tasks;
+
 create policy "Users can view own tasks"
   on public.tasks for select using (auth.uid() = user_id);
 
@@ -107,6 +122,10 @@ create policy "Users can delete own tasks"
   on public.tasks for delete using (auth.uid() = user_id);
 
 -- task_completions
+drop policy if exists "Users can view own completions"   on public.task_completions;
+drop policy if exists "Users can insert own completions" on public.task_completions;
+drop policy if exists "Users can delete own completions" on public.task_completions;
+
 create policy "Users can view own completions"
   on public.task_completions for select using (auth.uid() = user_id);
 
@@ -115,3 +134,10 @@ create policy "Users can insert own completions"
 
 create policy "Users can delete own completions"
   on public.task_completions for delete using (auth.uid() = user_id);
+
+-- =============================================================================
+-- Notify PostgREST to reload its schema cache.
+-- This is REQUIRED after creating new tables so the API can see them.
+-- Without this, you get: "Could not find the table 'public.tasks' in the schema cache"
+-- =============================================================================
+notify pgrst, 'reload schema';

@@ -4,14 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Task, TaskFormData } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
-import { IS_DEV_MODE } from "@/lib/dev/is-dev-mode";
-import { devStore } from "@/lib/dev/mock-store";
 
 /**
  * Manages the full lifecycle of tasks for the authenticated user.
- *
- * In dev mode (NEXT_PUBLIC_DEV_MODE=true) all reads and writes go to the
- * in-memory devStore instead of Supabase so the app works without credentials.
+ * All reads and writes go directly to Supabase.
  */
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -20,70 +16,8 @@ export function useTasks() {
 
   const { showToast } = useToast();
 
-  // ΓöÇΓöÇΓöÇ Dev-mode branch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
-  useEffect(() => {
-    if (!IS_DEV_MODE) return;
-    /** Sync from store immediately and subscribe to future changes */
-    setTasks(devStore.getTasks());
-    setLoading(false);
-    return devStore.subscribe(() => setTasks(devStore.getTasks()));
-  }, []);
-
-  const devCreateTask = useCallback(
-    async (formData: TaskFormData): Promise<boolean> => {
-      devStore.addTask({ ...formData, description: formData.description ?? null, is_active: true });
-      showToast("Task created!", "success");
-      return true;
-    },
-    [showToast]
-  );
-
-  const devUpdateTask = useCallback(
-    async (id: string, formData: Partial<TaskFormData>): Promise<boolean> => {
-      devStore.updateTask(id, formData);
-      showToast("Task updated!", "success");
-      return true;
-    },
-    [showToast]
-  );
-
-  const devToggleTaskActive = useCallback(
-    async (id: string, currentlyActive: boolean): Promise<boolean> => {
-      devStore.updateTask(id, { is_active: !currentlyActive });
-      return true;
-    },
-    []
-  );
-
-  const devDeleteTask = useCallback(
-    async (id: string): Promise<boolean> => {
-      devStore.deleteTask(id);
-      showToast("Task deleted", "success");
-      return true;
-    },
-    [showToast]
-  );
-
-  if (IS_DEV_MODE) {
-    return {
-      tasks,
-      loading,
-      error,
-      fetchTasks: async () => setTasks(devStore.getTasks()),
-      createTask: devCreateTask,
-      updateTask: devUpdateTask,
-      toggleTaskActive: devToggleTaskActive,
-      deleteTask: devDeleteTask,
-    };
-  }
-
-  // ΓöÇΓöÇΓöÇ Production branch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
-  /** Stable Supabase client reference (browser singleton) */
+  /** Browser-singleton Supabase client */
   const supabase = createClient();
-
-  // ΓöÇΓöÇΓöÇ Fetch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   /**
    * Loads all tasks for the current user, ordered by creation date.
@@ -108,11 +42,10 @@ export function useTasks() {
     setLoading(false);
   }, [supabase, showToast]);
 
+  /** Fetch on mount */
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
-
-  // ΓöÇΓöÇΓöÇ Mutations ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   /**
    * Creates a new task for the authenticated user.

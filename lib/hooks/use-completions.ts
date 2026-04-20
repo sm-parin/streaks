@@ -5,15 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import type { TaskCompletion } from "@/lib/types";
 import { getTodayString } from "@/lib/utils/date";
 import { useToast } from "@/components/ui/toast";
-import { IS_DEV_MODE } from "@/lib/dev/is-dev-mode";
-import { devStore } from "@/lib/dev/mock-store";
 
 /**
  * Fetches task completions within an optional date range and provides an
  * optimistic-update toggle function.
- *
- * In dev mode (NEXT_PUBLIC_DEV_MODE=true) reads and writes go to the
- * in-memory devStore instead of Supabase.
  *
  * @param startDate - Earliest date to include (YYYY-MM-DD). Defaults to today.
  * @param endDate   - Latest date to include (YYYY-MM-DD). Defaults to today.
@@ -29,52 +24,17 @@ export function useCompletions(startDate?: string, endDate?: string) {
   const resolvedStart = startDate ?? today;
   const resolvedEnd = endDate ?? today;
 
-  // ΓöÇΓöÇΓöÇ Dev-mode branch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
-  useEffect(() => {
-    if (!IS_DEV_MODE) return;
-    /** Sync filtered completions from store and subscribe to future changes */
-    const sync = () =>
-      setCompletions(devStore.getCompletions(resolvedStart, resolvedEnd));
-    sync();
-    setLoading(false);
-    return devStore.subscribe(sync);
-    // resolvedStart/End are strings; referencing them directly is intentional
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedStart, resolvedEnd]);
-
-  const devToggleCompletion = useCallback(
-    async (taskId: string, date: string): Promise<void> => {
-      devStore.toggleCompletion(taskId, date);
-    },
-    []
-  );
-
-  if (IS_DEV_MODE) {
-    return {
-      completions,
-      loading,
-      error,
-      toggleCompletion: devToggleCompletion,
-      refetch: async () =>
-        setCompletions(devStore.getCompletions(resolvedStart, resolvedEnd)),
-    };
-  }
-
-  // ΓöÇΓöÇΓöÇ Production branch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
+  /** Browser-singleton Supabase client */
   const supabase = createClient();
 
   /**
-   * Keep stable refs so fetchCompletions can be listed as a dep without
-   * causing infinite re-renders when resolvedStart/End are inline strings.
+   * Stable refs so fetchCompletions stays stable even when the date strings
+   * change on re-render (avoids cascading useEffect triggers).
    */
   const startRef = useRef(resolvedStart);
   const endRef = useRef(resolvedEnd);
   startRef.current = resolvedStart;
   endRef.current = resolvedEnd;
-
-  // ΓöÇΓöÇΓöÇ Fetch ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   /**
    * Loads completions from Supabase within the configured date range.
@@ -100,11 +60,10 @@ export function useCompletions(startDate?: string, endDate?: string) {
     setLoading(false);
   }, [supabase, showToast]);
 
+  /** Fetch on mount */
   useEffect(() => {
     fetchCompletions();
   }, [fetchCompletions]);
-
-  // ΓöÇΓöÇΓöÇ Toggle ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   /**
    * Toggles the completion state of a task on a specific date.
@@ -179,5 +138,11 @@ export function useCompletions(startDate?: string, endDate?: string) {
     [supabase, completions, showToast]
   );
 
-  return { completions, loading, error, toggleCompletion, refetch: fetchCompletions };
+  return {
+    completions,
+    loading,
+    error,
+    toggleCompletion,
+    refetch: fetchCompletions,
+  };
 }
