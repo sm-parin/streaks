@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
   await supabase.from("notifications").insert({
     user_id: target.id,
     type: "friend_request",
-    data: { friendship_id: friendship.id, from_username: session.username },
+    data: { friendship_id: friendship.id },
   });
 
   return NextResponse.json({ friendship }, { status: 201 });

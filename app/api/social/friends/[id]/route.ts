@@ -3,81 +3,88 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { createServiceClient } from "@/lib/supabase/service";
 
-type Params = { params: Promise<{ id: string }> };
+const requestSchema = z.object({ username: z.string().min(1) });
 
-const actionSchema = z.object({
-  action: z.enum(["accept", "reject"]),
-});
-
-const settingsSchema = z.object({
-  auto_accept_activities: z.boolean(),
-});
-
-export async function PATCH(request: NextRequest, { params }: Params) {
+export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
   const supabase = createServiceClient();
+
+  // Friendships where I am requester
+  const { data: sent } = await supabase
+    .from("friendships")
+    .select("id, status, auto_accept_activities, created_at, updated_at, addressee:addressee_id(id,username,nickname,avatar_url)")
+    .eq("requester_id", session.sub);
+
+  // Friendships where I am addressee
+  const { data: received } = await supabase
+    .from("friendships")
+    .select("id, status, auto_accept_activities, created_at, updated_at, requester:requester_id(id,username,nickname,avatar_url)")
+    .eq("addressee_id", session.sub);
+
+  const friendships = [
+    ...(sent ?? []).map((f) => ({ ...f, friend: f.addressee, is_requester: true })),
+    ...(received ?? []).map((f) => ({ ...f, friend: f.requester, is_requester: false })),
+  ];
+
+  return NextResponse.json({ friendships });
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: unknown;
   try { body = await request.json(); } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  // Settings update
-  const settingsResult = settingsSchema.safeParse(body);
-  if (settingsResult.success) {
-    const { data, error } = await supabase
-      .from("friendships")
-      .update({ auto_accept_activities: settingsResult.data.auto_accept_activities })
-      .eq("id", id)
-      .or(`requester_id.eq.${session.sub},addressee_id.eq.${session.sub}`)
-      .select()
-      .single();
-    if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ friendship: data });
+  const result = requestSchema.safeParse(body);
+  if (!result.success) return NextResponse.json({ error: "username required" }, { status: 400 });
+
+  const supabase = createServiceClient();
+  const { data: target } = await supabase
+    .from("users")
+    .select("id")
+    .eq("username", result.data.username.toLowerCase())
+    .single();
+
+  if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (target.id === session.sub) {
+    return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
   }
 
-  // Accept/reject
-  const actionResult = actionSchema.safeParse(body);
-  if (!actionResult.success) {
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  // Check if friendship already exists
+  const { data: existing } = await supabase
+    .from("friendships")
+    .select("id, status")
+    .or(
+      `and(requester_id.eq.${session.sub},addressee_id.eq.${target.id}),and(requester_id.eq.${target.id},addressee_id.eq.${session.sub})`
+    )
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.status === "accepted") {
+      return NextResponse.json({ error: "Already friends" }, { status: 409 });
+    }
+    if (existing.status === "pending") {
+      return NextResponse.json({ error: "Request already sent" }, { status: 409 });
+    }
   }
 
-  const newStatus = actionResult.data.action === "accept" ? "accepted" : "rejected";
   const { data: friendship, error } = await supabase
     .from("friendships")
-    .update({ status: newStatus, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("addressee_id", session.sub)
-    .eq("status", "pending")
+    .insert({ requester_id: session.sub, addressee_id: target.id })
     .select()
     .single();
 
-  if (error || !friendship) {
-    return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  if (actionResult.data.action === "accept") {
-    await supabase.from("notifications").insert({
-      user_id: friendship.requester_id,
-      type: "friend_accepted",
-      data: { friendship_id: friendship.id, from_username: session.username },
-    });
-  }
+  await supabase.from("notifications").insert({
+    user_id: target.id,
+    type: "friend_request",
+    data: { friendship_id: friendship.id },
+  });
 
-  return NextResponse.json({ friendship });
-}
-
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
-  const supabase = createServiceClient();
-  await supabase
-    .from("friendships")
-    .delete()
-    .eq("id", id)
-    .or(`requester_id.eq.${session.sub},addressee_id.eq.${session.sub}`);
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ friendship }, { status: 201 });
 }

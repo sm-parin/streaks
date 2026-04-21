@@ -123,7 +123,6 @@ export async function POST(request: NextRequest) {
       data: {
         activity_id: activity.id,
         activity_title: activity.title,
-        from_username: session.username,
       },
     });
   }

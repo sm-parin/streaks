@@ -42,25 +42,9 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = authData.user.id;
-  const base = email.split("@")[0].replace(/[^a-z0-9_-]/gi, "").toLowerCase().slice(0, 16);
-  const username = `${base}_${Math.random().toString(36).slice(2, 6)}`;
-  const nickname = `Guest${Math.floor(100000 + Math.random() * 900000)}`;
-
-  const { error: profileError } = await supabase.from("users").insert({
-    id: userId,
-    username,
-    nickname,
-    password_hash: "",
-    sq_name: "",
-    sq_place: "",
-    sq_animal: "",
-    sq_thing: "",
-  });
-
-  if (profileError) {
-    await supabase.auth.admin.deleteUser(userId);
-    return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 });
-  }
+  // profiles row is auto-created by the on_auth_user_created trigger;
+  // nothing more to insert.
+  void userId;
 
   return NextResponse.json({ success: true });
 }

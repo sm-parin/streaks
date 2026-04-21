@@ -80,7 +80,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     await supabase.from("notifications").insert({
       user_id: target.id,
       type: "group_invite",
-      data: { group_id: id, group_name: group?.name, from_username: session.username },
+      data: { group_id: id, group_name: group?.name },
     });
 
     return NextResponse.json({ success: true });
