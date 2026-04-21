@@ -31,7 +31,7 @@ function RateBar({ rate }: { rate: number }) {
       <span className={cn("text-xs font-bold w-8 text-right", COLOR_TEXT[color])}>
         {Math.round(rate * 100)}%
       </span>
-      <span className="text-xs text-[var(--color-text-secondary)] w-14">{getPerformanceLabel(color)}</span>
+      <span className="text-xs text-[var(--color-text-secondary)] w-14">{getPerformanceLabel(rate)}</span>
     </div>
   );
 }
@@ -104,7 +104,7 @@ export function ReportsView() {
                 <div key={g.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{g.title}</span>
-                    <span className={cn("text-xs font-bold", COLOR_TEXT[color])}>{getPerformanceLabel(color)}</span>
+                    <span className={cn("text-xs font-bold", COLOR_TEXT[color])}>{getPerformanceLabel(rate)}</span>
                   </div>
                   <RateBar rate={rate} />
                   <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
