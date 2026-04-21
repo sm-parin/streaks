@@ -1,31 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { hashValue } from "@/lib/auth/password";
-import { signToken } from "@/lib/auth/jwt";
 import { createServiceClient } from "@/lib/supabase/service";
-import { COOKIE_NAME, COOKIE_OPTIONS } from "@/lib/auth/session";
-
-const PASSWORD_RE =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{8,128}$/;
 
 const schema = z.object({
-  username: z
-    .string()
-    .regex(
-      /^[a-z][a-z0-9_-]{2,19}$/,
-      "Username: 3-20 chars, start with a letter, only letters/numbers/_ -"
-    ),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
   nickname: z.string().min(1).max(50),
-  password: z
-    .string()
-    .regex(
-      PASSWORD_RE,
-      "Password must be 8-128 chars and include uppercase, lowercase, number, and special character"
-    ),
-  sq_name: z.string().min(1).max(100),
-  sq_place: z.string().min(1).max(100),
-  sq_animal: z.string().min(1).max(100),
-  sq_thing: z.string().min(1).max(100),
 });
 
 export async function POST(request: NextRequest) {
@@ -44,49 +24,41 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { username, nickname, password, sq_name, sq_place, sq_animal, sq_thing } =
-    result.data;
-
+  const { email, password, nickname } = result.data;
   const supabase = createServiceClient();
 
-  const { data: existing } = await supabase
-    .from("users")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
 
-  if (existing) {
-    return NextResponse.json({ error: "Username is already taken" }, { status: 409 });
+  if (authError) {
+    const msg = authError.message.includes("already")
+      ? "An account with this email already exists"
+      : authError.message;
+    return NextResponse.json({ error: msg }, { status: 409 });
   }
 
-  const [passwordHash, sqName, sqPlace, sqAnimal, sqThing] = await Promise.all([
-    hashValue(password),
-    hashValue(sq_name.toLowerCase().trim()),
-    hashValue(sq_place.toLowerCase().trim()),
-    hashValue(sq_animal.toLowerCase().trim()),
-    hashValue(sq_thing.toLowerCase().trim()),
-  ]);
+  const userId = authData.user.id;
+  const base = email.split("@")[0].replace(/[^a-z0-9_-]/gi, "").toLowerCase().slice(0, 16);
+  const username = `${base}_${Math.random().toString(36).slice(2, 6)}`;
 
-  const { data: user, error: insertError } = await supabase
-    .from("users")
-    .insert({
-      username,
-      nickname,
-      password_hash: passwordHash,
-      sq_name: sqName,
-      sq_place: sqPlace,
-      sq_animal: sqAnimal,
-      sq_thing: sqThing,
-    })
-    .select("id, username, nickname, bio, avatar_url, created_at")
-    .single();
+  const { error: profileError } = await supabase.from("users").insert({
+    id: userId,
+    username,
+    nickname,
+    password_hash: "",
+    sq_name: "",
+    sq_place: "",
+    sq_animal: "",
+    sq_thing: "",
+  });
 
-  if (insertError || !user) {
-    return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
+  if (profileError) {
+    await supabase.auth.admin.deleteUser(userId);
+    return NextResponse.json({ error: "Failed to create user profile" }, { status: 500 });
   }
 
-  const token = await signToken({ sub: user.id, username: user.username });
-  const response = NextResponse.json({ user }, { status: 201 });
-  response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
-  return response;
+  return NextResponse.json({ success: true });
 }

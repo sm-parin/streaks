@@ -1,15 +1,31 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth/jwt";
-import { COOKIE_NAME } from "@/lib/auth/session";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-/**
- * Route middleware â€” runs on every request matching the config.matcher pattern.
- *
- * Reads the custom JWT session cookie and:
- * 1. Redirects unauthenticated users away from protected routes â†’ /login
- * 2. Redirects authenticated users away from auth routes â†’ /today
- */
 export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
   const isProtected =
@@ -18,7 +34,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/records") ||
     pathname.startsWith("/social") ||
     pathname.startsWith("/settings") ||
-    // Legacy protected routes
     pathname.startsWith("/analytics") ||
     pathname.startsWith("/configure");
 
@@ -27,21 +42,15 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/register") ||
     pathname.startsWith("/forgot-password");
 
-  const token = request.cookies.get(COOKIE_NAME)?.value ?? null;
-  const session = token ? await verifyToken(token) : null;
-  const isAuthenticated = session?.type === "session";
-
-  if (isProtected && !isAuthenticated) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+  if (isProtected && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isAuthPage && isAuthenticated) {
-    const todayUrl = new URL("/today", request.url);
-    return NextResponse.redirect(todayUrl);
+  if (isAuthPage && user) {
+    return NextResponse.redirect(new URL("/today", request.url));
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
