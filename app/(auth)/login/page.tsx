@@ -30,10 +30,12 @@ export default function LoginPage() {
       });
       if (error) {
         showToast(error.message, "error");
+        setLoading(false);
       } else {
         window.location.href = "/today";
       }
-    } finally {
+    } catch {
+      showToast("Something went wrong. Please try again.", "error");
       setLoading(false);
     }
   };

@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
   });
 
   if (authError) {
-    const msg = authError.message.includes("already")
-      ? "An account with this email already exists"
-      : authError.message;
+    const msg =
+      authError.message.toLowerCase().includes("already") ||
+      authError.message.toLowerCase().includes("email")
+        ? "An account with this email already exists"
+        : authError.message;
     return NextResponse.json({ error: msg }, { status: 409 });
   }
 

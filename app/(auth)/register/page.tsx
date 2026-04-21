@@ -37,9 +37,11 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await res.json();
+      let data: { error?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON body */ }
       if (!res.ok) {
         showToast(data.error ?? "Registration failed", "error");
+        setLoading(false);
         return;
       }
       const supabase = createClient();
@@ -48,10 +50,10 @@ export default function RegisterPage() {
         showToast("Account created! Please sign in.", "success");
         window.location.href = "/login";
       } else {
-        showToast("Account created!", "success");
         window.location.href = "/today";
       }
-    } finally {
+    } catch {
+      showToast("Something went wrong. Please try again.", "error");
       setLoading(false);
     }
   };
