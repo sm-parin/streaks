@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Flame, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,18 +12,16 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
-  const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !nickname.trim() || !password) return;
+    if (!email.trim() || !password) return;
     if (password.length < 8) {
       showToast("Password must be at least 8 characters", "error");
       return;
@@ -38,7 +35,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password, nickname: nickname.trim() }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -49,10 +46,10 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         showToast("Account created! Please sign in.", "success");
-        router.push("/login");
+        window.location.href = "/login";
       } else {
         showToast("Account created!", "success");
-        router.push("/today");
+        window.location.href = "/today";
       }
     } finally {
       setLoading(false);
@@ -80,19 +77,6 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="nickname">Display name</Label>
-            <Input
-              id="nickname"
-              type="text"
-              autoComplete="name"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Your name"
               required
             />
           </div>

@@ -5,7 +5,6 @@ import { createServiceClient } from "@/lib/supabase/service";
 const schema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters").max(128),
-  nickname: z.string().min(1).max(50),
 });
 
 export async function POST(request: NextRequest) {
@@ -24,7 +23,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { email, password, nickname } = result.data;
+  const { email, password } = result.data;
   const supabase = createServiceClient();
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -43,6 +42,7 @@ export async function POST(request: NextRequest) {
   const userId = authData.user.id;
   const base = email.split("@")[0].replace(/[^a-z0-9_-]/gi, "").toLowerCase().slice(0, 16);
   const username = `${base}_${Math.random().toString(36).slice(2, 6)}`;
+  const nickname = `Guest${Math.floor(100000 + Math.random() * 900000)}`;
 
   const { error: profileError } = await supabase.from("users").insert({
     id: userId,

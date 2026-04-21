@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Flame, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +16,6 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +31,7 @@ export default function LoginPage() {
       if (error) {
         showToast(error.message, "error");
       } else {
-        router.push("/today");
+        window.location.href = "/today";
       }
     } finally {
       setLoading(false);
