@@ -10,13 +10,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const supabase = createServiceClient();
 
-  // Friendships where I am requester
   const { data: sent } = await supabase
     .from("friendships")
     .select("id, status, auto_accept_activities, created_at, updated_at, addressee:addressee_id(id,username,nickname,avatar_url)")
     .eq("requester_id", session.sub);
 
-  // Friendships where I am addressee
   const { data: received } = await supabase
     .from("friendships")
     .select("id, status, auto_accept_activities, created_at, updated_at, requester:requester_id(id,username,nickname,avatar_url)")
@@ -54,7 +52,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
   }
 
-  // Check if friendship already exists
   const { data: existing } = await supabase
     .from("friendships")
     .select("id, status")

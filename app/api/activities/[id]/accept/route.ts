@@ -38,7 +38,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Activity not found or already actioned" }, { status: 404 });
   }
 
-  // Notify the creator
   const notifType =
     result.data.action === "accept" ? "activity_accepted" : "activity_rejected";
   await supabase.from("notifications").insert({

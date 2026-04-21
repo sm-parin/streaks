@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
   const todayOnly = request.nextUrl.searchParams.get("today") === "true";
   const todayStr = new Date().toISOString().split("T")[0];
 
-  // Activities assigned to me (individual) 
   let q1 = supabase
     .from("activities")
     .select("*, creator:creator_user_id(username,nickname)")
@@ -34,7 +33,6 @@ export async function GET(request: NextRequest) {
 
   const { data: myActivities } = await q1;
 
-  // Group activities for my active groups
   const { data: myGroups } = await supabase
     .from("group_members")
     .select("group_id")
@@ -74,11 +72,9 @@ export async function POST(request: NextRequest) {
   }
 
   const data = result.data;
-  // If no assignee specified, assign to self
   const assigneeId = data.assignee_user_id ?? session.sub;
   const isSelfAssign = assigneeId === session.sub;
 
-  // Check if assigning to a friend
   if (!isSelfAssign && !data.group_id) {
     const supabase = createServiceClient();
     const { data: friendship } = await supabase
@@ -99,7 +95,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient();
-  // Self-assigned or group activities are auto-accepted
   const status = isSelfAssign || data.group_id ? "accepted" : "pending";
 
   const { data: activity, error } = await supabase
@@ -115,7 +110,6 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Create notification for recipient (if not self-assigned)
   if (!isSelfAssign && !data.group_id && activity) {
     await supabase.from("notifications").insert({
       user_id: assigneeId,

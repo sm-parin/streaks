@@ -1,7 +1,6 @@
 "use client";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { LogOut, Moon, Sun, Monitor, User, Lock, Bell } from "lucide-react";
+import { useState } from "react";
+import { LogOut, Monitor, User, Lock } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,35 +11,17 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { TAB_COLORS } from "@/lib/types";
 
 export default function SettingsPage() {
-  const { user, refetch } = useUser();
-  const router = useRouter();
+  const { user } = useUser();
   const { showToast } = useToast();
-
-  const [nickname, setNickname] = useState(user?.nickname ?? "");
-  const [bio, setBio] = useState(user?.bio ?? "");
-  const [profileLoading, setProfileLoading] = useState(false);
 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
 
-  const handleProfileSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileLoading(true);
-    const r = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nickname, bio: bio || null }),
-    });
-    const d = await r.json();
-    setProfileLoading(false);
-    if (!r.ok) showToast(d.error ?? "Update failed", "error");
-    else { showToast("Profile updated", "success"); refetch(); }
-  };
-
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (newPw.length < 8) return showToast("Password must be at least 8 characters", "error");
     if (newPw !== confirmPw) return showToast("Passwords do not match", "error");
     setPwLoading(true);
     const r = await fetch("/api/profile", {
@@ -57,8 +38,7 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.push("/login");
-    router.refresh();
+    window.location.href = "/login";
   };
 
   const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
@@ -77,32 +57,13 @@ export default function SettingsPage() {
     <div>
       <PageHeader title="Settings" accentColor={TAB_COLORS.settings} />
 
-      <Section icon={User} title="Profile">
-        <form onSubmit={handleProfileSave} className="space-y-3">
-          <div className="space-y-1">
-            <Label>Username</Label>
-            <p className="text-sm text-[var(--color-text-primary)] font-mono bg-[var(--color-bg-secondary)] px-3 py-2 rounded-[var(--radius-md)]">
-              @{user?.username}
-            </p>
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="nickname">Nickname</Label>
-            <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="bio">Bio</Label>
-            <textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={300}
-              rows={3}
-              className="w-full px-3 py-2 text-sm bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] resize-none"
-            />
-            <p className="text-xs text-[var(--color-text-disabled)] text-right">{bio.length}/300</p>
-          </div>
-          <Button type="submit" size="sm" loading={profileLoading}>Save Profile</Button>
-        </form>
+      <Section icon={User} title="Account">
+        <div className="space-y-1">
+          <Label>Email</Label>
+          <p className="text-sm text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] px-3 py-2 rounded-[var(--radius-md)]">
+            {user?.email ?? "—"}
+          </p>
+        </div>
       </Section>
 
       <Section icon={Lock} title="Password">
@@ -114,7 +75,6 @@ export default function SettingsPage() {
           <div className="space-y-1">
             <Label htmlFor="new-pw">New password</Label>
             <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required />
-            <p className="text-xs text-[var(--color-text-disabled)]">8-128 chars, uppercase, lowercase, number, special character</p>
           </div>
           <div className="space-y-1">
             <Label htmlFor="conf-pw">Confirm new password</Label>

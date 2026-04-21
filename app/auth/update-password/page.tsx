@@ -1,8 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { Flame, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
 
-export default function RegisterPage() {
-  const [email, setEmail] = useState("");
+export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -20,9 +18,17 @@ export default function RegisterPage() {
 
   const { showToast } = useToast();
 
+  // Supabase sets the session automatically when the recovery link is clicked.
+  // If there is no session here, send the user to forgot-password.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) window.location.href = "/forgot-password";
+    });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) return;
     if (password.length < 8) {
       showToast("Password must be at least 8 characters", "error");
       return;
@@ -34,22 +40,12 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
+      const { error } = await supabase.auth.updateUser({ password });
       if (error) {
         showToast(error.message, "error");
-        return;
-      }
-      // If session is returned immediately, email confirmation is disabled
-      if (data.session) {
-        window.location.href = "/today";
       } else {
         setDone(true);
+        setTimeout(() => { window.location.href = "/login"; }, 2000);
       }
     } catch {
       showToast("Something went wrong. Please try again.", "error");
@@ -65,17 +61,8 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-[var(--radius-2xl)] bg-[var(--color-brand-light)] mb-6">
             <Flame className="w-7 h-7 text-[var(--color-brand)]" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Check your email</h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-2">
-            We sent a confirmation link to <strong>{email}</strong>.
-            Click it to activate your account.
-          </p>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-4">
-            Already confirmed?{" "}
-            <Link href="/login" className="text-[var(--color-brand)] font-medium hover:underline">
-              Sign in
-            </Link>
-          </p>
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Password updated</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-2">Redirecting you to sign in...</p>
         </div>
       </main>
     );
@@ -88,26 +75,13 @@ export default function RegisterPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-[var(--radius-2xl)] bg-[var(--color-brand-light)] mb-4">
             <Flame className="w-7 h-7 text-[var(--color-brand)]" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Create account</h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">Start building your streaks</p>
+          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Set new password</h1>
+          <p className="text-sm text-[var(--color-text-secondary)] mt-1">Choose a strong password</p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">New password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -144,16 +118,9 @@ export default function RegisterPage() {
           </div>
 
           <Button type="submit" fullWidth loading={loading} className="mt-1">
-            Create Account
+            Update password
           </Button>
         </form>
-
-        <p className="text-center text-sm text-[var(--color-text-secondary)] mt-5">
-          Already have an account?{" "}
-          <Link href="/login" className="text-[var(--color-brand)] font-medium hover:underline">
-            Sign in
-          </Link>
-        </p>
       </div>
     </main>
   );

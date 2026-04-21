@@ -1,4 +1,4 @@
-/** Day of week integer: 0 = Sunday, 1 = Monday ΓÇª 6 = Saturday */
+/** Day of week integer: 0 = Sunday, 1 = Monday ... 6 = Saturday */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 /** A habit task configured by the user */
@@ -7,7 +7,7 @@ export interface Task {
   user_id: string;
   name: string;
   description: string | null;
-  /** Array of scheduled days. e.g. [1,2,3,4,5] = MonΓÇôFri */
+  /** Array of scheduled days. e.g. [1,2,3,4,5] = Mon-Fri */
   active_days: DayOfWeek[];
   /** Hex colour string used as a visual identifier */
   color: string;
@@ -44,15 +44,14 @@ export interface DailyReport {
   date: string;
   completedTasks: Task[];
   scheduledTasks: Task[];
-  /** Fraction 0ΓÇô1 */
+  /** Fraction 0-1 */
   completionRate: number;
 }
 
-/** Authenticated user profile stored in the profiles table */
+/** Authenticated user profile */
 export interface Profile {
   id: string;
-  display_name: string | null;
-  avatar_url: string | null;
+  email: string;
   created_at: string;
 }
 
@@ -67,7 +66,7 @@ export interface TaskFormData {
 /** Theme preference stored in localStorage */
 export type Theme = "light" | "dark" | "system";
 
-// ─── New v2 domain types ───────────────────────────────────────────────────
+// --- New v2 domain types ---------------------------------------------------
 
 export interface Goal {
   id: string;
@@ -130,10 +129,7 @@ export interface SubRecord {
 
 export interface UserProfile {
   id: string;
-  username: string;
-  nickname: string;
-  bio: string | null;
-  avatar_url: string | null;
+  email: string;
   created_at: string;
 }
 
@@ -185,15 +181,15 @@ export interface Notification {
   created_at: string;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────
+// --- Constants -------------------------------------------------------------
 
 /** Per-tab accent colours matching the spec */
 export const TAB_COLORS = {
-  streaks: "#EAB308",   // yellow
-  records: "#22C55E",   // green
-  today:   "#F07F13",   // orange (brand)
-  social:  "#3B82F6",   // blue
-  settings: "#EF4444",  // red
+  streaks:  "#EAB308",   // yellow
+  records:  "#22C55E",   // green
+  today:    "#F07F13",   // orange (brand)
+  social:   "#3B82F6",   // blue
+  settings: "#EF4444",   // red
 } as const;
 
 /** Priority badge colours (1 = highest) */
@@ -214,14 +210,14 @@ export const PRIORITY_LABELS: Record<number, string> = {
   5: "P5 — Minimal",
 };
 
-/** Short day-of-week labels indexed 0 (Sun) – 6 (Sat) */
+/** Short day-of-week labels indexed 0 (Sun) - 6 (Sat) */
 export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-// ─── Performance helpers ──────────────────────────────────────────────────
+// --- Performance helpers ---------------------------------------------------
 
 /**
- * Maps a completion rate (0–1) to one of the five colour names:
- * 0–20% red | 21–40% yellow | 41–60% blue | 61–80% green | 81–100% orange
+ * Maps a completion rate (0-1) to one of the five colour names:
+ * 0-20% red | 21-40% yellow | 41-60% blue | 61-80% green | 81-100% orange
  */
 export function getPerformanceColor(rate: number): string {
   if (rate <= 0.20) return "red";

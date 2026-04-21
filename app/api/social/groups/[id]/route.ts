@@ -46,12 +46,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  // Handle invite
   const inviteResult = inviteSchema.safeParse(body);
   if (inviteResult.success && "username" in (body as object)) {
     const supabase = createServiceClient();
 
-    // Check requester is admin
     const { data: me } = await supabase
       .from("group_members")
       .select("role")
@@ -86,7 +84,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ success: true });
   }
 
-  // Handle group update
   const updateResult = updateSchema.safeParse(body);
   if (!updateResult.success) {
     return NextResponse.json({ error: updateResult.error.errors[0].message }, { status: 400 });
@@ -134,7 +131,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ success: true });
   }
 
-  // Delete group (admin only)
   const { error } = await supabase
     .from("groups")
     .delete()
