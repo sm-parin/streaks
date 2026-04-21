@@ -1,0 +1,3710 @@
+diff --git a/.env.local.example b/.env.local.example
+new file mode 100644
+index 0000000..4a961cc
+--- /dev/null
++++ b/.env.local.example
+@@ -0,0 +1,18 @@
++# ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç Supabase ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++# Public URL and anon key (safe to expose in client)
++NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
++NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
++
++# Service role key ╬ô├ç├╢ SERVER-SIDE ONLY, never expose to the browser
++SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
++
++# ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç Custom JWT Auth ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++# Generate a strong random secret:  openssl rand -base64 64
++# Must be at least 32 characters long
++JWT_SECRET=<your-jwt-secret-min-32-chars>
++
++# ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç Web Push Notifications (optional) ╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç╬ô├╢├ç
++# Generate with:  npx web-push generate-vapid-keys
++NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>
++VAPID_PRIVATE_KEY=<your-vapid-private-key>
++VAPID_SUBJECT=mailto:you@example.com
+diff --git a/app/(auth)/forgot-password/page.tsx b/app/(auth)/forgot-password/page.tsx
+new file mode 100644
+index 0000000..cb6c86e
+--- /dev/null
++++ b/app/(auth)/forgot-password/page.tsx
+@@ -0,0 +1,141 @@
++"use client";
++export const dynamic = "force-dynamic";
++
++import { useState } from "react";
++import Link from "next/link";
++import { Flame, Eye, EyeOff } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { useToast } from "@/components/ui/toast";
++
++const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{8,128}$/;
++
++export default function ForgotPasswordPage() {
++  const [phase, setPhase] = useState<"verify" | "reset" | "done">("verify");
++  const [username, setUsername] = useState("");
++  const [sqName, setSqName] = useState("");
++  const [sqPlace, setSqPlace] = useState("");
++  const [sqAnimal, setSqAnimal] = useState("");
++  const [sqThing, setSqThing] = useState("");
++  const [resetToken, setResetToken] = useState("");
++  const [newPassword, setNewPassword] = useState("");
++  const [confirmPw, setConfirmPw] = useState("");
++  const [showPw, setShowPw] = useState(false);
++  const [loading, setLoading] = useState(false);
++  const { showToast } = useToast();
++
++  const handleVerify = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setLoading(true);
++    try {
++      const res = await fetch("/api/auth/verify-security", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({
++          username: username.toLowerCase().trim(),
++          sq_name: sqName, sq_place: sqPlace, sq_animal: sqAnimal, sq_thing: sqThing,
++        }),
++      });
++      const data = await res.json();
++      if (!res.ok) { showToast(data.error ?? "Verification failed", "error"); }
++      else { setResetToken(data.reset_token); setPhase("reset"); }
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleReset = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!PASSWORD_RE.test(newPassword)) {
++      return showToast("Password doesn't meet the requirements", "error");
++    }
++    if (newPassword !== confirmPw) return showToast("Passwords do not match", "error");
++    setLoading(true);
++    try {
++      const res = await fetch("/api/auth/reset-password", {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ reset_token: resetToken, new_password: newPassword }),
++      });
++      const data = await res.json();
++      if (!res.ok) { showToast(data.error ?? "Reset failed", "error"); }
++      else { setPhase("done"); }
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4 py-8">
++      <div className="w-full max-w-sm">
++        <div className="text-center mb-8">
++          <div className="inline-flex items-center justify-center w-14 h-14 rounded-[var(--radius-xl)] bg-[var(--color-brand-light)] mb-4">
++            <Flame className="w-7 h-7 text-[var(--color-brand)]" />
++          </div>
++          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Reset password</h1>
++          <p className="text-sm text-[var(--color-text-secondary)] mt-1">
++            {phase === "verify" ? "Answer your security questions" :
++             phase === "reset" ? "Set a new password" : "Password updated!"}
++          </p>
++        </div>
++
++        {phase === "done" ? (
++          <div className="text-center space-y-4">
++            <p className="text-[var(--color-text-secondary)]">Your password has been reset successfully.</p>
++            <Link href="/login" className="block">
++              <Button className="w-full">Back to Login</Button>
++            </Link>
++          </div>
++        ) : phase === "verify" ? (
++          <form onSubmit={handleVerify} className="space-y-4">
++            <div className="space-y-1.5">
++              <Label htmlFor="fp-username">Username</Label>
++              <Input id="fp-username" type="text" autoCapitalize="none"
++                value={username} onChange={(e) => setUsername(e.target.value)} required />
++            </div>
++            {[
++              { label: "What is your name?", val: sqName, set: setSqName, id: "fp-name" },
++              { label: "What is your favourite place?", val: sqPlace, set: setSqPlace, id: "fp-place" },
++              { label: "What is your favourite animal?", val: sqAnimal, set: setSqAnimal, id: "fp-animal" },
++              { label: "What is your favourite thing?", val: sqThing, set: setSqThing, id: "fp-thing" },
++            ].map(({ label, val, set, id }) => (
++              <div key={id} className="space-y-1.5">
++                <Label htmlFor={id}>{label}</Label>
++                <Input id={id} type="text" value={val} onChange={(e) => set(e.target.value)} required />
++              </div>
++            ))}
++            <Button type="submit" className="w-full" loading={loading}>Verify</Button>
++          </form>
++        ) : (
++          <form onSubmit={handleReset} className="space-y-4">
++            <div className="space-y-1.5">
++              <Label htmlFor="new-pw">New password</Label>
++              <div className="relative">
++                <Input id="new-pw" type={showPw ? "text" : "password"} value={newPassword}
++                  onChange={(e) => setNewPassword(e.target.value)} required className="pr-10" />
++                <button type="button" onClick={() => setShowPw(!showPw)}
++                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]">
++                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
++                </button>
++              </div>
++              <p className="text-xs text-[var(--color-text-secondary)]">
++                8-128 chars, uppercase, lowercase, number, special character
++              </p>
++            </div>
++            <div className="space-y-1.5">
++              <Label htmlFor="confirm-pw">Confirm new password</Label>
++              <Input id="confirm-pw" type="password" value={confirmPw}
++                onChange={(e) => setConfirmPw(e.target.value)} required />
++            </div>
++            <Button type="submit" className="w-full" loading={loading}>Reset Password</Button>
++          </form>
++        )}
++
++        <p className="text-center text-sm text-[var(--color-text-secondary)] mt-6">
++          <Link href="/login" className="text-[var(--color-brand)] hover:underline">Back to login</Link>
++        </p>
++      </div>
++    </div>
++  );
++}
+diff --git a/app/(protected)/records/page.tsx b/app/(protected)/records/page.tsx
+new file mode 100644
+index 0000000..3e0a57a
+--- /dev/null
++++ b/app/(protected)/records/page.tsx
+@@ -0,0 +1,70 @@
++"use client";
++import { useState } from "react";
++import { BookPlus, Flame, Activity } from "lucide-react";
++import { PageHeader } from "@/components/layout/page-header";
++import { Button } from "@/components/ui/button";
++import { RecordFormDialog } from "@/components/records/record-form-dialog";
++import { GoalsList } from "@/components/goals/goals-list";
++import { ActivitiesList } from "@/components/activities/activities-list";
++import { TAB_COLORS } from "@/lib/types";
++import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
++
++export default function RecordsPage() {
++  const [showForm, setShowForm] = useState(false);
++  const [formType, setFormType] = useState<"goal" | "activity">("goal");
++  const [refreshKey, setRefreshKey] = useState(0);
++
++  const openForm = (type: "goal" | "activity") => {
++    setFormType(type);
++    setShowForm(true);
++  };
++
++  return (
++    <div>
++      <PageHeader
++        title="Records"
++        subtitle="Goals & Activities"
++        accentColor={TAB_COLORS.records}
++        right={
++          <div className="flex gap-2">
++            <Button size="sm" variant="outline" onClick={() => openForm("goal")}
++              leftIcon={<Flame className="w-4 h-4" style={{ color: TAB_COLORS.today }} />}>
++              Goal
++            </Button>
++            <Button size="sm" onClick={() => openForm("activity")}
++              leftIcon={<Activity className="w-4 h-4" />}>
++              Activity
++            </Button>
++          </div>
++        }
++      />
++
++      <Tabs defaultValue="goals">
++        <TabsList className="mb-4">
++          <TabsTrigger value="goals">
++            <Flame className="w-3.5 h-3.5 mr-1.5" style={{ color: TAB_COLORS.today }} />
++            Goals
++          </TabsTrigger>
++          <TabsTrigger value="activities">
++            <Activity className="w-3.5 h-3.5 mr-1.5" style={{ color: TAB_COLORS.records }} />
++            Activities
++          </TabsTrigger>
++        </TabsList>
++        <TabsContent value="goals">
++          <GoalsList key={`goals-${refreshKey}`} onAddNew={() => openForm("goal")} />
++        </TabsContent>
++        <TabsContent value="activities">
++          <ActivitiesList key={`acts-${refreshKey}`} onAddNew={() => openForm("activity")} />
++        </TabsContent>
++      </Tabs>
++
++      {showForm && (
++        <RecordFormDialog
++          type={formType}
++          onClose={() => setShowForm(false)}
++          onSaved={() => { setShowForm(false); setRefreshKey((k) => k + 1); }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/app/(protected)/settings/page.tsx b/app/(protected)/settings/page.tsx
+new file mode 100644
+index 0000000..3c3c49b
+--- /dev/null
++++ b/app/(protected)/settings/page.tsx
+@@ -0,0 +1,146 @@
++"use client";
++import { useState, useRef } from "react";
++import { useRouter } from "next/navigation";
++import { LogOut, Moon, Sun, Monitor, User, Lock, Bell } from "lucide-react";
++import { PageHeader } from "@/components/layout/page-header";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { useToast } from "@/components/ui/toast";
++import { useUser, setUser } from "@/lib/hooks/use-user";
++import { ThemeToggle } from "@/components/layout/theme-toggle";
++import { TAB_COLORS } from "@/lib/types";
++
++export default function SettingsPage() {
++  const { user, refetch } = useUser();
++  const router = useRouter();
++  const { showToast } = useToast();
++
++  const [nickname, setNickname] = useState(user?.nickname ?? "");
++  const [bio, setBio] = useState(user?.bio ?? "");
++  const [profileLoading, setProfileLoading] = useState(false);
++
++  const [currentPw, setCurrentPw] = useState("");
++  const [newPw, setNewPw] = useState("");
++  const [confirmPw, setConfirmPw] = useState("");
++  const [pwLoading, setPwLoading] = useState(false);
++
++  const handleProfileSave = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setProfileLoading(true);
++    const r = await fetch("/api/profile", {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ nickname, bio: bio || null }),
++    });
++    const d = await r.json();
++    setProfileLoading(false);
++    if (!r.ok) showToast(d.error ?? "Update failed", "error");
++    else { showToast("Profile updated", "success"); refetch(); }
++  };
++
++  const handlePasswordSave = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (newPw !== confirmPw) return showToast("Passwords do not match", "error");
++    setPwLoading(true);
++    const r = await fetch("/api/profile", {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ current_password: currentPw, new_password: newPw }),
++    });
++    const d = await r.json();
++    setPwLoading(false);
++    if (!r.ok) showToast(d.error ?? "Password change failed", "error");
++    else { showToast("Password updated", "success"); setCurrentPw(""); setNewPw(""); setConfirmPw(""); }
++  };
++
++  const handleLogout = async () => {
++    await fetch("/api/auth/logout", { method: "POST" });
++    setUser(null);
++    router.push("/login");
++    router.refresh();
++  };
++
++  const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
++    <div className="mb-6">
++      <div className="flex items-center gap-2 mb-3">
++        <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
++        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">{title}</h2>
++      </div>
++      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-4">
++        {children}
++      </div>
++    </div>
++  );
++
++  return (
++    <div>
++      <PageHeader title="Settings" accentColor={TAB_COLORS.settings} />
++
++      <Section icon={User} title="Profile">
++        <form onSubmit={handleProfileSave} className="space-y-3">
++          <div className="space-y-1">
++            <Label>Username</Label>
++            <p className="text-sm text-[var(--color-text-primary)] font-mono bg-[var(--color-bg-secondary)] px-3 py-2 rounded-[var(--radius-md)]">
++              @{user?.username}
++            </p>
++          </div>
++          <div className="space-y-1">
++            <Label htmlFor="nickname">Nickname</Label>
++            <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} />
++          </div>
++          <div className="space-y-1">
++            <Label htmlFor="bio">Bio</Label>
++            <textarea
++              id="bio"
++              value={bio}
++              onChange={(e) => setBio(e.target.value)}
++              maxLength={300}
++              rows={3}
++              className="w-full px-3 py-2 text-sm bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] resize-none"
++            />
++            <p className="text-xs text-[var(--color-text-disabled)] text-right">{bio.length}/300</p>
++          </div>
++          <Button type="submit" size="sm" loading={profileLoading}>Save Profile</Button>
++        </form>
++      </Section>
++
++      <Section icon={Lock} title="Password">
++        <form onSubmit={handlePasswordSave} className="space-y-3">
++          <div className="space-y-1">
++            <Label htmlFor="cur-pw">Current password</Label>
++            <Input id="cur-pw" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} required />
++          </div>
++          <div className="space-y-1">
++            <Label htmlFor="new-pw">New password</Label>
++            <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required />
++            <p className="text-xs text-[var(--color-text-disabled)]">8-128 chars, uppercase, lowercase, number, special character</p>
++          </div>
++          <div className="space-y-1">
++            <Label htmlFor="conf-pw">Confirm new password</Label>
++            <Input id="conf-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
++          </div>
++          <Button type="submit" size="sm" loading={pwLoading}>Change Password</Button>
++        </form>
++      </Section>
++
++      <Section icon={Monitor} title="Appearance">
++        <div className="flex items-center justify-between">
++          <div>
++            <p className="text-sm font-medium text-[var(--color-text-primary)]">Theme</p>
++            <p className="text-xs text-[var(--color-text-secondary)]">Light, dark, or system preference</p>
++          </div>
++          <ThemeToggle />
++        </div>
++      </Section>
++
++      <div className="mt-8">
++        <Button variant="ghost" className="w-full text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
++          onClick={handleLogout}
++          leftIcon={<LogOut className="w-4 h-4" />}>
++          Sign Out
++        </Button>
++      </div>
++    </div>
++  );
++}
+diff --git a/app/(protected)/social/page.tsx b/app/(protected)/social/page.tsx
+new file mode 100644
+index 0000000..86081a9
+--- /dev/null
++++ b/app/(protected)/social/page.tsx
+@@ -0,0 +1,62 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Users, UserPlus, Bell, Search, UserCheck, Shield } from "lucide-react";
++import { PageHeader } from "@/components/layout/page-header";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { TAB_COLORS } from "@/lib/types";
++import { FriendsList } from "@/components/social/friends-list";
++import { GroupsList } from "@/components/social/groups-list";
++import { NotificationsList } from "@/components/social/notifications-list";
++import { FindFriends } from "@/components/social/find-friends";
++import { useNotifications } from "@/lib/hooks/use-notifications";
++import { cn } from "@/lib/utils/cn";
++
++type Section = "notifications" | "friends" | "groups" | "find";
++
++export default function SocialPage() {
++  const [section, setSection] = useState<Section>("notifications");
++  const { unreadCount } = useNotifications();
++
++  const tabs: { id: Section; label: string; icon: React.ElementType }[] = [
++    { id: "notifications", label: "Notifications", icon: Bell },
++    { id: "friends",       label: "Friends",       icon: UserCheck },
++    { id: "groups",        label: "Groups",        icon: Shield },
++    { id: "find",          label: "Find",          icon: Search },
++  ];
++
++  return (
++    <div>
++      <PageHeader title="Social" accentColor={TAB_COLORS.social} />
++
++      <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
++        {tabs.map(({ id, label, icon: Icon }) => (
++          <button
++            key={id}
++            onClick={() => setSection(id)}
++            className={cn(
++              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border shrink-0 transition-colors relative",
++              section === id
++                ? "text-white border-[var(--color-social)]"
++                : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
++            )}
++            style={section === id ? { backgroundColor: TAB_COLORS.social, borderColor: TAB_COLORS.social } : undefined}
++          >
++            <Icon className="w-3.5 h-3.5" />
++            {label}
++            {id === "notifications" && unreadCount > 0 && (
++              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
++                {unreadCount > 9 ? "9+" : unreadCount}
++              </span>
++            )}
++          </button>
++        ))}
++      </div>
++
++      {section === "notifications" && <NotificationsList />}
++      {section === "friends"       && <FriendsList />}
++      {section === "groups"        && <GroupsList />}
++      {section === "find"          && <FindFriends />}
++    </div>
++  );
++}
+diff --git a/app/(protected)/streaks/page.tsx b/app/(protected)/streaks/page.tsx
+new file mode 100644
+index 0000000..9ca56c1
+--- /dev/null
++++ b/app/(protected)/streaks/page.tsx
+@@ -0,0 +1,78 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Flame, Plus, TrendingUp } from "lucide-react";
++import { PageHeader } from "@/components/layout/page-header";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
++import { StreakCard } from "@/components/streaks/streak-card";
++import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
++import { ReportsView } from "@/components/streaks/reports-view";
++import { TAB_COLORS } from "@/lib/types";
++import type { GoalWithStreak } from "@/lib/types";
++
++export default function StreaksPage() {
++  const [goals, setGoals] = useState<GoalWithStreak[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [showForm, setShowForm] = useState(false);
++
++  const fetchGoals = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/goals?streaks=true&active=true");
++    if (r.ok) { const d = await r.json(); setGoals(d.goals ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { fetchGoals(); }, [fetchGoals]);
++
++  return (
++    <div>
++      <PageHeader
++        title="Streaks"
++        subtitle="Your recurring goals"
++        accentColor={TAB_COLORS.streaks}
++        right={
++          <Button size="sm" onClick={() => setShowForm(true)} leftIcon={<Plus className="w-4 h-4" />}>
++            New Goal
++          </Button>
++        }
++      />
++
++      <Tabs defaultValue="streaks">
++        <TabsList className="mb-4">
++          <TabsTrigger value="streaks"><Flame className="w-3.5 h-3.5 mr-1.5" />Streaks</TabsTrigger>
++          <TabsTrigger value="reports"><TrendingUp className="w-3.5 h-3.5 mr-1.5" />Reports</TabsTrigger>
++        </TabsList>
++
++        <TabsContent value="streaks">
++          {loading ? (
++            <div className="flex justify-center py-16"><Spinner /></div>
++          ) : goals.length === 0 ? (
++            <div className="text-center py-16 text-[var(--color-text-secondary)]">
++              <Flame className="w-10 h-10 mx-auto mb-3 opacity-30" />
++              <p className="font-medium">No active goals</p>
++              <p className="text-sm mt-1">Create your first goal to start a streak</p>
++            </div>
++          ) : (
++            <div className="space-y-3">
++              {goals.map((g) => (
++                <StreakCard key={g.id} goal={g} onUpdate={fetchGoals} />
++              ))}
++            </div>
++          )}
++        </TabsContent>
++
++        <TabsContent value="reports">
++          <ReportsView />
++        </TabsContent>
++      </Tabs>
++
++      {showForm && (
++        <GoalFormDialog
++          onClose={() => setShowForm(false)}
++          onSaved={() => { setShowForm(false); fetchGoals(); }}
++        />
++      )}
++    </div>
++  );
++}
+diff --git a/app/api/activities/[id]/accept/route.ts b/app/api/activities/[id]/accept/route.ts
+new file mode 100644
+index 0000000..2c4ed35
+--- /dev/null
++++ b/app/api/activities/[id]/accept/route.ts
+@@ -0,0 +1,55 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++const schema = z.object({ action: z.enum(["accept", "reject"]) });
++
++export async function POST(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = schema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: "action must be 'accept' or 'reject'" }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const newStatus = result.data.action === "accept" ? "accepted" : "rejected";
++
++  const { data: activity, error } = await supabase
++    .from("activities")
++    .update({ status: newStatus, updated_at: new Date().toISOString() })
++    .eq("id", id)
++    .eq("assignee_user_id", session.sub)
++    .eq("status", "pending")
++    .select()
++    .single();
++
++  if (error || !activity) {
++    return NextResponse.json({ error: "Activity not found or already actioned" }, { status: 404 });
++  }
++
++  // Notify the creator
++  const notifType =
++    result.data.action === "accept" ? "activity_accepted" : "activity_rejected";
++  await supabase.from("notifications").insert({
++    user_id: activity.creator_user_id,
++    type: notifType,
++    data: {
++      activity_id: activity.id,
++      activity_title: activity.title,
++      from_username: session.username,
++    },
++  });
++
++  return NextResponse.json({ activity });
++}
+diff --git a/app/api/activities/[id]/route.ts b/app/api/activities/[id]/route.ts
+new file mode 100644
+index 0000000..646f17f
+--- /dev/null
++++ b/app/api/activities/[id]/route.ts
+@@ -0,0 +1,91 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++const updateSchema = z.object({
++  title: z.string().min(1).max(80).optional(),
++  description: z.string().max(500).nullable().optional(),
++  activity_date: z.string().nullable().optional(),
++  activity_time: z.string().nullable().optional(),
++  priority: z.number().int().min(1).max(5).optional(),
++  tag_ids: z.array(z.string().uuid()).optional(),
++  reminder_minutes: z.array(z.number().int().positive()).nullable().optional(),
++});
++
++export async function PATCH(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = updateSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: activity, error } = await supabase
++    .from("activities")
++    .update({ ...result.data, updated_at: new Date().toISOString() })
++    .eq("id", id)
++    .or(`creator_user_id.eq.${session.sub},assignee_user_id.eq.${session.sub}`)
++    .select()
++    .single();
++
++  if (error || !activity) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  return NextResponse.json({ activity });
++}
++
++export async function DELETE(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  const { error } = await supabase
++    .from("activities")
++    .delete()
++    .eq("id", id)
++    .eq("creator_user_id", session.sub);
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ success: true });
++}
++
++export async function POST(request: NextRequest, { params }: Params) {
++  // Toggle complete
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++
++  const { data: existing } = await supabase
++    .from("activity_completions")
++    .select("id")
++    .eq("activity_id", id)
++    .eq("user_id", session.sub)
++    .maybeSingle();
++
++  if (existing) {
++    await supabase.from("activity_completions").delete().eq("id", existing.id);
++    await supabase
++      .from("activities")
++      .update({ status: "accepted" })
++      .eq("id", id);
++    return NextResponse.json({ completed: false });
++  } else {
++    await supabase
++      .from("activity_completions")
++      .insert({ activity_id: id, user_id: session.sub });
++    await supabase
++      .from("activities")
++      .update({ status: "completed", updated_at: new Date().toISOString() })
++      .eq("id", id);
++    return NextResponse.json({ completed: true });
++  }
++}
+diff --git a/app/api/activities/route.ts b/app/api/activities/route.ts
+new file mode 100644
+index 0000000..34b21cb
+--- /dev/null
++++ b/app/api/activities/route.ts
+@@ -0,0 +1,132 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const createSchema = z.object({
++  title: z.string().min(1).max(80),
++  description: z.string().max(500).optional(),
++  activity_date: z.string().optional().nullable(),
++  activity_time: z.string().optional().nullable(),
++  priority: z.number().int().min(1).max(5).default(3),
++  tag_ids: z.array(z.string().uuid()).default([]),
++  reminder_minutes: z.array(z.number().int().positive()).optional().nullable(),
++  assignee_user_id: z.string().uuid().optional().nullable(),
++  group_id: z.string().uuid().optional().nullable(),
++});
++
++export async function GET(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const supabase = createServiceClient();
++  const todayOnly = request.nextUrl.searchParams.get("today") === "true";
++  const todayStr = new Date().toISOString().split("T")[0];
++
++  // Activities assigned to me (individual) 
++  let q1 = supabase
++    .from("activities")
++    .select("*, creator:creator_user_id(username,nickname)")
++    .eq("assignee_user_id", session.sub)
++    .not("status", "eq", "rejected");
++
++  if (todayOnly) q1 = q1.eq("activity_date", todayStr);
++
++  const { data: myActivities } = await q1;
++
++  // Group activities for my active groups
++  const { data: myGroups } = await supabase
++    .from("group_members")
++    .select("group_id")
++    .eq("user_id", session.sub)
++    .eq("status", "active");
++
++  let groupActivities: unknown[] = [];
++  if (myGroups && myGroups.length > 0) {
++    const groupIds = myGroups.map((g) => g.group_id);
++    let q2 = supabase
++      .from("activities")
++      .select("*, creator:creator_user_id(username,nickname), grp:group_id(name)")
++      .in("group_id", groupIds)
++      .is("assignee_user_id", null);
++
++    if (todayOnly) q2 = q2.eq("activity_date", todayStr);
++    const { data } = await q2;
++    groupActivities = data ?? [];
++  }
++
++  const activities = [...(myActivities ?? []), ...groupActivities];
++  return NextResponse.json({ activities });
++}
++
++export async function POST(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = createSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const data = result.data;
++  // If no assignee specified, assign to self
++  const assigneeId = data.assignee_user_id ?? session.sub;
++  const isSelfAssign = assigneeId === session.sub;
++
++  // Check if assigning to a friend
++  if (!isSelfAssign && !data.group_id) {
++    const supabase = createServiceClient();
++    const { data: friendship } = await supabase
++      .from("friendships")
++      .select("id, auto_accept_activities, status")
++      .or(
++        `and(requester_id.eq.${session.sub},addressee_id.eq.${assigneeId}),and(requester_id.eq.${assigneeId},addressee_id.eq.${session.sub})`
++      )
++      .eq("status", "accepted")
++      .maybeSingle();
++
++    if (!friendship) {
++      return NextResponse.json(
++        { error: "You can only assign activities to friends" },
++        { status: 403 }
++      );
++    }
++  }
++
++  const supabase = createServiceClient();
++  // Self-assigned or group activities are auto-accepted
++  const status = isSelfAssign || data.group_id ? "accepted" : "pending";
++
++  const { data: activity, error } = await supabase
++    .from("activities")
++    .insert({
++      ...data,
++      assignee_user_id: data.group_id ? null : assigneeId,
++      creator_user_id: session.sub,
++      status,
++    })
++    .select()
++    .single();
++
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++
++  // Create notification for recipient (if not self-assigned)
++  if (!isSelfAssign && !data.group_id && activity) {
++    await supabase.from("notifications").insert({
++      user_id: assigneeId,
++      type: "activity_assigned",
++      data: {
++        activity_id: activity.id,
++        activity_title: activity.title,
++        from_username: session.username,
++      },
++    });
++  }
++
++  return NextResponse.json({ activity }, { status: 201 });
++}
+diff --git a/app/api/auth/login/route.ts b/app/api/auth/login/route.ts
+new file mode 100644
+index 0000000..9f93b27
+--- /dev/null
++++ b/app/api/auth/login/route.ts
+@@ -0,0 +1,44 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { verifyValue } from "@/lib/auth/password";
++import { signToken } from "@/lib/auth/jwt";
++import { createServiceClient } from "@/lib/supabase/service";
++import { COOKIE_NAME, COOKIE_OPTIONS } from "@/lib/auth/session";
++
++const schema = z.object({
++  username: z.string().min(1),
++  password: z.string().min(1),
++});
++
++export async function POST(request: NextRequest) {
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const result = schema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: user } = await supabase
++    .from("users")
++    .select("id, username, nickname, bio, avatar_url, password_hash, created_at")
++    .eq("username", result.data.username.toLowerCase())
++    .maybeSingle();
++
++  const INVALID = "Invalid username or password";
++  if (!user) return NextResponse.json({ error: INVALID }, { status: 401 });
++
++  const valid = await verifyValue(result.data.password, user.password_hash);
++  if (!valid) return NextResponse.json({ error: INVALID }, { status: 401 });
++
++  const { password_hash: _ph, ...safeUser } = user;
++  const token = await signToken({ sub: user.id, username: user.username });
++  const response = NextResponse.json({ user: safeUser });
++  response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
++  return response;
++}
+diff --git a/app/api/auth/logout/route.ts b/app/api/auth/logout/route.ts
+new file mode 100644
+index 0000000..fc42d32
+--- /dev/null
++++ b/app/api/auth/logout/route.ts
+@@ -0,0 +1,14 @@
++import { NextResponse } from "next/server";
++import { COOKIE_NAME } from "@/lib/auth/session";
++
++export async function POST() {
++  const response = NextResponse.json({ success: true });
++  response.cookies.set(COOKIE_NAME, "", {
++    httpOnly: true,
++    secure: process.env.NODE_ENV === "production",
++    sameSite: "lax",
++    maxAge: 0,
++    path: "/",
++  });
++  return response;
++}
+diff --git a/app/api/auth/me/route.ts b/app/api/auth/me/route.ts
+new file mode 100644
+index 0000000..5565617
+--- /dev/null
++++ b/app/api/auth/me/route.ts
+@@ -0,0 +1,18 @@
++import { NextResponse } from "next/server";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++export async function GET() {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const supabase = createServiceClient();
++  const { data: user } = await supabase
++    .from("users")
++    .select("id, username, nickname, bio, avatar_url, created_at")
++    .eq("id", session.sub)
++    .single();
++
++  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
++  return NextResponse.json({ user });
++}
+diff --git a/app/api/auth/register/route.ts b/app/api/auth/register/route.ts
+new file mode 100644
+index 0000000..6a2b496
+--- /dev/null
++++ b/app/api/auth/register/route.ts
+@@ -0,0 +1,92 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { hashValue } from "@/lib/auth/password";
++import { signToken } from "@/lib/auth/jwt";
++import { createServiceClient } from "@/lib/supabase/service";
++import { COOKIE_NAME, COOKIE_OPTIONS } from "@/lib/auth/session";
++
++const PASSWORD_RE =
++  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{8,128}$/;
++
++const schema = z.object({
++  username: z
++    .string()
++    .regex(
++      /^[a-z][a-z0-9_-]{2,19}$/,
++      "Username: 3-20 chars, start with a letter, only letters/numbers/_ -"
++    ),
++  nickname: z.string().min(1).max(50),
++  password: z
++    .string()
++    .regex(
++      PASSWORD_RE,
++      "Password must be 8-128 chars and include uppercase, lowercase, number, and special character"
++    ),
++  sq_name: z.string().min(1).max(100),
++  sq_place: z.string().min(1).max(100),
++  sq_animal: z.string().min(1).max(100),
++  sq_thing: z.string().min(1).max(100),
++});
++
++export async function POST(request: NextRequest) {
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const result = schema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json(
++      { error: result.error.errors[0].message },
++      { status: 400 }
++    );
++  }
++
++  const { username, nickname, password, sq_name, sq_place, sq_animal, sq_thing } =
++    result.data;
++
++  const supabase = createServiceClient();
++
++  const { data: existing } = await supabase
++    .from("users")
++    .select("id")
++    .eq("username", username)
++    .maybeSingle();
++
++  if (existing) {
++    return NextResponse.json({ error: "Username is already taken" }, { status: 409 });
++  }
++
++  const [passwordHash, sqName, sqPlace, sqAnimal, sqThing] = await Promise.all([
++    hashValue(password),
++    hashValue(sq_name.toLowerCase().trim()),
++    hashValue(sq_place.toLowerCase().trim()),
++    hashValue(sq_animal.toLowerCase().trim()),
++    hashValue(sq_thing.toLowerCase().trim()),
++  ]);
++
++  const { data: user, error: insertError } = await supabase
++    .from("users")
++    .insert({
++      username,
++      nickname,
++      password_hash: passwordHash,
++      sq_name: sqName,
++      sq_place: sqPlace,
++      sq_animal: sqAnimal,
++      sq_thing: sqThing,
++    })
++    .select("id, username, nickname, bio, avatar_url, created_at")
++    .single();
++
++  if (insertError || !user) {
++    return NextResponse.json({ error: "Failed to create account" }, { status: 500 });
++  }
++
++  const token = await signToken({ sub: user.id, username: user.username });
++  const response = NextResponse.json({ user }, { status: 201 });
++  response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS);
++  return response;
++}
+diff --git a/app/api/auth/reset-password/route.ts b/app/api/auth/reset-password/route.ts
+new file mode 100644
+index 0000000..ee3cf70
+--- /dev/null
++++ b/app/api/auth/reset-password/route.ts
+@@ -0,0 +1,53 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { hashValue } from "@/lib/auth/password";
++import { verifyToken } from "@/lib/auth/jwt";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const PASSWORD_RE =
++  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{8,128}$/;
++
++const schema = z.object({
++  reset_token: z.string().min(1),
++  new_password: z
++    .string()
++    .regex(
++      PASSWORD_RE,
++      "Password must be 8-128 chars with uppercase, lowercase, number, and special character"
++    ),
++});
++
++export async function POST(request: NextRequest) {
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const result = schema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const { reset_token, new_password } = result.data;
++  const payload = await verifyToken(reset_token);
++
++  if (!payload || payload.type !== "password_reset") {
++    return NextResponse.json({ error: "Invalid or expired reset token" }, { status: 401 });
++  }
++
++  const supabase = createServiceClient();
++  const passwordHash = await hashValue(new_password);
++
++  const { error } = await supabase
++    .from("users")
++    .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
++    .eq("id", payload.sub);
++
++  if (error) {
++    return NextResponse.json({ error: "Failed to reset password" }, { status: 500 });
++  }
++
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/auth/verify-security/route.ts b/app/api/auth/verify-security/route.ts
+new file mode 100644
+index 0000000..0061cc3
+--- /dev/null
++++ b/app/api/auth/verify-security/route.ts
+@@ -0,0 +1,57 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { verifyValue } from "@/lib/auth/password";
++import { signToken } from "@/lib/auth/jwt";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const schema = z.object({
++  username: z.string().min(1),
++  sq_name: z.string().min(1),
++  sq_place: z.string().min(1),
++  sq_animal: z.string().min(1),
++  sq_thing: z.string().min(1),
++});
++
++export async function POST(request: NextRequest) {
++  let body: unknown;
++  try {
++    body = await request.json();
++  } catch {
++    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
++  }
++
++  const result = schema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: "All fields are required" }, { status: 400 });
++  }
++
++  const { username, sq_name, sq_place, sq_animal, sq_thing } = result.data;
++  const supabase = createServiceClient();
++
++  const { data: user } = await supabase
++    .from("users")
++    .select("id, username, sq_name, sq_place, sq_animal, sq_thing")
++    .eq("username", username.toLowerCase())
++    .maybeSingle();
++
++  const FAIL = "Security answers are incorrect";
++  if (!user) return NextResponse.json({ error: FAIL }, { status: 401 });
++
++  const [n, p, a, t] = await Promise.all([
++    verifyValue(sq_name.toLowerCase().trim(), user.sq_name),
++    verifyValue(sq_place.toLowerCase().trim(), user.sq_place),
++    verifyValue(sq_animal.toLowerCase().trim(), user.sq_animal),
++    verifyValue(sq_thing.toLowerCase().trim(), user.sq_thing),
++  ]);
++
++  if (!n || !p || !a || !t) {
++    return NextResponse.json({ error: FAIL }, { status: 401 });
++  }
++
++  const resetToken = await signToken(
++    { sub: user.id, username: user.username, type: "password_reset" },
++    "15m"
++  );
++
++  return NextResponse.json({ reset_token: resetToken });
++}
+diff --git a/app/api/goals/[id]/complete/route.ts b/app/api/goals/[id]/complete/route.ts
+new file mode 100644
+index 0000000..e7f92cb
+--- /dev/null
++++ b/app/api/goals/[id]/complete/route.ts
+@@ -0,0 +1,49 @@
++import { NextRequest, NextResponse } from "next/server";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++export async function POST(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const { id } = await params;
++  let date: string;
++  try {
++    const body = await request.json();
++    date = body.date ?? new Date().toISOString().split("T")[0];
++  } catch {
++    date = new Date().toISOString().split("T")[0];
++  }
++
++  const supabase = createServiceClient();
++
++  // Verify goal belongs to user
++  const { data: goal } = await supabase
++    .from("goals")
++    .select("id")
++    .eq("id", id)
++    .eq("user_id", session.sub)
++    .single();
++
++  if (!goal) return NextResponse.json({ error: "Not found" }, { status: 404 });
++
++  // Toggle: delete if exists, insert if not
++  const { data: existing } = await supabase
++    .from("goal_completions")
++    .select("id")
++    .eq("goal_id", id)
++    .eq("completed_date", date)
++    .maybeSingle();
++
++  if (existing) {
++    await supabase.from("goal_completions").delete().eq("id", existing.id);
++    return NextResponse.json({ completed: false });
++  } else {
++    await supabase
++      .from("goal_completions")
++      .insert({ goal_id: id, user_id: session.sub, completed_date: date });
++    return NextResponse.json({ completed: true });
++  }
++}
+diff --git a/app/api/goals/[id]/route.ts b/app/api/goals/[id]/route.ts
+new file mode 100644
+index 0000000..a852d6f
+--- /dev/null
++++ b/app/api/goals/[id]/route.ts
+@@ -0,0 +1,72 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const updateSchema = z.object({
++  title: z.string().min(1).max(80).optional(),
++  description: z.string().max(500).nullable().optional(),
++  active_days: z.array(z.number().int().min(0).max(6)).optional(),
++  priority: z.number().int().min(1).max(5).optional(),
++  tag_ids: z.array(z.string().uuid()).optional(),
++  is_active: z.boolean().optional(),
++});
++
++type Params = { params: Promise<{ id: string }> };
++
++export async function GET(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  const { data: goal, error } = await supabase
++    .from("goals")
++    .select("*")
++    .eq("id", id)
++    .eq("user_id", session.sub)
++    .single();
++  if (error || !goal) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  return NextResponse.json({ goal });
++}
++
++export async function PATCH(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = updateSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: goal, error } = await supabase
++    .from("goals")
++    .update({ ...result.data, updated_at: new Date().toISOString() })
++    .eq("id", id)
++    .eq("user_id", session.sub)
++    .select()
++    .single();
++
++  if (error || !goal) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  return NextResponse.json({ goal });
++}
++
++export async function DELETE(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  const { error } = await supabase
++    .from("goals")
++    .delete()
++    .eq("id", id)
++    .eq("user_id", session.sub);
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/goals/route.ts b/app/api/goals/route.ts
+new file mode 100644
+index 0000000..84b0d18
+--- /dev/null
++++ b/app/api/goals/route.ts
+@@ -0,0 +1,134 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++// ---- Streak calculation ----
++function fmtDate(d: Date) {
++  return d.toISOString().split("T")[0];
++}
++
++function calcStreaks(activeDays: number[], completionDates: string[]) {
++  const set = new Set(completionDates);
++  const total = completionDates.length;
++  const today = new Date();
++  const todayStr = fmtDate(today);
++  const completed_today = set.has(todayStr);
++
++  const sorted = [...completionDates].sort();
++  const last_completed = sorted.length ? sorted[sorted.length - 1] : null;
++
++  if (!activeDays.length) {
++    return { current: 0, longest: 0, total, last_completed, completed_today };
++  }
++
++  // Build schedule for last 730 days
++  const schedule: string[] = [];
++  const d = new Date(today);
++  d.setDate(d.getDate() - 730);
++  while (d <= today) {
++    if (activeDays.includes(d.getDay())) schedule.push(fmtDate(new Date(d)));
++    d.setDate(d.getDate() + 1);
++  }
++
++  let longest = 0, run = 0;
++  for (const date of schedule) {
++    if (date === todayStr && !completed_today) continue;
++    if (set.has(date)) { run++; if (run > longest) longest = run; }
++    else run = 0;
++  }
++
++  let current = 0;
++  for (let i = schedule.length - 1; i >= 0; i--) {
++    const date = schedule[i];
++    if (date === todayStr && !completed_today) continue;
++    if (set.has(date)) current++;
++    else break;
++  }
++
++  return { current, longest, total, last_completed, completed_today };
++}
++
++// ---- Route handlers ----
++const createSchema = z.object({
++  title: z.string().min(1).max(80),
++  description: z.string().max(500).optional(),
++  active_days: z.array(z.number().int().min(0).max(6)),
++  priority: z.number().int().min(1).max(5).default(3),
++  tag_ids: z.array(z.string().uuid()).default([]),
++});
++
++export async function GET(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const withStreaks = request.nextUrl.searchParams.get("streaks") === "true";
++  const activeOnly = request.nextUrl.searchParams.get("active") === "true";
++  const todayOnly = request.nextUrl.searchParams.get("today") === "true";
++
++  const supabase = createServiceClient();
++  let query = supabase.from("goals").select("*").eq("user_id", session.sub).order("created_at");
++
++  if (activeOnly || todayOnly) query = query.eq("is_active", true);
++
++  const { data: goals, error } = await query;
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++
++  let filtered = goals ?? [];
++
++  if (todayOnly) {
++    const dow = new Date().getDay();
++    filtered = filtered.filter((g) => g.active_days?.includes(dow));
++  }
++
++  if (!withStreaks) return NextResponse.json({ goals: filtered });
++
++  if (!filtered.length) return NextResponse.json({ goals: [] });
++
++  const since = new Date();
++  since.setDate(since.getDate() - 730);
++
++  const { data: completions } = await supabase
++    .from("goal_completions")
++    .select("goal_id, completed_date")
++    .in("goal_id", filtered.map((g) => g.id))
++    .gte("completed_date", fmtDate(since));
++
++  const byGoal = new Map<string, string[]>();
++  for (const c of completions ?? []) {
++    if (!byGoal.has(c.goal_id)) byGoal.set(c.goal_id, []);
++    byGoal.get(c.goal_id)!.push(c.completed_date);
++  }
++
++  return NextResponse.json({
++    goals: filtered.map((g) => ({
++      ...g,
++      streak: calcStreaks(g.active_days ?? [], byGoal.get(g.id) ?? []),
++    })),
++  });
++}
++
++export async function POST(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = createSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: goal, error } = await supabase
++    .from("goals")
++    .insert({ ...result.data, user_id: session.sub })
++    .select()
++    .single();
++
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ goal }, { status: 201 });
++}
+diff --git a/app/api/notifications/[id]/route.ts b/app/api/notifications/[id]/route.ts
+new file mode 100644
+index 0000000..33a88a0
+--- /dev/null
++++ b/app/api/notifications/[id]/route.ts
+@@ -0,0 +1,18 @@
++import { NextRequest, NextResponse } from "next/server";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++export async function PATCH(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  await supabase
++    .from("notifications")
++    .update({ read: true })
++    .eq("id", id)
++    .eq("user_id", session.sub);
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/notifications/route.ts b/app/api/notifications/route.ts
+new file mode 100644
+index 0000000..70e0a19
+--- /dev/null
++++ b/app/api/notifications/route.ts
+@@ -0,0 +1,38 @@
++import { NextRequest, NextResponse } from "next/server";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++export async function GET(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const supabase = createServiceClient();
++
++  const unreadOnly = request.nextUrl.searchParams.get("unread") === "true";
++  let query = supabase
++    .from("notifications")
++    .select("*")
++    .eq("user_id", session.sub)
++    .order("created_at", { ascending: false })
++    .limit(50);
++
++  if (unreadOnly) query = query.eq("read", false);
++
++  const { data, error } = await query;
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++
++  const unreadCount = (data ?? []).filter((n) => !n.read).length;
++  return NextResponse.json({ notifications: data ?? [], unread_count: unreadCount });
++}
++
++export async function PATCH() {
++  // Mark all as read
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const supabase = createServiceClient();
++  await supabase
++    .from("notifications")
++    .update({ read: true })
++    .eq("user_id", session.sub)
++    .eq("read", false);
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/profile/route.ts b/app/api/profile/route.ts
+new file mode 100644
+index 0000000..662aa7c
+--- /dev/null
++++ b/app/api/profile/route.ts
+@@ -0,0 +1,85 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++import { hashValue, verifyValue } from "@/lib/auth/password";
++
++const PASSWORD_RE =
++  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+\[\]{};':"\\|,.<>/?]).{8,128}$/;
++
++const updateSchema = z.object({
++  nickname: z.string().min(1).max(50).optional(),
++  bio: z.string().max(300).nullable().optional(),
++  avatar_url: z.string().url().nullable().optional(),
++});
++
++const passwordSchema = z.object({
++  current_password: z.string().min(1),
++  new_password: z
++    .string()
++    .regex(PASSWORD_RE, "Password must be 8-128 chars with uppercase, lowercase, number, and special character"),
++});
++
++export async function GET() {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const supabase = createServiceClient();
++  const { data: user } = await supabase
++    .from("users")
++    .select("id, username, nickname, bio, avatar_url, created_at")
++    .eq("id", session.sub)
++    .single();
++  if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  return NextResponse.json({ user });
++}
++
++export async function PATCH(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const url = new URL(request.url);
++  const isPasswordChange = url.pathname.endsWith("/password");
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  if (isPasswordChange) {
++    const result = passwordSchema.safeParse(body);
++    if (!result.success) {
++      return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++    }
++    const supabase = createServiceClient();
++    const { data: user } = await supabase
++      .from("users")
++      .select("password_hash")
++      .eq("id", session.sub)
++      .single();
++    if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
++    const valid = await verifyValue(result.data.current_password, user.password_hash);
++    if (!valid) return NextResponse.json({ error: "Current password is incorrect" }, { status: 401 });
++    const newHash = await hashValue(result.data.new_password);
++    await supabase
++      .from("users")
++      .update({ password_hash: newHash, updated_at: new Date().toISOString() })
++      .eq("id", session.sub);
++    return NextResponse.json({ success: true });
++  }
++
++  const result = updateSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: user, error } = await supabase
++    .from("users")
++    .update({ ...result.data, updated_at: new Date().toISOString() })
++    .eq("id", session.sub)
++    .select("id, username, nickname, bio, avatar_url, created_at")
++    .single();
++
++  if (error || !user) return NextResponse.json({ error: "Update failed" }, { status: 500 });
++  return NextResponse.json({ user });
++}
+diff --git a/app/api/social/friends/[id]/route.ts b/app/api/social/friends/[id]/route.ts
+new file mode 100644
+index 0000000..1a7e81a
+--- /dev/null
++++ b/app/api/social/friends/[id]/route.ts
+@@ -0,0 +1,83 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++const actionSchema = z.object({
++  action: z.enum(["accept", "reject"]),
++});
++
++const settingsSchema = z.object({
++  auto_accept_activities: z.boolean(),
++});
++
++export async function PATCH(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  // Settings update
++  const settingsResult = settingsSchema.safeParse(body);
++  if (settingsResult.success) {
++    const { data, error } = await supabase
++      .from("friendships")
++      .update({ auto_accept_activities: settingsResult.data.auto_accept_activities })
++      .eq("id", id)
++      .or(`requester_id.eq.${session.sub},addressee_id.eq.${session.sub}`)
++      .select()
++      .single();
++    if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
++    return NextResponse.json({ friendship: data });
++  }
++
++  // Accept/reject
++  const actionResult = actionSchema.safeParse(body);
++  if (!actionResult.success) {
++    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
++  }
++
++  const newStatus = actionResult.data.action === "accept" ? "accepted" : "rejected";
++  const { data: friendship, error } = await supabase
++    .from("friendships")
++    .update({ status: newStatus, updated_at: new Date().toISOString() })
++    .eq("id", id)
++    .eq("addressee_id", session.sub)
++    .eq("status", "pending")
++    .select()
++    .single();
++
++  if (error || !friendship) {
++    return NextResponse.json({ error: "Request not found" }, { status: 404 });
++  }
++
++  if (actionResult.data.action === "accept") {
++    await supabase.from("notifications").insert({
++      user_id: friendship.requester_id,
++      type: "friend_accepted",
++      data: { friendship_id: friendship.id, from_username: session.username },
++    });
++  }
++
++  return NextResponse.json({ friendship });
++}
++
++export async function DELETE(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  await supabase
++    .from("friendships")
++    .delete()
++    .eq("id", id)
++    .or(`requester_id.eq.${session.sub},addressee_id.eq.${session.sub}`);
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/social/friends/route.ts b/app/api/social/friends/route.ts
+new file mode 100644
+index 0000000..9bdbdf4
+--- /dev/null
++++ b/app/api/social/friends/route.ts
+@@ -0,0 +1,90 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const requestSchema = z.object({ username: z.string().min(1) });
++
++export async function GET() {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const supabase = createServiceClient();
++
++  // Friendships where I am requester
++  const { data: sent } = await supabase
++    .from("friendships")
++    .select("id, status, auto_accept_activities, created_at, updated_at, addressee:addressee_id(id,username,nickname,avatar_url)")
++    .eq("requester_id", session.sub);
++
++  // Friendships where I am addressee
++  const { data: received } = await supabase
++    .from("friendships")
++    .select("id, status, auto_accept_activities, created_at, updated_at, requester:requester_id(id,username,nickname,avatar_url)")
++    .eq("addressee_id", session.sub);
++
++  const friendships = [
++    ...(sent ?? []).map((f) => ({ ...f, friend: f.addressee, is_requester: true })),
++    ...(received ?? []).map((f) => ({ ...f, friend: f.requester, is_requester: false })),
++  ];
++
++  return NextResponse.json({ friendships });
++}
++
++export async function POST(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = requestSchema.safeParse(body);
++  if (!result.success) return NextResponse.json({ error: "username required" }, { status: 400 });
++
++  const supabase = createServiceClient();
++  const { data: target } = await supabase
++    .from("users")
++    .select("id")
++    .eq("username", result.data.username.toLowerCase())
++    .single();
++
++  if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
++  if (target.id === session.sub) {
++    return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
++  }
++
++  // Check if friendship already exists
++  const { data: existing } = await supabase
++    .from("friendships")
++    .select("id, status")
++    .or(
++      `and(requester_id.eq.${session.sub},addressee_id.eq.${target.id}),and(requester_id.eq.${target.id},addressee_id.eq.${session.sub})`
++    )
++    .maybeSingle();
++
++  if (existing) {
++    if (existing.status === "accepted") {
++      return NextResponse.json({ error: "Already friends" }, { status: 409 });
++    }
++    if (existing.status === "pending") {
++      return NextResponse.json({ error: "Request already sent" }, { status: 409 });
++    }
++  }
++
++  const { data: friendship, error } = await supabase
++    .from("friendships")
++    .insert({ requester_id: session.sub, addressee_id: target.id })
++    .select()
++    .single();
++
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++
++  await supabase.from("notifications").insert({
++    user_id: target.id,
++    type: "friend_request",
++    data: { friendship_id: friendship.id, from_username: session.username },
++  });
++
++  return NextResponse.json({ friendship }, { status: 201 });
++}
+diff --git a/app/api/social/groups/[id]/route.ts b/app/api/social/groups/[id]/route.ts
+new file mode 100644
+index 0000000..0e7d1d1
+--- /dev/null
++++ b/app/api/social/groups/[id]/route.ts
+@@ -0,0 +1,145 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++const updateSchema = z.object({
++  name: z.string().min(1).max(60).optional(),
++  description: z.string().max(300).nullable().optional(),
++});
++
++const inviteSchema = z.object({ username: z.string().min(1) });
++
++export async function GET(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++
++  const { data: group } = await supabase.from("groups").select("*").eq("id", id).single();
++  if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
++
++  const { data: members } = await supabase
++    .from("group_members")
++    .select("*, user:user_id(id,username,nickname,avatar_url)")
++    .eq("group_id", id)
++    .neq("status", "removed");
++
++  const myMembership = members?.find((m) => m.user_id === session.sub);
++  if (!myMembership) return NextResponse.json({ error: "Not a member" }, { status: 403 });
++
++  return NextResponse.json({
++    group: { ...group, my_role: myMembership.role, my_status: myMembership.status },
++    members,
++  });
++}
++
++export async function PATCH(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  // Handle invite
++  const inviteResult = inviteSchema.safeParse(body);
++  if (inviteResult.success && "username" in (body as object)) {
++    const supabase = createServiceClient();
++
++    // Check requester is admin
++    const { data: me } = await supabase
++      .from("group_members")
++      .select("role")
++      .eq("group_id", id)
++      .eq("user_id", session.sub)
++      .eq("status", "active")
++      .single();
++    if (!me || me.role !== "admin") {
++      return NextResponse.json({ error: "Only admins can invite" }, { status: 403 });
++    }
++
++    const { data: target } = await supabase
++      .from("users")
++      .select("id")
++      .eq("username", inviteResult.data.username.toLowerCase())
++      .single();
++    if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
++
++    const { data: group } = await supabase.from("groups").select("name").eq("id", id).single();
++
++    await supabase.from("group_members").upsert(
++      { group_id: id, user_id: target.id, role: "member", status: "pending" },
++      { onConflict: "group_id,user_id" }
++    );
++
++    await supabase.from("notifications").insert({
++      user_id: target.id,
++      type: "group_invite",
++      data: { group_id: id, group_name: group?.name, from_username: session.username },
++    });
++
++    return NextResponse.json({ success: true });
++  }
++
++  // Handle group update
++  const updateResult = updateSchema.safeParse(body);
++  if (!updateResult.success) {
++    return NextResponse.json({ error: updateResult.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: group, error } = await supabase
++    .from("groups")
++    .update({ ...updateResult.data, updated_at: new Date().toISOString() })
++    .eq("id", id)
++    .eq("created_by", session.sub)
++    .select()
++    .single();
++
++  if (error || !group) return NextResponse.json({ error: "Not found or not admin" }, { status: 404 });
++  return NextResponse.json({ group });
++}
++
++export async function DELETE(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++
++  const { searchParams } = new URL(_req.url);
++  const action = searchParams.get("action");
++
++  if (action === "leave") {
++    await supabase
++      .from("group_members")
++      .update({ status: "removed" })
++      .eq("group_id", id)
++      .eq("user_id", session.sub);
++    return NextResponse.json({ success: true });
++  }
++
++  if (action === "accept" || action === "reject") {
++    const newStatus = action === "accept" ? "active" : "removed";
++    await supabase
++      .from("group_members")
++      .update({ status: newStatus, joined_at: action === "accept" ? new Date().toISOString() : null })
++      .eq("group_id", id)
++      .eq("user_id", session.sub)
++      .eq("status", "pending");
++    return NextResponse.json({ success: true });
++  }
++
++  // Delete group (admin only)
++  const { error } = await supabase
++    .from("groups")
++    .delete()
++    .eq("id", id)
++    .eq("created_by", session.sub);
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/social/groups/route.ts b/app/api/social/groups/route.ts
+new file mode 100644
+index 0000000..174e29c
+--- /dev/null
++++ b/app/api/social/groups/route.ts
+@@ -0,0 +1,71 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const createSchema = z.object({
++  name: z.string().min(1).max(60),
++  description: z.string().max(300).optional(),
++});
++
++export async function GET() {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const supabase = createServiceClient();
++
++  const { data: memberships } = await supabase
++    .from("group_members")
++    .select("group_id, role, status")
++    .eq("user_id", session.sub)
++    .in("status", ["active", "pending"]);
++
++  if (!memberships?.length) return NextResponse.json({ groups: [] });
++
++  const groupIds = memberships.map((m) => m.group_id);
++  const { data: groups } = await supabase
++    .from("groups")
++    .select("*, member_count:group_members(count)")
++    .in("id", groupIds);
++
++  const enriched = (groups ?? []).map((g) => {
++    const m = memberships.find((m) => m.group_id === g.id);
++    return { ...g, my_role: m?.role, my_status: m?.status };
++  });
++
++  return NextResponse.json({ groups: enriched });
++}
++
++export async function POST(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = createSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data: group, error } = await supabase
++    .from("groups")
++    .insert({ ...result.data, created_by: session.sub })
++    .select()
++    .single();
++
++  if (error || !group) return NextResponse.json({ error: error?.message }, { status: 500 });
++
++  // Creator becomes admin
++  await supabase.from("group_members").insert({
++    group_id: group.id,
++    user_id: session.sub,
++    role: "admin",
++    status: "active",
++    joined_at: new Date().toISOString(),
++  });
++
++  return NextResponse.json({ group }, { status: 201 });
++}
+diff --git a/app/api/sub-records/[id]/route.ts b/app/api/sub-records/[id]/route.ts
+new file mode 100644
+index 0000000..77e83d1
+--- /dev/null
++++ b/app/api/sub-records/[id]/route.ts
+@@ -0,0 +1,48 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ id: string }> };
++
++const updateSchema = z.object({
++  title: z.string().min(1).max(80).optional(),
++  completed: z.boolean().optional(),
++  sort_order: z.number().int().min(0).optional(),
++});
++
++export async function PATCH(request: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = updateSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data, error } = await supabase
++    .from("sub_records")
++    .update(result.data)
++    .eq("id", id)
++    .select()
++    .single();
++
++  if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
++  return NextResponse.json({ sub_record: data });
++}
++
++export async function DELETE(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++  const { id } = await params;
++  const supabase = createServiceClient();
++  await supabase.from("sub_records").delete().eq("id", id);
++  return NextResponse.json({ success: true });
++}
+diff --git a/app/api/sub-records/route.ts b/app/api/sub-records/route.ts
+new file mode 100644
+index 0000000..9ab2393
+--- /dev/null
++++ b/app/api/sub-records/route.ts
+@@ -0,0 +1,58 @@
++import { NextRequest, NextResponse } from "next/server";
++import { z } from "zod";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++const createSchema = z.object({
++  goal_id: z.string().uuid().optional().nullable(),
++  activity_id: z.string().uuid().optional().nullable(),
++  title: z.string().min(1).max(80),
++  sort_order: z.number().int().min(0).default(0),
++});
++
++export async function GET(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const goalId = request.nextUrl.searchParams.get("goal_id");
++  const activityId = request.nextUrl.searchParams.get("activity_id");
++  const supabase = createServiceClient();
++
++  let query = supabase.from("sub_records").select("*").order("sort_order");
++  if (goalId) query = query.eq("goal_id", goalId);
++  else if (activityId) query = query.eq("activity_id", activityId);
++  else return NextResponse.json({ error: "Provide goal_id or activity_id" }, { status: 400 });
++
++  const { data, error } = await query;
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ sub_records: data ?? [] });
++}
++
++export async function POST(request: NextRequest) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  let body: unknown;
++  try { body = await request.json(); } catch {
++    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
++  }
++
++  const result = createSchema.safeParse(body);
++  if (!result.success) {
++    return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
++  }
++
++  if (!result.data.goal_id && !result.data.activity_id) {
++    return NextResponse.json({ error: "Provide goal_id or activity_id" }, { status: 400 });
++  }
++
++  const supabase = createServiceClient();
++  const { data, error } = await supabase
++    .from("sub_records")
++    .insert(result.data)
++    .select()
++    .single();
++
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ sub_record: data }, { status: 201 });
++}
+diff --git a/app/api/tags/route.ts b/app/api/tags/route.ts
+new file mode 100644
+index 0000000..8a82146
+--- /dev/null
++++ b/app/api/tags/route.ts
+@@ -0,0 +1,12 @@
++import { NextResponse } from "next/server";
++import { createServiceClient } from "@/lib/supabase/service";
++
++export async function GET() {
++  const supabase = createServiceClient();
++  const { data: tags, error } = await supabase
++    .from("tags")
++    .select("id, name, slug")
++    .order("name");
++  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
++  return NextResponse.json({ tags: tags ?? [] });
++}
+diff --git a/app/api/users/[username]/route.ts b/app/api/users/[username]/route.ts
+new file mode 100644
+index 0000000..f14fae3
+--- /dev/null
++++ b/app/api/users/[username]/route.ts
+@@ -0,0 +1,42 @@
++import { NextRequest, NextResponse } from "next/server";
++import { getSession } from "@/lib/auth/session";
++import { createServiceClient } from "@/lib/supabase/service";
++
++type Params = { params: Promise<{ username: string }> };
++
++export async function GET(_req: NextRequest, { params }: Params) {
++  const session = await getSession();
++  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
++
++  const { username } = await params;
++  const supabase = createServiceClient();
++
++  const { data: user } = await supabase
++    .from("users")
++    .select("id, username, nickname, bio, avatar_url, created_at")
++    .eq("username", username.toLowerCase())
++    .single();
++
++  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
++
++  // Check friendship status with current user
++  const { data: friendship } = await supabase
++    .from("friendships")
++    .select("id, status, requester_id, auto_accept_activities")
++    .or(
++      `and(requester_id.eq.${session.sub},addressee_id.eq.${user.id}),and(requester_id.eq.${user.id},addressee_id.eq.${session.sub})`
++    )
++    .maybeSingle();
++
++  return NextResponse.json({
++    user,
++    friendship: friendship
++      ? {
++          id: friendship.id,
++          status: friendship.status,
++          is_requester: friendship.requester_id === session.sub,
++          auto_accept_activities: friendship.auto_accept_activities,
++        }
++      : null,
++  });
++}
+diff --git a/components/activities/activities-list.tsx b/components/activities/activities-list.tsx
+new file mode 100644
+index 0000000..7d39e6e
+--- /dev/null
++++ b/components/activities/activities-list.tsx
+@@ -0,0 +1,78 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Activity, Plus, CheckCircle2, Clock, Circle } from "lucide-react";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { PRIORITY_COLORS, TAB_COLORS } from "@/lib/types";
++import type { Activity as ActivityType } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++import { RecordFormDialog } from "@/components/records/record-form-dialog";
++
++export function ActivitiesList({ onAddNew }: { onAddNew: () => void }) {
++  const [activities, setActivities] = useState<ActivityType[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [editing, setEditing] = useState<ActivityType | null>(null);
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/activities");
++    if (r.ok) { const d = await r.json(); setActivities(d.activities ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { load(); }, [load]);
++
++  const statusColor = (s: string) =>
++    s === "completed" ? "text-[var(--color-success)]" :
++    s === "pending"   ? "text-[var(--color-warning)]" :
++    s === "rejected"  ? "text-[var(--color-error)]" : "text-[var(--color-text-secondary)]";
++
++  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
++
++  if (!activities.length) return (
++    <div className="text-center py-12 text-[var(--color-text-secondary)]">
++      <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
++      <p className="font-medium">No activities yet</p>
++      <Button size="sm" className="mt-3" onClick={onAddNew} leftIcon={<Plus className="w-4 h-4" />}>Add Activity</Button>
++    </div>
++  );
++
++  return (
++    <>
++      <div className="space-y-3">
++        {activities.map((a) => (
++          <div key={a.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 cursor-pointer hover:border-[var(--color-border-strong)]"
++            onClick={() => setEditing(a)}>
++            <div className="flex items-start gap-2">
++              <div className="mt-0.5 shrink-0">
++                {a.status === "completed"
++                  ? <CheckCircle2 className="w-4 h-4 text-[var(--color-success)]" />
++                  : <Circle className="w-4 h-4 text-[var(--color-text-disabled)]" />}
++              </div>
++              <div className="flex-1 min-w-0">
++                <div className="flex items-center gap-2 flex-wrap">
++                  <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{a.title}</span>
++                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
++                    style={{ backgroundColor: PRIORITY_COLORS[a.priority] + "22", color: PRIORITY_COLORS[a.priority] }}>
++                    P{a.priority}
++                  </span>
++                  <span className={cn("text-[10px] font-medium capitalize", statusColor(a.status))}>{a.status}</span>
++                </div>
++                {a.description && <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 truncate">{a.description}</p>}
++                {(a.activity_date || a.activity_time) && (
++                  <div className="flex items-center gap-1 mt-1 text-xs text-[var(--color-text-secondary)]">
++                    <Clock className="w-3 h-3" />
++                    {a.activity_date} {a.activity_time ?? ""}
++                  </div>
++                )}
++              </div>
++            </div>
++          </div>
++        ))}
++      </div>
++      {editing && (
++        <RecordFormDialog type="activity" activity={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />
++      )}
++    </>
++  );
++}
+diff --git a/components/goals/goal-form-dialog.tsx b/components/goals/goal-form-dialog.tsx
+new file mode 100644
+index 0000000..20053d7
+--- /dev/null
++++ b/components/goals/goal-form-dialog.tsx
+@@ -0,0 +1,133 @@
++"use client";
++import { useState } from "react";
++import { X } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { useTags } from "@/lib/hooks/use-tags";
++import { useToast } from "@/components/ui/toast";
++import { DAY_LABELS, PRIORITY_LABELS } from "@/lib/types";
++import type { Goal } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++
++interface Props {
++  goal?: Partial<Goal>;
++  onClose: () => void;
++  onSaved: () => void;
++}
++
++export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
++  const isEdit = !!goal?.id;
++  const [title, setTitle] = useState(goal?.title ?? "");
++  const [desc, setDesc] = useState(goal?.description ?? "");
++  const [activeDays, setActiveDays] = useState<number[]>(goal?.active_days ?? [0,1,2,3,4,5,6]);
++  const [priority, setPriority] = useState(goal?.priority ?? 3);
++  const [selectedTags, setSelectedTags] = useState<string[]>(goal?.tag_ids ?? []);
++  const [loading, setLoading] = useState(false);
++  const { tags } = useTags();
++  const { showToast } = useToast();
++
++  const toggleDay = (d: number) =>
++    setActiveDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
++
++  const toggleTag = (id: string) =>
++    setSelectedTags((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!title.trim()) return showToast("Title is required", "error");
++    if (!activeDays.length) return showToast("Select at least one day", "error");
++    setLoading(true);
++    const body = { title: title.trim(), description: desc || undefined, active_days: activeDays, priority, tag_ids: selectedTags };
++    const r = await fetch(isEdit ? `/api/goals/${goal!.id}` : "/api/goals", {
++      method: isEdit ? "PATCH" : "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify(body),
++    });
++    setLoading(false);
++    if (!r.ok) { const d = await r.json(); showToast(d.error ?? "Save failed", "error"); return; }
++    onSaved();
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
++      <div className="bg-[var(--color-surface-raised)] rounded-[var(--radius-2xl)] w-full max-w-md max-h-[90vh] overflow-y-auto">
++        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
++          <h2 className="font-semibold text-[var(--color-text-primary)]">{isEdit ? "Edit Goal" : "New Goal"}</h2>
++          <button onClick={onClose} className="text-[var(--color-text-secondary)]"><X className="w-5 h-5" /></button>
++        </div>
++
++        <form onSubmit={handleSubmit} className="p-4 space-y-4">
++          <div className="space-y-1.5">
++            <Label htmlFor="g-title">Title *</Label>
++            <Input id="g-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Morning Run" required />
++          </div>
++
++          <div className="space-y-1.5">
++            <Label htmlFor="g-desc">Description</Label>
++            <textarea id="g-desc" value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} maxLength={500}
++              className="w-full px-3 py-2 text-sm bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] resize-none" />
++          </div>
++
++          <div className="space-y-1.5">
++            <Label>Active days *</Label>
++            <div className="flex gap-1.5 flex-wrap">
++              {DAY_LABELS.map((d, i) => (
++                <button key={i} type="button" onClick={() => toggleDay(i)}
++                  className={cn(
++                    "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
++                    activeDays.includes(i)
++                      ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
++                      : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
++                  )}>
++                  {d}
++                </button>
++              ))}
++            </div>
++          </div>
++
++          <div className="space-y-1.5">
++            <Label>Priority</Label>
++            <div className="flex gap-2">
++              {[1,2,3,4,5].map((p) => (
++                <button key={p} type="button" onClick={() => setPriority(p as 1|2|3|4|5)}
++                  className={cn(
++                    "flex-1 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold border transition-colors",
++                    priority === p ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
++                      : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
++                  )}>
++                  P{p}
++                </button>
++              ))}
++            </div>
++            <p className="text-xs text-[var(--color-text-secondary)]">{PRIORITY_LABELS[priority]}</p>
++          </div>
++
++          {tags.length > 0 && (
++            <div className="space-y-1.5">
++              <Label>Tags</Label>
++              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
++                {tags.map((t) => (
++                  <button key={t.id} type="button" onClick={() => toggleTag(t.id)}
++                    className={cn(
++                      "px-2.5 py-1 rounded-full text-xs border transition-colors",
++                      selectedTags.includes(t.id)
++                        ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
++                        : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
++                    )}>
++                    {t.name}
++                  </button>
++                ))}
++              </div>
++            </div>
++          )}
++
++          <div className="flex gap-3 pt-2">
++            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
++            <Button type="submit" loading={loading} className="flex-1">{isEdit ? "Save" : "Create"}</Button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
+diff --git a/components/goals/goals-list.tsx b/components/goals/goals-list.tsx
+new file mode 100644
+index 0000000..558097a
+--- /dev/null
++++ b/components/goals/goals-list.tsx
+@@ -0,0 +1,33 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Flame, Plus } from "lucide-react";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { StreakCard } from "@/components/streaks/streak-card";
++import type { GoalWithStreak } from "@/lib/types";
++
++export function GoalsList({ onAddNew }: { onAddNew: () => void }) {
++  const [goals, setGoals] = useState<GoalWithStreak[]>([]);
++  const [loading, setLoading] = useState(true);
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/goals?streaks=true");
++    if (r.ok) { const d = await r.json(); setGoals(d.goals ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { load(); }, [load]);
++
++  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
++
++  if (!goals.length) return (
++    <div className="text-center py-12 text-[var(--color-text-secondary)]">
++      <Flame className="w-10 h-10 mx-auto mb-3 opacity-30" />
++      <p className="font-medium">No goals yet</p>
++      <Button size="sm" className="mt-3" onClick={onAddNew} leftIcon={<Plus className="w-4 h-4" />}>Add Goal</Button>
++    </div>
++  );
++
++  return <div className="space-y-3">{goals.map((g) => <StreakCard key={g.id} goal={g} onUpdate={load} />)}</div>;
++}
+diff --git a/components/layout/page-header.tsx b/components/layout/page-header.tsx
+new file mode 100644
+index 0000000..35ef16b
+--- /dev/null
++++ b/components/layout/page-header.tsx
+@@ -0,0 +1,28 @@
++import { cn } from "@/lib/utils/cn";
++
++interface PageHeaderProps {
++  title: string;
++  subtitle?: string;
++  accentColor?: string;
++  right?: React.ReactNode;
++  className?: string;
++}
++
++export function PageHeader({ title, subtitle, accentColor, right, className }: PageHeaderProps) {
++  return (
++    <div className={cn("flex items-start justify-between mb-5", className)}>
++      <div>
++        <h1
++          className="text-xl font-bold text-[var(--color-text-primary)]"
++          style={accentColor ? { color: accentColor } : undefined}
++        >
++          {title}
++        </h1>
++        {subtitle && (
++          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{subtitle}</p>
++        )}
++      </div>
++      {right && <div className="flex items-center gap-2">{right}</div>}
++    </div>
++  );
++}
+diff --git a/components/records/record-form-dialog.tsx b/components/records/record-form-dialog.tsx
+new file mode 100644
+index 0000000..50c2e6b
+--- /dev/null
++++ b/components/records/record-form-dialog.tsx
+@@ -0,0 +1,156 @@
++"use client";
++import { useState } from "react";
++import { X } from "lucide-react";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { useTags } from "@/lib/hooks/use-tags";
++import { useToast } from "@/components/ui/toast";
++import { PRIORITY_LABELS } from "@/lib/types";
++import type { Activity } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
++
++interface Props {
++  type: "goal" | "activity";
++  activity?: Partial<Activity>;
++  prefill?: { assignee_user_id?: string; group_id?: string; assignee_label?: string };
++  onClose: () => void;
++  onSaved: () => void;
++}
++
++export function RecordFormDialog({ type, activity, prefill, onClose, onSaved }: Props) {
++  if (type === "goal") return <GoalFormDialog onClose={onClose} onSaved={onSaved} />;
++
++  const isEdit = !!activity?.id;
++  const [title, setTitle] = useState(activity?.title ?? "");
++  const [desc, setDesc] = useState(activity?.description ?? "");
++  const [date, setDate] = useState(activity?.activity_date ?? "");
++  const [time, setTime] = useState(activity?.activity_time ?? "");
++  const [priority, setPriority] = useState<1|2|3|4|5>(activity?.priority ?? 3);
++  const [selectedTags, setSelectedTags] = useState<string[]>(activity?.tag_ids ?? []);
++  const [reminders, setReminders] = useState<string>("15,60");
++  const [loading, setLoading] = useState(false);
++  const { tags } = useTags();
++  const { showToast } = useToast();
++
++  const toggleTag = (id: string) =>
++    setSelectedTags((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
++
++  const parseReminders = () =>
++    reminders.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!title.trim()) return showToast("Title is required", "error");
++    setLoading(true);
++    const body = {
++      title: title.trim(),
++      description: desc || undefined,
++      activity_date: date || null,
++      activity_time: time || null,
++      priority,
++      tag_ids: selectedTags,
++      reminder_minutes: parseReminders(),
++      ...(prefill?.assignee_user_id ? { assignee_user_id: prefill.assignee_user_id } : {}),
++      ...(prefill?.group_id ? { group_id: prefill.group_id } : {}),
++    };
++    const r = await fetch(isEdit ? `/api/activities/${activity!.id}` : "/api/activities", {
++      method: isEdit ? "PATCH" : "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify(body),
++    });
++    setLoading(false);
++    if (!r.ok) { const d = await r.json(); showToast(d.error ?? "Save failed", "error"); return; }
++    onSaved();
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4">
++      <div className="bg-[var(--color-surface-raised)] rounded-[var(--radius-2xl)] w-full max-w-md max-h-[90vh] overflow-y-auto">
++        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
++          <h2 className="font-semibold text-[var(--color-text-primary)]">
++            {isEdit ? "Edit Activity" : prefill?.assignee_label ? `Assign to ${prefill.assignee_label}` : "New Activity"}
++          </h2>
++          <button onClick={onClose} className="text-[var(--color-text-secondary)]"><X className="w-5 h-5" /></button>
++        </div>
++
++        <form onSubmit={handleSubmit} className="p-4 space-y-4">
++          {prefill?.assignee_label && (
++            <div className="px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)] text-xs text-[var(--color-text-secondary)]">
++              Assigning to: <span className="font-semibold text-[var(--color-text-primary)]">{prefill.assignee_label}</span>
++            </div>
++          )}
++
++          <div className="space-y-1.5">
++            <Label htmlFor="a-title">Title *</Label>
++            <Input id="a-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Team meeting" required />
++          </div>
++
++          <div className="space-y-1.5">
++            <Label htmlFor="a-desc">Description</Label>
++            <textarea id="a-desc" value={desc} onChange={(e) => setDesc(e.target.value)} rows={3} maxLength={500}
++              className="w-full px-3 py-2 text-sm bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)] resize-none" />
++          </div>
++
++          <div className="grid grid-cols-2 gap-3">
++            <div className="space-y-1.5">
++              <Label htmlFor="a-date">Date</Label>
++              <Input id="a-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
++            </div>
++            <div className="space-y-1.5">
++              <Label htmlFor="a-time">Time</Label>
++              <Input id="a-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
++            </div>
++          </div>
++
++          <div className="space-y-1.5">
++            <Label htmlFor="a-reminders">Reminders (minutes before, comma-separated)</Label>
++            <Input id="a-reminders" value={reminders} onChange={(e) => setReminders(e.target.value)} placeholder="15, 60" />
++          </div>
++
++          <div className="space-y-1.5">
++            <Label>Priority</Label>
++            <div className="flex gap-2">
++              {[1,2,3,4,5].map((p) => (
++                <button key={p} type="button" onClick={() => setPriority(p as 1|2|3|4|5)}
++                  className={cn(
++                    "flex-1 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold border transition-colors",
++                    priority === p ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
++                      : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
++                  )}>
++                  P{p}
++                </button>
++              ))}
++            </div>
++            <p className="text-xs text-[var(--color-text-secondary)]">{PRIORITY_LABELS[priority]}</p>
++          </div>
++
++          {tags.length > 0 && (
++            <div className="space-y-1.5">
++              <Label>Tags</Label>
++              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
++                {tags.map((t) => (
++                  <button key={t.id} type="button" onClick={() => toggleTag(t.id)}
++                    className={cn(
++                      "px-2.5 py-1 rounded-full text-xs border transition-colors",
++                      selectedTags.includes(t.id)
++                        ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
++                        : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
++                    )}>
++                    {t.name}
++                  </button>
++                ))}
++              </div>
++            </div>
++          )}
++
++          <div className="flex gap-3 pt-2">
++            <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
++            <Button type="submit" loading={loading} className="flex-1">{isEdit ? "Save" : "Create"}</Button>
++          </div>
++        </form>
++      </div>
++    </div>
++  );
++}
+diff --git a/components/records/sub-records-list.tsx b/components/records/sub-records-list.tsx
+new file mode 100644
+index 0000000..39ab40e
+--- /dev/null
++++ b/components/records/sub-records-list.tsx
+@@ -0,0 +1,83 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Plus, CheckSquare, Square } from "lucide-react";
++import type { SubRecord } from "@/lib/types";
++
++interface Props { goalId?: string; activityId?: string; }
++
++export function SubRecordsList({ goalId, activityId }: Props) {
++  const [items, setItems] = useState<SubRecord[]>([]);
++  const [newTitle, setNewTitle] = useState("");
++  const [adding, setAdding] = useState(false);
++
++  const load = useCallback(async () => {
++    const qs = goalId ? `goal_id=${goalId}` : `activity_id=${activityId}`;
++    const r = await fetch(`/api/sub-records?${qs}`);
++    if (r.ok) { const d = await r.json(); setItems(d.sub_records ?? []); }
++  }, [goalId, activityId]);
++
++  useEffect(() => { load(); }, [load]);
++
++  const toggle = async (item: SubRecord) => {
++    await fetch(`/api/sub-records/${item.id}`, {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ completed: !item.completed }),
++    });
++    load();
++  };
++
++  const add = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!newTitle.trim()) return;
++    setAdding(true);
++    await fetch("/api/sub-records", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ title: newTitle.trim(), goal_id: goalId, activity_id: activityId }),
++    });
++    setNewTitle(""); load(); setAdding(false);
++  };
++
++  const done = items.filter((i) => i.completed).length;
++
++  return (
++    <div>
++      {items.length > 0 && (
++        <>
++          <div className="flex items-center justify-between mb-2">
++            <span className="text-xs font-medium text-[var(--color-text-secondary)]">Sub-tasks</span>
++            <span className="text-xs text-[var(--color-text-secondary)]">{done}/{items.length}</span>
++          </div>
++          <div className="w-full h-1 bg-[var(--color-bg-secondary)] rounded-full mb-2 overflow-hidden">
++            <div className="h-full bg-[var(--color-success)] rounded-full transition-all"
++              style={{ width: items.length ? `${(done/items.length)*100}%` : "0%" }} />
++          </div>
++          <div className="space-y-1">
++            {items.map((item) => (
++              <button key={item.id} onClick={() => toggle(item)} className="flex items-center gap-2 w-full text-left">
++                {item.completed
++                  ? <CheckSquare className="w-3.5 h-3.5 text-[var(--color-success)] shrink-0" />
++                  : <Square className="w-3.5 h-3.5 text-[var(--color-text-disabled)] shrink-0" />}
++                <span className={`text-xs ${item.completed ? "line-through text-[var(--color-text-disabled)]" : "text-[var(--color-text-primary)]"}`}>
++                  {item.title}
++                </span>
++              </button>
++            ))}
++          </div>
++        </>
++      )}
++      <form onSubmit={add} className="flex items-center gap-2 mt-2">
++        <input
++          value={newTitle}
++          onChange={(e) => setNewTitle(e.target.value)}
++          placeholder="Add sub-task..."
++          className="flex-1 text-xs px-2 py-1.5 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-sm)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:ring-1 focus:ring-[var(--color-brand)]"
++        />
++        <button type="submit" disabled={adding || !newTitle.trim()} className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-brand)] text-white disabled:opacity-40">
++          <Plus className="w-3.5 h-3.5" />
++        </button>
++      </form>
++    </div>
++  );
++}
+diff --git a/components/social/find-friends.tsx b/components/social/find-friends.tsx
+new file mode 100644
+index 0000000..1ea2b49
+--- /dev/null
++++ b/components/social/find-friends.tsx
+@@ -0,0 +1,76 @@
++"use client";
++import { useState } from "react";
++import { Search, UserPlus, UserCheck, Loader2 } from "lucide-react";
++import { Input } from "@/components/ui/input";
++import { Button } from "@/components/ui/button";
++import { useToast } from "@/components/ui/toast";
++import { useUser } from "@/lib/hooks/use-user";
++
++export function FindFriends() {
++  const { user } = useUser();
++  const [query, setQuery] = useState("");
++  const [result, setResult] = useState<{ user: { id: string; username: string; nickname: string; avatar_url: string | null }; friendship: { status: string } | null } | null>(null);
++  const [searching, setSearching] = useState(false);
++  const [adding, setAdding] = useState(false);
++  const { showToast } = useToast();
++
++  const search = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!query.trim()) return;
++    setSearching(true);
++    setResult(null);
++    const r = await fetch(`/api/users/${query.toLowerCase().trim()}`);
++    setSearching(false);
++    if (!r.ok) { showToast("User not found", "error"); return; }
++    setResult(await r.json());
++  };
++
++  const sendRequest = async () => {
++    if (!result) return;
++    setAdding(true);
++    const r = await fetch("/api/social/friends", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ username: result.user.username }),
++    });
++    const d = await r.json();
++    setAdding(false);
++    if (!r.ok) { showToast(d.error ?? "Failed", "error"); return; }
++    showToast("Friend request sent!", "success");
++    setResult((prev) => prev ? { ...prev, friendship: { status: "pending" } } : null);
++  };
++
++  const isSelf = result?.user.id === user?.id;
++  const hasRequest = result?.friendship?.status === "pending" || result?.friendship?.status === "accepted";
++
++  return (
++    <div>
++      <form onSubmit={search} className="flex gap-2 mb-4">
++        <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by username..." className="flex-1" />
++        <Button type="submit" loading={searching} leftIcon={<Search className="w-4 h-4" />}>Find</Button>
++      </form>
++
++      {result && !isSelf && (
++        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 flex items-center gap-3">
++          <div className="w-10 h-10 rounded-full bg-[var(--color-brand-light)] flex items-center justify-center text-sm font-bold text-[var(--color-brand)]">
++            {result.user.nickname[0].toUpperCase()}
++          </div>
++          <div className="flex-1">
++            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{result.user.nickname}</p>
++            <p className="text-xs text-[var(--color-text-secondary)]">@{result.user.username}</p>
++          </div>
++          {!hasRequest ? (
++            <Button size="sm" onClick={sendRequest} loading={adding} leftIcon={<UserPlus className="w-4 h-4" />}>
++              Add
++            </Button>
++          ) : (
++            <div className="flex items-center gap-1 text-xs text-[var(--color-success)] font-medium">
++              <UserCheck className="w-4 h-4" />
++              {result.friendship!.status === "accepted" ? "Friends" : "Requested"}
++            </div>
++          )}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/components/social/friends-list.tsx b/components/social/friends-list.tsx
+new file mode 100644
+index 0000000..df4a102
+--- /dev/null
++++ b/components/social/friends-list.tsx
+@@ -0,0 +1,123 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { UserCheck, UserX, MoreHorizontal, Activity } from "lucide-react";
++import { Spinner } from "@/components/ui/spinner";
++import { useToast } from "@/components/ui/toast";
++import type { Friendship } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++import { RecordFormDialog } from "@/components/records/record-form-dialog";
++
++export function FriendsList() {
++  const [friendships, setFriendships] = useState<Friendship[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [assigning, setAssigning] = useState<Friendship | null>(null);
++  const { showToast } = useToast();
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/social/friends");
++    if (r.ok) { const d = await r.json(); setFriendships(d.friendships ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { load(); }, [load]);
++
++  const respond = async (id: string, action: "accept" | "reject") => {
++    await fetch(`/api/social/friends/${id}`, {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ action }),
++    });
++    showToast(action === "accept" ? "Friend accepted!" : "Request rejected", action === "accept" ? "success" : "info");
++    load();
++  };
++
++  const accepted = friendships.filter((f) => f.status === "accepted");
++  const pending   = friendships.filter((f) => f.status === "pending" && !f.is_requester);
++  const sent      = friendships.filter((f) => f.status === "pending" && f.is_requester);
++
++  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
++
++  return (
++    <>
++      {pending.length > 0 && (
++        <div className="mb-4">
++          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">Incoming Requests ({pending.length})</h3>
++          <div className="space-y-2">
++            {pending.map((f) => (
++              <div key={f.id} className="flex items-center gap-3 bg-[var(--color-surface)] border border-[var(--color-brand)] rounded-[var(--radius-lg)] p-3">
++                <div className="w-9 h-9 rounded-full bg-[var(--color-brand-light)] flex items-center justify-center text-sm font-bold text-[var(--color-brand)]">
++                  {(f.friend?.nickname ?? "?")[0].toUpperCase()}
++                </div>
++                <div className="flex-1">
++                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
++                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username}</p>
++                </div>
++                <button onClick={() => respond(f.id, "accept")} className="p-1.5 rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)]"><UserCheck className="w-4 h-4" /></button>
++                <button onClick={() => respond(f.id, "reject")} className="p-1.5 rounded-full bg-[var(--color-error-bg)] text-[var(--color-error)]"><UserX className="w-4 h-4" /></button>
++              </div>
++            ))}
++          </div>
++        </div>
++      )}
++
++      {accepted.length > 0 && (
++        <div className="mb-4">
++          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">Friends ({accepted.length})</h3>
++          <div className="space-y-2">
++            {accepted.map((f) => (
++              <div key={f.id} className="flex items-center gap-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3">
++                <div className="w-9 h-9 rounded-full bg-[var(--color-success-bg)] flex items-center justify-center text-sm font-bold text-[var(--color-success)]">
++                  {(f.friend?.nickname ?? "?")[0].toUpperCase()}
++                </div>
++                <div className="flex-1">
++                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
++                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username}</p>
++                </div>
++                <button onClick={() => setAssigning(f)} className="p-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
++                  <Activity className="w-4 h-4" />
++                </button>
++              </div>
++            ))}
++          </div>
++        </div>
++      )}
++
++      {sent.length > 0 && (
++        <div>
++          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">Sent Requests</h3>
++          <div className="space-y-2">
++            {sent.map((f) => (
++              <div key={f.id} className="flex items-center gap-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 opacity-70">
++                <div className="w-9 h-9 rounded-full bg-[var(--color-bg-secondary)] flex items-center justify-center text-sm font-bold text-[var(--color-text-secondary)]">
++                  {(f.friend?.nickname ?? "?")[0].toUpperCase()}
++                </div>
++                <div className="flex-1">
++                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
++                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username} Γö¼Γòû Pending</p>
++                </div>
++              </div>
++            ))}
++          </div>
++        </div>
++      )}
++
++      {!accepted.length && !pending.length && !sent.length && (
++        <div className="text-center py-12 text-[var(--color-text-secondary)]">
++          <UserCheck className="w-10 h-10 mx-auto mb-3 opacity-30" />
++          <p className="font-medium">No friends yet</p>
++          <p className="text-sm mt-1">Find friends using the Find tab</p>
++        </div>
++      )}
++
++      {assigning && (
++        <RecordFormDialog
++          type="activity"
++          prefill={{ assignee_user_id: assigning.friend?.id, assignee_label: assigning.friend?.nickname ?? "" }}
++          onClose={() => setAssigning(null)}
++          onSaved={() => { setAssigning(null); showToast("Activity assigned!", "success"); }}
++        />
++      )}
++    </>
++  );
++}
+diff --git a/components/social/groups-list.tsx b/components/social/groups-list.tsx
+new file mode 100644
+index 0000000..d9c0bc7
+--- /dev/null
++++ b/components/social/groups-list.tsx
+@@ -0,0 +1,93 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Shield, Plus, Users } from "lucide-react";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { useToast } from "@/components/ui/toast";
++import type { Group } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++
++export function GroupsList() {
++  const [groups, setGroups] = useState<Group[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [showCreate, setShowCreate] = useState(false);
++  const [name, setName] = useState("");
++  const [desc, setDesc] = useState("");
++  const [creating, setCreating] = useState(false);
++  const { showToast } = useToast();
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/social/groups");
++    if (r.ok) { const d = await r.json(); setGroups(d.groups ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { load(); }, [load]);
++
++  const createGroup = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!name.trim()) return;
++    setCreating(true);
++    const r = await fetch("/api/social/groups", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ name: name.trim(), description: desc || undefined }),
++    });
++    setCreating(false);
++    if (!r.ok) { const d = await r.json(); showToast(d.error ?? "Failed", "error"); return; }
++    showToast("Group created!", "success");
++    setShowCreate(false); setName(""); setDesc(""); load();
++  };
++
++  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
++
++  return (
++    <div>
++      <div className="flex justify-between items-center mb-3">
++        <span className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">My Groups</span>
++        <Button size="sm" variant="outline" onClick={() => setShowCreate((v) => !v)} leftIcon={<Plus className="w-3.5 h-3.5" />}>
++          New
++        </Button>
++      </div>
++
++      {showCreate && (
++        <form onSubmit={createGroup} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 mb-3 space-y-3">
++          <div className="space-y-1"><Label htmlFor="g-name">Group name</Label><Input id="g-name" value={name} onChange={(e) => setName(e.target.value)} required /></div>
++          <div className="space-y-1"><Label htmlFor="g-desc">Description (optional)</Label><Input id="g-desc" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
++          <div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button><Button type="submit" size="sm" loading={creating}>Create</Button></div>
++        </form>
++      )}
++
++      {groups.length === 0 ? (
++        <div className="text-center py-12 text-[var(--color-text-secondary)]">
++          <Shield className="w-10 h-10 mx-auto mb-3 opacity-30" />
++          <p className="font-medium">No groups yet</p>
++        </div>
++      ) : (
++        <div className="space-y-2">
++          {groups.map((g) => (
++            <div key={g.id} className={cn(
++              "bg-[var(--color-surface)] border rounded-[var(--radius-lg)] p-3",
++              g.my_status === "pending" ? "border-[var(--color-warning)]" : "border-[var(--color-border)]"
++            )}>
++              <div className="flex items-center gap-3">
++                <div className="w-9 h-9 rounded-full bg-[var(--color-bg-secondary)] flex items-center justify-center">
++                  <Shield className="w-4 h-4 text-[var(--color-text-secondary)]" />
++                </div>
++                <div className="flex-1">
++                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{g.name}</p>
++                  <p className="text-xs text-[var(--color-text-secondary)] capitalize">
++                    {g.my_role} Γö¼Γòû {g.my_status === "pending" ? "Invite pending" : "Active"}
++                  </p>
++                </div>
++              </div>
++            </div>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/components/social/notifications-list.tsx b/components/social/notifications-list.tsx
+new file mode 100644
+index 0000000..90c7388
+--- /dev/null
++++ b/components/social/notifications-list.tsx
+@@ -0,0 +1,73 @@
++"use client";
++import { Bell, UserPlus, Activity, Users, Check } from "lucide-react";
++import { Spinner } from "@/components/ui/spinner";
++import { Button } from "@/components/ui/button";
++import { useNotifications } from "@/lib/hooks/use-notifications";
++import type { Notification, NotificationType } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++
++function NotifIcon({ type }: { type: NotificationType }) {
++  if (type.startsWith("friend")) return <UserPlus className="w-4 h-4" />;
++  if (type.startsWith("activity")) return <Activity className="w-4 h-4" />;
++  if (type.startsWith("group")) return <Users className="w-4 h-4" />;
++  return <Bell className="w-4 h-4" />;
++}
++
++function notifLabel(n: Notification): string {
++  const d = n.data as Record<string, string>;
++  switch (n.type) {
++    case "friend_request":   return `@${d.from_username} sent you a friend request`;
++    case "friend_accepted":  return `@${d.from_username} accepted your friend request`;
++    case "activity_assigned":return `@${d.from_username} assigned "${d.activity_title}" to you`;
++    case "activity_accepted":return `@${d.from_username} accepted "${d.activity_title}"`;
++    case "activity_rejected":return `@${d.from_username} declined "${d.activity_title}"`;
++    case "group_invite":     return `@${d.from_username} invited you to "${d.group_name}"`;
++    case "group_accepted":   return `@${d.from_username} joined your group`;
++    default: return "New notification";
++  }
++}
++
++export function NotificationsList() {
++  const { notifications, loading, unreadCount, markAllRead } = useNotifications();
++
++  if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
++
++  return (
++    <div>
++      {unreadCount > 0 && (
++        <div className="flex justify-between items-center mb-3">
++          <span className="text-xs text-[var(--color-text-secondary)]">{unreadCount} unread</span>
++          <Button size="sm" variant="ghost" onClick={markAllRead} leftIcon={<Check className="w-3.5 h-3.5" />}>
++            Mark all read
++          </Button>
++        </div>
++      )}
++
++      {notifications.length === 0 ? (
++        <div className="text-center py-12 text-[var(--color-text-secondary)]">
++          <Bell className="w-10 h-10 mx-auto mb-3 opacity-30" />
++          <p className="font-medium">No notifications</p>
++        </div>
++      ) : (
++        <div className="space-y-2">
++          {notifications.map((n) => (
++            <div key={n.id} className={cn(
++              "flex items-start gap-3 p-3 rounded-[var(--radius-lg)] border",
++              n.read ? "bg-[var(--color-surface)] border-[var(--color-border)] opacity-70" : "bg-[var(--color-brand-light)] border-[var(--color-brand)]"
++            )}>
++              <div className="mt-0.5 text-[var(--color-brand)] shrink-0">
++                <NotifIcon type={n.type} />
++              </div>
++              <div className="flex-1">
++                <p className="text-sm text-[var(--color-text-primary)]">{notifLabel(n)}</p>
++                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
++                  {new Date(n.created_at).toLocaleDateString()}
++                </p>
++              </div>
++            </div>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/components/streaks/reports-view.tsx b/components/streaks/reports-view.tsx
+new file mode 100644
+index 0000000..ae22ac0
+--- /dev/null
++++ b/components/streaks/reports-view.tsx
+@@ -0,0 +1,123 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import { Spinner } from "@/components/ui/spinner";
++import { getPerformanceColor, getPerformanceLabel, type GoalWithStreak } from "@/lib/types";
++import { cn } from "@/lib/utils/cn";
++
++const COLOR_CLASSES: Record<string, string> = {
++  red:    "bg-red-500",
++  yellow: "bg-yellow-400",
++  blue:   "bg-blue-500",
++  green:  "bg-green-500",
++  orange: "bg-orange-500",
++};
++
++const COLOR_TEXT: Record<string, string> = {
++  red:    "text-red-500",
++  yellow: "text-yellow-500",
++  blue:   "text-blue-500",
++  green:  "text-green-600",
++  orange: "text-orange-500",
++};
++
++function RateBar({ rate }: { rate: number }) {
++  const color = getPerformanceColor(rate);
++  return (
++    <div className="flex items-center gap-2">
++      <div className="flex-1 h-2 rounded-full bg-[var(--color-bg-secondary)] overflow-hidden">
++        <div className={cn("h-full rounded-full transition-all", COLOR_CLASSES[color])}
++          style={{ width: `${Math.round(rate * 100)}%` }} />
++      </div>
++      <span className={cn("text-xs font-bold w-8 text-right", COLOR_TEXT[color])}>
++        {Math.round(rate * 100)}%
++      </span>
++      <span className="text-xs text-[var(--color-text-secondary)] w-14">{getPerformanceLabel(color)}</span>
++    </div>
++  );
++}
++
++type Period = "week" | "month" | "year";
++
++export function ReportsView() {
++  const [period, setPeriod] = useState<Period>("week");
++  const [goals, setGoals] = useState<GoalWithStreak[]>([]);
++  const [loading, setLoading] = useState(true);
++
++  const load = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/goals?streaks=true");
++    if (r.ok) { const d = await r.json(); setGoals(d.goals ?? []); }
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { load(); }, [load]);
++
++  const getDays = () => period === "week" ? 7 : period === "month" ? 30 : 365;
++
++  const calcRate = (goal: GoalWithStreak) => {
++    const days = getDays();
++    const today = new Date();
++    let scheduled = 0, completed = 0;
++    for (let i = 0; i < days; i++) {
++      const d = new Date(today);
++      d.setDate(d.getDate() - i);
++      if (goal.active_days.includes(d.getDay() as 0|1|2|3|4|5|6)) {
++        scheduled++;
++        const ds = d.toISOString().split("T")[0];
++        if (i === 0 ? goal.streak.completed_today : false) completed++;
++      }
++    }
++    if (scheduled === 0) return 0;
++    const base = period === "week"
++      ? Math.min(goal.streak.current, 7)
++      : period === "month"
++      ? Math.min(goal.streak.current, 30)
++      : goal.streak.total;
++    return Math.min(1, base / scheduled);
++  };
++
++  return (
++    <div>
++      <div className="flex gap-2 mb-4">
++        {(["week", "month", "year"] as Period[]).map((p) => (
++          <button key={p} onClick={() => setPeriod(p)}
++            className={cn(
++              "px-3 py-1 rounded-full text-xs font-medium border capitalize",
++              period === p
++                ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
++                : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
++            )}>
++            {p}
++          </button>
++        ))}
++      </div>
++
++      {loading ? <div className="flex justify-center py-12"><Spinner /></div> :
++        goals.length === 0 ? (
++          <p className="text-center text-[var(--color-text-secondary)] py-12">No goals yet</p>
++        ) : (
++          <div className="space-y-4">
++            {goals.map((g) => {
++              const rate = calcRate(g);
++              const color = getPerformanceColor(rate);
++              return (
++                <div key={g.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3">
++                  <div className="flex items-center justify-between mb-2">
++                    <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{g.title}</span>
++                    <span className={cn("text-xs font-bold", COLOR_TEXT[color])}>{getPerformanceLabel(color)}</span>
++                  </div>
++                  <RateBar rate={rate} />
++                  <div className="flex gap-4 mt-2 text-xs text-[var(--color-text-secondary)]">
++                    <span>Γëí╞Æ├╢├æ {g.streak.current} streak</span>
++                    <span>Γëí╞Æ├à├Ñ {g.streak.longest} best</span>
++                    <span>╬ô┬ú├┤ {g.streak.total} total</span>
++                  </div>
++                </div>
++              );
++            })}
++          </div>
++        )
++      }
++    </div>
++  );
++}
+diff --git a/components/streaks/streak-card.tsx b/components/streaks/streak-card.tsx
+new file mode 100644
+index 0000000..ddcba60
+--- /dev/null
++++ b/components/streaks/streak-card.tsx
+@@ -0,0 +1,125 @@
++"use client";
++import { useState } from "react";
++import { Flame, CheckCircle2, Circle, MoreHorizontal, Pause, Play, Trash2, Pencil } from "lucide-react";
++import { cn } from "@/lib/utils/cn";
++import { PRIORITY_COLORS, DAY_LABELS } from "@/lib/types";
++import type { GoalWithStreak } from "@/lib/types";
++import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
++
++interface Props { goal: GoalWithStreak; onUpdate: () => void; }
++
++export function StreakCard({ goal, onUpdate }: Props) {
++  const [toggling, setToggling] = useState(false);
++  const [menuOpen, setMenuOpen] = useState(false);
++  const [editing, setEditing] = useState(false);
++
++  const today = new Date().toISOString().split("T")[0];
++  const isCompleted = goal.streak.completed_today;
++
++  const toggle = async () => {
++    setToggling(true);
++    await fetch(`/api/goals/${goal.id}/complete`, {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ date: today }),
++    });
++    onUpdate();
++    setToggling(false);
++  };
++
++  const toggleActive = async () => {
++    await fetch(`/api/goals/${goal.id}`, {
++      method: "PATCH",
++      headers: { "Content-Type": "application/json" },
++      body: JSON.stringify({ is_active: !goal.is_active }),
++    });
++    onUpdate();
++  };
++
++  const deleteGoal = async () => {
++    if (!confirm("Delete this goal and all its streak history?")) return;
++    await fetch(`/api/goals/${goal.id}`, { method: "DELETE" });
++    onUpdate();
++  };
++
++  return (
++    <>
++      <div className={cn(
++        "bg-[var(--color-surface)] border rounded-[var(--radius-lg)] p-4 transition-all",
++        isCompleted ? "border-[var(--color-success)] bg-[var(--color-success-bg)]" : "border-[var(--color-border)]"
++      )}>
++        <div className="flex items-start gap-3">
++          <button onClick={toggle} disabled={toggling} className="mt-0.5 shrink-0" aria-label="Toggle completion">
++            {isCompleted
++              ? <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
++              : <Circle className="w-5 h-5 text-[var(--color-text-disabled)]" />}
++          </button>
++
++          <div className="flex-1 min-w-0">
++            <div className="flex items-center gap-2">
++              <span className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{goal.title}</span>
++              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
++                style={{ backgroundColor: PRIORITY_COLORS[goal.priority] + "22", color: PRIORITY_COLORS[goal.priority] }}>
++                P{goal.priority}
++              </span>
++            </div>
++
++            {goal.description && (
++              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5 truncate">{goal.description}</p>
++            )}
++
++            <div className="flex items-center gap-3 mt-2">
++              <div className="flex items-center gap-1">
++                <Flame className="w-3.5 h-3.5 text-[var(--color-brand)]" />
++                <span className="text-xs font-bold text-[var(--color-brand)]">{goal.streak.current}</span>
++                <span className="text-xs text-[var(--color-text-secondary)]">streak</span>
++              </div>
++              <div className="text-xs text-[var(--color-text-secondary)]">
++                Best: <span className="font-medium text-[var(--color-text-primary)]">{goal.streak.longest}</span>
++              </div>
++              <div className="text-xs text-[var(--color-text-secondary)]">
++                Total: <span className="font-medium text-[var(--color-text-primary)]">{goal.streak.total}</span>
++              </div>
++            </div>
++
++            <div className="flex gap-1 mt-2">
++              {[0,1,2,3,4,5,6].map((d) => (
++                <span key={d} className={cn(
++                  "text-[9px] px-1 py-0.5 rounded",
++                  goal.active_days.includes(d as 0|1|2|3|4|5|6)
++                    ? "bg-[var(--color-brand)] text-white font-semibold"
++                    : "bg-[var(--color-bg-secondary)] text-[var(--color-text-disabled)]"
++                )}>
++                  {DAY_LABELS[d]}
++                </span>
++              ))}
++            </div>
++          </div>
++
++          <div className="relative">
++            <button onClick={() => setMenuOpen((v) => !v)} className="p-1 rounded text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]">
++              <MoreHorizontal className="w-4 h-4" />
++            </button>
++            {menuOpen && (
++              <div className="absolute right-0 top-6 w-36 bg-[var(--color-surface-raised)] border border-[var(--color-border)] rounded-[var(--radius-md)] shadow-md z-10 py-1" onMouseLeave={() => setMenuOpen(false)}>
++                <button onClick={() => { setEditing(true); setMenuOpen(false); }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]">
++                  <Pencil className="w-3.5 h-3.5" /> Edit
++                </button>
++                <button onClick={() => { toggleActive(); setMenuOpen(false); }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]">
++                  {goal.is_active ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
++                  {goal.is_active ? "Pause" : "Resume"}
++                </button>
++                <button onClick={() => { deleteGoal(); setMenuOpen(false); }} className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-[var(--color-error)] hover:bg-[var(--color-error-bg)]">
++                  <Trash2 className="w-3.5 h-3.5" /> Delete
++                </button>
++              </div>
++            )}
++          </div>
++        </div>
++      </div>
++      {editing && (
++        <GoalFormDialog goal={goal} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); onUpdate(); }} />
++      )}
++    </>
++  );
++}
+diff --git a/components/today/today-record-item.tsx b/components/today/today-record-item.tsx
+new file mode 100644
+index 0000000..5104ac7
+--- /dev/null
++++ b/components/today/today-record-item.tsx
+@@ -0,0 +1,114 @@
++"use client";
++import { useState } from "react";
++import { CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Activity, Clock, AlertCircle } from "lucide-react";
++import { cn } from "@/lib/utils/cn";
++import { PRIORITY_COLORS, PRIORITY_LABELS, TAB_COLORS } from "@/lib/types";
++import type { GoalWithStreak, Activity as ActivityType } from "@/lib/types";
++import { SubRecordsList } from "@/components/records/sub-records-list";
++
++type GoalItem  = { type: "goal";     goal: GoalWithStreak; activity?: never; onUpdate: () => void; };
++type ActItem   = { type: "activity"; goal?: never; activity: ActivityType; onUpdate: () => void; };
++type Props = GoalItem | ActItem;
++
++export function TodayRecordItem({ type, goal, activity, onUpdate }: Props) {
++  const [expanded, setExpanded] = useState(false);
++  const [toggling, setToggling] = useState(false);
++
++  const today = new Date().toISOString().split("T")[0];
++  const isGoal = type === "goal";
++
++  const isCompleted = isGoal
++    ? goal!.streak.completed_today
++    : activity!.status === "completed";
++
++  const title = isGoal ? goal!.title : activity!.title;
++  const desc  = isGoal ? goal!.description : activity!.description;
++  const pri   = isGoal ? goal!.priority : activity!.priority;
++  const id    = isGoal ? goal!.id : activity!.id;
++
++  const accentColor = isGoal ? TAB_COLORS.today :
++    activity?.group_id ? "#2563EB" : TAB_COLORS.records;
++
++  const toggle = async () => {
++    setToggling(true);
++    if (isGoal) {
++      await fetch(`/api/goals/${id}/complete`, {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ date: today }),
++      });
++    } else {
++      await fetch(`/api/activities/${id}`, { method: "POST" });
++    }
++    onUpdate();
++    setToggling(false);
++  };
++
++  return (
++    <div className={cn(
++      "bg-[var(--color-surface)] border rounded-[var(--radius-lg)] transition-all overflow-hidden",
++      isCompleted ? "border-[var(--color-success)] opacity-70" : "border-[var(--color-border)]"
++    )}>
++      <div className="flex items-start gap-3 p-3 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
++        <button
++          onClick={(e) => { e.stopPropagation(); toggle(); }}
++          disabled={toggling}
++          className="mt-0.5 shrink-0"
++          aria-label="Toggle"
++        >
++          {isCompleted
++            ? <CheckCircle2 className="w-5 h-5 text-[var(--color-success)]" />
++            : <Circle className="w-5 h-5" style={{ color: accentColor }} />}
++        </button>
++
++        <div className="flex-1 min-w-0">
++          <div className="flex items-center gap-2 flex-wrap">
++            {isGoal
++              ? <Flame className="w-3.5 h-3.5 shrink-0" style={{ color: accentColor }} />
++              : <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: accentColor }} />}
++            <span className={cn("text-sm font-semibold text-[var(--color-text-primary)] truncate", isCompleted && "line-through")}>
++              {title}
++            </span>
++            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0"
++              style={{ backgroundColor: PRIORITY_COLORS[pri] + "22", color: PRIORITY_COLORS[pri] }}>
++              P{pri}
++            </span>
++          </div>
++          {!isGoal && activity?.activity_time && (
++            <div className="flex items-center gap-1 mt-0.5 text-xs text-[var(--color-text-secondary)]">
++              <Clock className="w-3 h-3" />{activity.activity_time}
++            </div>
++          )}
++          {isGoal && (
++            <div className="flex items-center gap-1 mt-0.5 text-xs" style={{ color: accentColor }}>
++              Γëí╞Æ├╢├æ {goal!.streak.current} day streak
++            </div>
++          )}
++        </div>
++        {expanded ? <ChevronUp className="w-4 h-4 text-[var(--color-text-disabled)] shrink-0" />
++          : <ChevronDown className="w-4 h-4 text-[var(--color-text-disabled)] shrink-0" />}
++      </div>
++
++      {expanded && (
++        <div className="px-4 pb-3 border-t border-[var(--color-border)] pt-3 space-y-3">
++          {desc && <p className="text-sm text-[var(--color-text-secondary)]">{desc}</p>}
++          <div className="flex items-center gap-3 flex-wrap text-xs text-[var(--color-text-secondary)]">
++            <span className="font-medium" style={{ color: PRIORITY_COLORS[pri] }}>
++              {PRIORITY_LABELS[pri]} Priority
++            </span>
++            {!isGoal && activity?.creator_username && activity.creator_username !== activity.assignee_user_id && (
++              <span className="flex items-center gap-1">
++                <AlertCircle className="w-3 h-3" />
++                From @{activity.creator_username}
++              </span>
++            )}
++          </div>
++          <SubRecordsList
++            goalId={isGoal ? id : undefined}
++            activityId={!isGoal ? id : undefined}
++          />
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/lib/auth/jwt.ts b/lib/auth/jwt.ts
+new file mode 100644
+index 0000000..3c38afd
+--- /dev/null
++++ b/lib/auth/jwt.ts
+@@ -0,0 +1,29 @@
++import { SignJWT, jwtVerify } from "jose";
++
++const getSecret = () => new TextEncoder().encode(process.env.JWT_SECRET!);
++
++export interface SessionPayload {
++  sub: string;
++  username: string;
++  type: "session" | "password_reset";
++}
++
++export async function signToken(
++  payload: Omit<SessionPayload, "type"> & { type?: "session" | "password_reset" },
++  expiresIn = "7d"
++): Promise<string> {
++  return new SignJWT({ ...payload, type: payload.type ?? "session" })
++    .setProtectedHeader({ alg: "HS256" })
++    .setIssuedAt()
++    .setExpirationTime(expiresIn)
++    .sign(getSecret());
++}
++
++export async function verifyToken(token: string): Promise<SessionPayload | null> {
++  try {
++    const { payload } = await jwtVerify(token, getSecret());
++    return payload as unknown as SessionPayload;
++  } catch {
++    return null;
++  }
++}
+diff --git a/lib/auth/password.ts b/lib/auth/password.ts
+new file mode 100644
+index 0000000..1fe4a32
+--- /dev/null
++++ b/lib/auth/password.ts
+@@ -0,0 +1,11 @@
++import bcrypt from "bcryptjs";
++
++const ROUNDS = 12;
++
++export async function hashValue(value: string): Promise<string> {
++  return bcrypt.hash(value, ROUNDS);
++}
++
++export async function verifyValue(value: string, hash: string): Promise<boolean> {
++  return bcrypt.compare(value, hash);
++}
+diff --git a/lib/auth/session.ts b/lib/auth/session.ts
+new file mode 100644
+index 0000000..3a3a773
+--- /dev/null
++++ b/lib/auth/session.ts
+@@ -0,0 +1,25 @@
++import { cookies } from "next/headers";
++import { verifyToken, type SessionPayload } from "./jwt";
++
++export const COOKIE_NAME = "streaks_session";
++
++export const COOKIE_OPTIONS = {
++  httpOnly: true,
++  secure: process.env.NODE_ENV === "production",
++  sameSite: "lax" as const,
++  maxAge: 60 * 60 * 24 * 7,
++  path: "/",
++};
++
++export async function getSession(): Promise<SessionPayload | null> {
++  try {
++    const cookieStore = await cookies();
++    const token = cookieStore.get(COOKIE_NAME)?.value;
++    if (!token) return null;
++    const payload = await verifyToken(token);
++    if (!payload || payload.type !== "session") return null;
++    return payload;
++  } catch {
++    return null;
++  }
++}
+diff --git a/lib/hooks/use-notifications.ts b/lib/hooks/use-notifications.ts
+new file mode 100644
+index 0000000..184c0b9
+--- /dev/null
++++ b/lib/hooks/use-notifications.ts
+@@ -0,0 +1,28 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import type { Notification } from "@/lib/types";
++
++export function useNotifications() {
++  const [notifications, setNotifications] = useState<Notification[]>([]);
++  const [unreadCount, setUnreadCount] = useState(0);
++  const [loading, setLoading] = useState(true);
++
++  const fetch_ = useCallback(async () => {
++    const r = await fetch("/api/notifications");
++    if (!r.ok) return;
++    const d = await r.json();
++    setNotifications(d.notifications ?? []);
++    setUnreadCount(d.unread_count ?? 0);
++    setLoading(false);
++  }, []);
++
++  useEffect(() => { fetch_(); }, [fetch_]);
++
++  const markAllRead = useCallback(async () => {
++    await fetch("/api/notifications", { method: "PATCH" });
++    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
++    setUnreadCount(0);
++  }, []);
++
++  return { notifications, unreadCount, loading, refetch: fetch_, markAllRead };
++}
+diff --git a/lib/hooks/use-tags.ts b/lib/hooks/use-tags.ts
+new file mode 100644
+index 0000000..39ca6c2
+--- /dev/null
++++ b/lib/hooks/use-tags.ts
+@@ -0,0 +1,19 @@
++"use client";
++import { useState, useEffect } from "react";
++import type { Tag } from "@/lib/types";
++
++let _tags: Tag[] | null = null;
++
++export function useTags() {
++  const [tags, setTags] = useState<Tag[]>(_tags ?? []);
++  const [loading, setLoading] = useState(_tags === null);
++
++  useEffect(() => {
++    if (_tags !== null) { setLoading(false); return; }
++    fetch("/api/tags")
++      .then((r) => r.json())
++      .then((d) => { _tags = d.tags ?? []; setTags(_tags!); setLoading(false); });
++  }, []);
++
++  return { tags, loading };
++}
+diff --git a/lib/hooks/use-user.ts b/lib/hooks/use-user.ts
+new file mode 100644
+index 0000000..7bac7f0
+--- /dev/null
++++ b/lib/hooks/use-user.ts
+@@ -0,0 +1,40 @@
++"use client";
++import { useState, useEffect, useCallback } from "react";
++import type { User } from "@/lib/types";
++
++let _cache: User | null = null;
++const _listeners = new Set<() => void>();
++
++function notify() { _listeners.forEach((fn) => fn()); }
++
++export function setUser(u: User | null) { _cache = u; notify(); }
++
++export function useUser() {
++  const [user, setLocalUser] = useState<User | null>(_cache);
++  const [loading, setLoading] = useState(_cache === null);
++
++  useEffect(() => {
++    const listener = () => setLocalUser(_cache);
++    _listeners.add(listener);
++    if (_cache === null) {
++      fetch("/api/auth/me")
++        .then((r) => (r.ok ? r.json() : null))
++        .then((d) => { _cache = d?.user ?? null; notify(); setLoading(false); })
++        .catch(() => { setLoading(false); });
++    } else {
++      setLoading(false);
++    }
++    return () => { _listeners.delete(listener); };
++  }, []);
++
++  const refetch = useCallback(async () => {
++    setLoading(true);
++    const r = await fetch("/api/auth/me");
++    const d = r.ok ? await r.json() : null;
++    _cache = d?.user ?? null;
++    notify();
++    setLoading(false);
++  }, []);
++
++  return { user, loading, refetch };
++}
+diff --git a/lib/supabase/service.ts b/lib/supabase/service.ts
+new file mode 100644
+index 0000000..2f6dcfe
+--- /dev/null
++++ b/lib/supabase/service.ts
+@@ -0,0 +1,10 @@
++import { createClient } from "@supabase/supabase-js";
++
++/** Service-role Supabase client. Server-side only ╬ô├ç├╢ bypasses RLS. */
++export function createServiceClient() {
++  return createClient(
++    process.env.NEXT_PUBLIC_SUPABASE_URL!,
++    process.env.SUPABASE_SERVICE_ROLE_KEY!,
++    { auth: { persistSession: false, autoRefreshToken: false } }
++  );
++}
