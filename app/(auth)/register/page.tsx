@@ -17,8 +17,39 @@ export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const { showToast } = useToast();
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setResendLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) {
+        showToast(error.message, "error");
+      } else {
+        showToast("Confirmation email resent", "success");
+        setResendCooldown(60);
+        const interval = setInterval(() => {
+          setResendCooldown((c) => {
+            if (c <= 1) { clearInterval(interval); return 0; }
+            return c - 1;
+          });
+        }, 1000);
+      }
+    } catch {
+      showToast("Something went wrong. Please try again.", "error");
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +101,17 @@ export default function RegisterPage() {
             We sent a confirmation link to <strong>{email}</strong>.
             Click it to activate your account.
           </p>
+          <button
+            onClick={handleResend}
+            disabled={resendLoading || resendCooldown > 0}
+            className="mt-5 text-sm text-[var(--color-brand)] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendLoading
+              ? "Sending..."
+              : resendCooldown > 0
+              ? `Resend in ${resendCooldown}s`
+              : "Didn't get it? Resend email"}
+          </button>
           <p className="text-sm text-[var(--color-text-secondary)] mt-4">
             Already confirmed?{" "}
             <Link href="/login" className="text-[var(--color-brand)] font-medium hover:underline">

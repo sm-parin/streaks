@@ -2,24 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart2, CheckSquare, Settings } from "lucide-react";
+import { Flame, ClipboardList, CalendarCheck, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const NAV_ITEMS = [
   {
-    href: "/analytics",
-    icon: BarChart2,
-    label: "Analytics",
+    href: "/streaks",
+    icon: Flame,
+    label: "Streaks",
+    activeColor: "text-yellow-400",
+  },
+  {
+    href: "/records",
+    icon: ClipboardList,
+    label: "Records",
+    activeColor: "text-green-400",
   },
   {
     href: "/today",
-    icon: CheckSquare,
+    icon: CalendarCheck,
     label: "Today",
+    activeColor: "text-[var(--color-brand)]",
   },
   {
-    href: "/configure",
+    href: "/social",
+    icon: Users,
+    label: "Social",
+    activeColor: "text-blue-400",
+  },
+  {
+    href: "/settings",
     icon: Settings,
-    label: "Configure",
+    label: "Settings",
+    activeColor: "text-red-400",
   },
 ] as const;
 
@@ -43,7 +58,7 @@ export function BottomNav() {
       )}
     >
       <div className="max-w-2xl mx-auto flex items-stretch">
-        {NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+        {NAV_ITEMS.map(({ href, icon: Icon, label, activeColor }) => {
           const isActive = pathname.startsWith(href);
           return (
             <Link
@@ -55,7 +70,7 @@ export function BottomNav() {
                 "text-xs font-medium transition-colors duration-[var(--transition-fast)]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)] focus-visible:ring-inset",
                 isActive
-                  ? "text-[var(--color-brand)]"
+                  ? activeColor
                   : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
               )}
             >
