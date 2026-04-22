@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { data: tags, error } = await supabase
     .from("tags")
-    .select("id, name, slug")
+    .select("id, name, color")
     .order("name");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ tags: tags ?? [] });

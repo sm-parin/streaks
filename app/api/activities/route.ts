@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 const createSchema = z.object({
@@ -19,42 +20,21 @@ export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const todayOnly = request.nextUrl.searchParams.get("today") === "true";
   const todayStr = new Date().toISOString().split("T")[0];
 
-  let q1 = supabase
+  let query = supabase
     .from("activities")
-    .select("*, creator:creator_user_id(username,nickname)")
-    .eq("assignee_user_id", session.sub)
-    .not("status", "eq", "rejected");
+    .select("*")
+    .not("status", "eq", "rejected")
+    .order("created_at", { ascending: false });
 
-  if (todayOnly) q1 = q1.eq("activity_date", todayStr);
+  if (todayOnly) query = query.eq("activity_date", todayStr);
 
-  const { data: myActivities } = await q1;
-
-  const { data: myGroups } = await supabase
-    .from("group_members")
-    .select("group_id")
-    .eq("user_id", session.sub)
-    .eq("status", "active");
-
-  let groupActivities: unknown[] = [];
-  if (myGroups && myGroups.length > 0) {
-    const groupIds = myGroups.map((g) => g.group_id);
-    let q2 = supabase
-      .from("activities")
-      .select("*, creator:creator_user_id(username,nickname), grp:group_id(name)")
-      .in("group_id", groupIds)
-      .is("assignee_user_id", null);
-
-    if (todayOnly) q2 = q2.eq("activity_date", todayStr);
-    const { data } = await q2;
-    groupActivities = data ?? [];
-  }
-
-  const activities = [...(myActivities ?? []), ...groupActivities];
-  return NextResponse.json({ activities });
+  const { data: activities, error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ activities: activities ?? [] });
 }
 
 export async function POST(request: NextRequest) {
@@ -94,15 +74,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const status = isSelfAssign || data.group_id ? "accepted" : "pending";
 
   const { data: activity, error } = await supabase
     .from("activities")
     .insert({
-      ...data,
+      title: data.title,
+      description: data.description,
+      activity_date: data.activity_date,
+      activity_time: data.activity_time,
+      priority: data.priority,
+      tag_ids: data.tag_ids,
+      reminder_minutes: data.reminder_minutes,
+      group_id: data.group_id ?? null,
+      user_id: session.sub,
+      assigner_user_id: session.sub,
       assignee_user_id: data.group_id ? null : assigneeId,
-      creator_user_id: session.sub,
       status,
     })
     .select()
@@ -111,14 +99,18 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (!isSelfAssign && !data.group_id && activity) {
-    await supabase.from("notifications").insert({
-      user_id: assigneeId,
-      type: "activity_assigned",
-      data: {
-        activity_id: activity.id,
-        activity_title: activity.title,
-      },
-    });
+    // Notification insert needs service role to write to another user's row
+    try {
+      const admin = createServiceClient();
+      await admin.from("notifications").insert({
+        user_id: assigneeId,
+        type: "activity_assigned",
+        payload: {
+          activity_id: activity.id,
+          activity_title: activity.title,
+        },
+      });
+    } catch { /* non-critical */ }
   }
 
   return NextResponse.json({ activity }, { status: 201 });

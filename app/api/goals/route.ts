@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 // ---- Streak calculation ----
 function fmtDate(d: Date) {
@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
   const activeOnly = request.nextUrl.searchParams.get("active") === "true";
   const todayOnly = request.nextUrl.searchParams.get("today") === "true";
 
-  const supabase = createServiceClient();
-  let query = supabase.from("goals").select("*").eq("user_id", session.sub).order("created_at");
+  const supabase = await createClient();
+  let query = supabase.from("goals").select("*").order("created_at");
 
   if (activeOnly || todayOnly) query = query.eq("is_active", true);
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { data: goal, error } = await supabase
     .from("goals")
     .insert({ ...result.data, user_id: session.sub })

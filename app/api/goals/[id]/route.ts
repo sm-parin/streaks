@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 const updateSchema = z.object({
   title: z.string().min(1).max(80).optional(),
@@ -18,14 +18,13 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const supabase = createServiceClient();
-  const { data: goal, error } = await supabase
+  const supabase = await createClient();
+  const { data: goal, error: findError } = await supabase
     .from("goals")
     .select("*")
     .eq("id", id)
-    .eq("user_id", session.sub)
     .single();
-  if (error || !goal) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (findError || !goal) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ goal });
 }
 
@@ -44,12 +43,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { data: goal, error } = await supabase
     .from("goals")
-    .update({ ...result.data, updated_at: new Date().toISOString() })
+    .update({ ...result.data })
     .eq("id", id)
-    .eq("user_id", session.sub)
     .select()
     .single();
 
@@ -61,12 +59,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { error } = await supabase
     .from("goals")
     .delete()
-    .eq("id", id)
-    .eq("user_id", session.sub);
+    .eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

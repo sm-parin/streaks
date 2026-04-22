@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     date = new Date().toISOString().split("T")[0];
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
 
   // Verify goal belongs to user
   const { data: goal } = await supabase

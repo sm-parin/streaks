@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const supabase = createServiceClient();
+  const supabase = await createClient();
 
   const unreadOnly = request.nextUrl.searchParams.get("unread") === "true";
   let query = supabase
@@ -28,7 +28,7 @@ export async function PATCH() {
   // Mark all as read
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   await supabase
     .from("notifications")
     .update({ read: true })
