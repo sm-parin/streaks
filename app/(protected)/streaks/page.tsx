@@ -1,12 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Flame, Plus, TrendingUp } from "lucide-react";
+import { Flame, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StreakCard } from "@/components/streaks/streak-card";
-import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
 import { ReportsView } from "@/components/streaks/reports-view";
 import { TAB_COLORS } from "@/lib/types";
 import type { GoalWithStreak } from "@/lib/types";
@@ -14,7 +12,6 @@ import type { GoalWithStreak } from "@/lib/types";
 export default function StreaksPage() {
   const [goals, setGoals] = useState<GoalWithStreak[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
 
   const fetchGoals = useCallback(async () => {
     setLoading(true);
@@ -31,11 +28,6 @@ export default function StreaksPage() {
         title="Streaks"
         subtitle="Your recurring goals"
         accentColor={TAB_COLORS.streaks}
-        right={
-          <Button size="sm" onClick={() => setShowForm(true)} leftIcon={<Plus className="w-4 h-4" />}>
-            New Goal
-          </Button>
-        }
       />
 
       <Tabs defaultValue="streaks">
@@ -66,13 +58,6 @@ export default function StreaksPage() {
           <ReportsView />
         </TabsContent>
       </Tabs>
-
-      {showForm && (
-        <GoalFormDialog
-          onClose={() => setShowForm(false)}
-          onSaved={() => { setShowForm(false); fetchGoals(); }}
-        />
-      )}
     </div>
   );
 }

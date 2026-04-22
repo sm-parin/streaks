@@ -1,39 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { LogOut, Flame } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { ThemeToggle } from "./theme-toggle";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/toast";
+import Link from "next/link";
+import { Flame } from "lucide-react";
+import { useUser } from "@/lib/hooks/use-user";
 
 /**
- * Top app bar displayed on all protected pages.
- * Shows the app brand, theme toggle, and a sign-out button.
+ * Top app bar. Shows brand name on the left.
+ * Right side: 2-letter avatar + display name, tapping opens profile edit.
  */
 export function Header() {
-  const [signingOut, setSigningOut] = useState(false);
-  const router = useRouter();
-  const { showToast } = useToast();
+  const { user } = useUser();
 
-  /** Signs the user out and redirects to the login page. */
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      showToast(error.message, "error");
-      setSigningOut(false);
-    } else {
-      router.push("/login");
-    }
-  };
+  const displayName = user?.username || user?.email?.split("@")[0] || "User";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <header className="sticky top-0 z-[200] w-full bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border)]">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-        {/** Brand */}
+        {/* Brand */}
         <div className="flex items-center gap-2">
           <Flame className="w-5 h-5 text-[var(--color-brand)]" aria-hidden="true" />
           <span className="font-semibold text-[var(--color-text-primary)] tracking-tight">
@@ -41,18 +25,19 @@ export function Header() {
           </span>
         </div>
 
-        {/** Right actions */}
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="sm"
-            loading={signingOut}
-            onClick={handleSignOut}
-            aria-label="Sign out"
-            leftIcon={!signingOut ? <LogOut className="w-4 h-4" /> : undefined}
-          />
-        </div>
+        {/* User avatar + name → profile edit */}
+        <Link
+          href="/settings/profile"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          aria-label="Edit profile"
+        >
+          <div className="w-8 h-8 rounded-full bg-[var(--color-brand)] flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-white">{initials}</span>
+          </div>
+          <span className="text-sm font-medium text-[var(--color-text-primary)] max-w-[120px] truncate hidden sm:block">
+            {displayName}
+          </span>
+        </Link>
       </div>
     </header>
   );

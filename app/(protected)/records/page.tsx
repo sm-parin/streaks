@@ -1,18 +1,24 @@
 "use client";
 import { useState } from "react";
-import { BookPlus, Flame, Activity } from "lucide-react";
+import { Flame, Activity } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { SearchFilterBar, type SortDir } from "@/components/layout/search-filter-bar";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 import { GoalsList } from "@/components/goals/goals-list";
 import { ActivitiesList } from "@/components/activities/activities-list";
 import { TAB_COLORS } from "@/lib/types";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function RecordsPage() {
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<"goal" | "activity">("goal");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [showGoals, setShowGoals] = useState(true);
+  const [goalSort, setGoalSort] = useState<SortDir>("asc");
+  const [showActivities, setShowActivities] = useState(true);
+  const [activitySort, setActivitySort] = useState<SortDir>("asc");
 
   const openForm = (type: "goal" | "activity") => {
     setFormType(type);
@@ -39,24 +45,25 @@ export default function RecordsPage() {
         }
       />
 
-      <Tabs defaultValue="goals">
-        <TabsList className="mb-4">
-          <TabsTrigger value="goals">
-            <Flame className="w-3.5 h-3.5 mr-1.5" style={{ color: TAB_COLORS.today }} />
-            Goals
-          </TabsTrigger>
-          <TabsTrigger value="activities">
-            <Activity className="w-3.5 h-3.5 mr-1.5" style={{ color: TAB_COLORS.records }} />
-            Activities
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="goals">
-          <GoalsList key={`goals-${refreshKey}`} onAddNew={() => openForm("goal")} />
-        </TabsContent>
-        <TabsContent value="activities">
-          <ActivitiesList key={`acts-${refreshKey}`} onAddNew={() => openForm("activity")} />
-        </TabsContent>
-      </Tabs>
+      <SearchFilterBar
+        search={search} onSearchChange={setSearch}
+        showGoals={showGoals} onToggleGoals={() => setShowGoals((v) => !v)}
+        goalSort={goalSort} onToggleGoalSort={() => setGoalSort((v) => v === "asc" ? "desc" : "asc")}
+        showActivities={showActivities} onToggleActivities={() => setShowActivities((v) => !v)}
+        activitySort={activitySort} onToggleActivitySort={() => setActivitySort((v) => v === "asc" ? "desc" : "asc")}
+      />
+
+      {showGoals && (
+        <div className="mb-5">
+          <GoalsList key={`goals-${refreshKey}`} onAddNew={() => openForm("goal")}
+            search={search} sortDir={goalSort} />
+        </div>
+      )}
+
+      {showActivities && (
+        <ActivitiesList key={`acts-${refreshKey}`} onAddNew={() => openForm("activity")}
+          search={search} sortDir={activitySort} />
+      )}
 
       {showForm && (
         <RecordFormDialog

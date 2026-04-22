@@ -1,14 +1,19 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Activity, Plus, CheckCircle2, Clock, Circle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { PRIORITY_COLORS, TAB_COLORS } from "@/lib/types";
+import { PRIORITY_COLORS } from "@/lib/types";
 import type { Activity as ActivityType } from "@/lib/types";
+import type { SortDir } from "@/components/layout/search-filter-bar";
 import { cn } from "@/lib/utils/cn";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 
-export function ActivitiesList({ onAddNew }: { onAddNew: () => void }) {
+export function ActivitiesList({ onAddNew, search = "", sortDir = "asc" }: {
+  onAddNew: () => void;
+  search?: string;
+  sortDir?: SortDir;
+}) {
   const [activities, setActivities] = useState<ActivityType[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<ActivityType | null>(null);
@@ -22,6 +27,14 @@ export function ActivitiesList({ onAddNew }: { onAddNew: () => void }) {
 
   useEffect(() => { load(); }, [load]);
 
+  const filtered = useMemo(() => {
+    let list = activities;
+    if (search) list = list.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()));
+    return [...list].sort((a, b) =>
+      sortDir === "asc" ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    );
+  }, [activities, search, sortDir]);
+
   const statusColor = (s: string) =>
     s === "completed" ? "text-[var(--color-success)]" :
     s === "pending"   ? "text-[var(--color-warning)]" :
@@ -29,18 +42,18 @@ export function ActivitiesList({ onAddNew }: { onAddNew: () => void }) {
 
   if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
 
-  if (!activities.length) return (
+  if (!filtered.length) return (
     <div className="text-center py-12 text-[var(--color-text-secondary)]">
       <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
-      <p className="font-medium">No activities yet</p>
-      <Button size="sm" className="mt-3" onClick={onAddNew} leftIcon={<Plus className="w-4 h-4" />}>Add Activity</Button>
+      <p className="font-medium">{search ? "No activities match your search" : "No activities yet"}</p>
+      {!search && <Button size="sm" className="mt-3" onClick={onAddNew} leftIcon={<Plus className="w-4 h-4" />}>Add Activity</Button>}
     </div>
   );
 
   return (
     <>
       <div className="space-y-3">
-        {activities.map((a) => (
+        {filtered.map((a) => (
           <div key={a.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 cursor-pointer hover:border-[var(--color-border-strong)]"
             onClick={() => setEditing(a)}>
             <div className="flex items-start gap-2">

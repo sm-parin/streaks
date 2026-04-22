@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTags } from "@/lib/hooks/use-tags";
 import { useToast } from "@/components/ui/toast";
-import { DAY_LABELS, PRIORITY_LABELS } from "@/lib/types";
+import { useUser } from "@/lib/hooks/use-user";
+import { DAY_LABELS, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import type { Goal } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
@@ -18,9 +19,11 @@ interface Props {
 
 export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
   const isEdit = !!goal?.id;
+  const { user } = useUser();
+  const defaultDays = goal?.active_days ?? user?.default_active_days ?? [0, 1, 2, 3, 4, 5, 6];
   const [title, setTitle] = useState(goal?.title ?? "");
   const [desc, setDesc] = useState(goal?.description ?? "");
-  const [activeDays, setActiveDays] = useState<number[]>(goal?.active_days ?? [0,1,2,3,4,5,6]);
+  const [activeDays, setActiveDays] = useState<number[]>(defaultDays);
   const [priority, setPriority] = useState(goal?.priority ?? 3);
   const [selectedTags, setSelectedTags] = useState<string[]>(goal?.tag_ids ?? []);
   const [loading, setLoading] = useState(false);
@@ -86,21 +89,25 @@ export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Priority</Label>
-            <div className="flex gap-2">
-              {[1,2,3,4,5].map((p) => (
-                <button key={p} type="button" onClick={() => setPriority(p as 1|2|3|4|5)}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold border transition-colors",
-                    priority === p ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                      : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
-                  )}>
-                  P{p}
-                </button>
-              ))}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Priority</Label>
+              <span className="text-xs font-semibold" style={{ color: PRIORITY_COLORS[priority] }}>
+                {PRIORITY_LABELS[priority]}
+              </span>
             </div>
-            <p className="text-xs text-[var(--color-text-secondary)]">{PRIORITY_LABELS[priority]}</p>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              step={1}
+              value={priority}
+              onChange={(e) => setPriority(Number(e.target.value) as 1|2|3|4|5)}
+              className="w-full accent-[var(--color-brand)] cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-[var(--color-text-secondary)] px-0.5">
+              {[1,2,3,4,5].map((p) => <span key={p}>{PRIORITY_LABELS[p]}</span>)}
+            </div>
           </div>
 
           {tags.length > 0 && (

@@ -1,23 +1,53 @@
 "use client";
 import { useState } from "react";
-import { LogOut, Monitor, User, Lock } from "lucide-react";
+import {
+  User, Monitor, Settings2, LogOut,
+  ChevronRight, ArrowLeft, Lock,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useToast } from "@/components/ui/toast";
 import { useUser, setUser } from "@/lib/hooks/use-user";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { TAB_COLORS } from "@/lib/types";
+import { TAB_COLORS, DAY_LABELS } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
+
+type Screen = "main" | "account" | "configure";
+
+const TIMEZONES = [
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Asia/Kolkata",
+  "Asia/Tokyo",
+  "Asia/Singapore",
+  "Australia/Sydney",
+];
 
 export default function SettingsPage() {
-  const { user } = useUser();
+  const { user, refetch } = useUser();
   const { showToast } = useToast();
+  const [screen, setScreen] = useState<Screen>("main");
 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [pwLoading, setPwLoading] = useState(false);
+
+  const [activeDays, setActiveDays] = useState<number[]>(
+    user?.default_active_days ?? [0, 1, 2, 3, 4, 5, 6]
+  );
+  const [timezone, setTimezone] = useState(
+    user?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+  const [configLoading, setConfigLoading] = useState(false);
 
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,69 +65,151 @@ export default function SettingsPage() {
     else { showToast("Password updated", "success"); setCurrentPw(""); setNewPw(""); setConfirmPw(""); }
   };
 
+  const handleConfigSave = async () => {
+    setConfigLoading(true);
+    const r = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ default_active_days: activeDays, timezone }),
+    });
+    const d = await r.json();
+    setConfigLoading(false);
+    if (!r.ok) showToast(d.error ?? "Save failed", "error");
+    else { showToast("Settings saved", "success"); await refetch(); }
+  };
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     window.location.href = "/login";
   };
 
-  const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="w-4 h-4 text-[var(--color-text-secondary)]" />
-        <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">{title}</h2>
+  const toggleDay = (d: number) =>
+    setActiveDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+
+  // ── Account sub-screen ─────────────────────────────────────────────────────
+  if (screen === "account") {
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => setScreen("main")} className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">Account</h1>
+        </div>
+        <div className="space-y-1 mb-6">
+          <Label>Email</Label>
+          <div className="px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
+            {user?.email ?? "—"}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 mb-3">
+          <Lock className="w-4 h-4 text-[var(--color-text-secondary)]" />
+          <h2 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">Change Password</h2>
+        </div>
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4">
+          <form onSubmit={handlePasswordSave} className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="cur-pw">Current password</Label>
+              <Input id="cur-pw" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="new-pw">New password</Label>
+              <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="conf-pw">Confirm new password</Label>
+              <Input id="conf-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
+            </div>
+            <Button type="submit" size="sm" loading={pwLoading}>Change Password</Button>
+          </form>
+        </div>
       </div>
-      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-4">
-        {children}
+    );
+  }
+
+  // ── Configure sub-screen ───────────────────────────────────────────────────
+  if (screen === "configure") {
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => setScreen("main")} className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">Configure</h1>
+        </div>
+        <div className="space-y-5">
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">Default Active Days</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">New goals will use these days by default.</p>
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {DAY_LABELS.map((d, i) => (
+                <button key={i} type="button" onClick={() => toggleDay(i)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                    activeDays.includes(i)
+                      ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
+                      : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                  )}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">Timezone</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Drives all time-based features in the app.</p>
+            </div>
+            <select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-[var(--color-bg)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
+            >
+              {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
+            </select>
+          </div>
+          <Button onClick={handleConfigSave} loading={configLoading} className="w-full">Save</Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // ── Main settings list ─────────────────────────────────────────────────────
+  const navRows: { icon: React.ElementType; label: string; desc: string; dest: Screen }[] = [
+    { icon: User,      label: "Account",   desc: "Email, password",        dest: "account" },
+    { icon: Settings2, label: "Configure", desc: "Default days, timezone", dest: "configure" },
+  ];
 
   return (
     <div>
       <PageHeader title="Settings" accentColor={TAB_COLORS.settings} />
-
-      <Section icon={User} title="Account">
-        <div className="space-y-1">
-          <Label>Email</Label>
-          <p className="text-sm text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] px-3 py-2 rounded-[var(--radius-md)]">
-            {user?.email ?? "—"}
-          </p>
-        </div>
-      </Section>
-
-      <Section icon={Lock} title="Password">
-        <form onSubmit={handlePasswordSave} className="space-y-3">
-          <div className="space-y-1">
-            <Label htmlFor="cur-pw">Current password</Label>
-            <Input id="cur-pw" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="new-pw">New password</Label>
-            <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="conf-pw">Confirm new password</Label>
-            <Input id="conf-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
-          </div>
-          <Button type="submit" size="sm" loading={pwLoading}>Change Password</Button>
-        </form>
-      </Section>
-
-      <Section icon={Monitor} title="Appearance">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="space-y-3">
+        {navRows.map(({ icon: Icon, label, desc, dest }) => (
+          <button key={label} onClick={() => setScreen(dest)}
+            className="w-full flex items-center gap-3 p-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] hover:bg-[var(--color-bg-secondary)] transition-colors text-left">
+            <Icon className="w-5 h-5 text-[var(--color-text-secondary)] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{desc}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[var(--color-text-secondary)]" />
+          </button>
+        ))}
+        <div className="flex items-center gap-3 p-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)]">
+          <Monitor className="w-5 h-5 text-[var(--color-text-secondary)] shrink-0" />
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-[var(--color-text-primary)]">Theme</p>
-            <p className="text-xs text-[var(--color-text-secondary)]">Light, dark, or system preference</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Light, dark, or system</p>
           </div>
           <ThemeToggle />
         </div>
-      </Section>
-
+      </div>
       <div className="mt-8">
         <Button variant="ghost" className="w-full text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
-          onClick={handleLogout}
-          leftIcon={<LogOut className="w-4 h-4" />}>
+          onClick={handleLogout} leftIcon={<LogOut className="w-4 h-4" />}>
           Sign Out
         </Button>
       </div>

@@ -53,6 +53,10 @@ export interface Profile {
   id: string;
   email: string;
   created_at: string;
+  username?: string;
+  bio?: string;
+  default_active_days?: number[];
+  timezone?: string;
 }
 
 /** Values submitted by the task creation / edit form */
@@ -131,6 +135,10 @@ export interface UserProfile {
   id: string;
   email: string;
   created_at: string;
+  username?: string;
+  bio?: string;
+  default_active_days?: number[];
+  timezone?: string;
 }
 
 /** Alias used by use-user hook and auth API */
@@ -203,11 +211,11 @@ export const PRIORITY_COLORS: Record<number, string> = {
 
 /** Human-readable priority labels */
 export const PRIORITY_LABELS: Record<number, string> = {
-  1: "P1 — Critical",
-  2: "P2 — High",
-  3: "P3 — Medium",
-  4: "P4 — Low",
-  5: "P5 — Minimal",
+  1: "Critical",
+  2: "High",
+  3: "Medium",
+  4: "Low",
+  5: "Minimal",
 };
 
 /** Short day-of-week labels indexed 0 (Sun) - 6 (Sat) */
@@ -238,12 +246,3 @@ export function getPerformanceLabel(rate: number): string {
 
 /** Severity levels for toast notifications */
 export type ToastType = "success" | "error" | "warning" | "info";
-
-/** A single toast notification entry */
-export interface Toast {
-  id: string;
-  message: string;
-  type: ToastType;
-  /** Auto-dismiss delay in ms. Defaults to 4000. */
-  duration?: number;
-}

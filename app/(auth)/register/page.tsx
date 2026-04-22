@@ -76,7 +76,6 @@ export default function RegisterPage() {
         showToast(error.message, "error");
         return;
       }
-      // If session is returned immediately, email confirmation is disabled
       if (data.session) {
         window.location.href = "/today";
       } else {

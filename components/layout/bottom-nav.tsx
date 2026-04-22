@@ -38,11 +38,6 @@ const NAV_ITEMS = [
   },
 ] as const;
 
-/**
- * Primary navigation bar.
- * - Mobile: fixed bottom tab bar.
- * - The active route is highlighted with the brand colour.
- */
 export function BottomNav() {
   const pathname = usePathname();
 
@@ -53,7 +48,6 @@ export function BottomNav() {
         "fixed bottom-0 left-0 right-0 z-[200]",
         "bg-[var(--color-bg)]/95 backdrop-blur-md",
         "border-t border-[var(--color-border)]",
-        /** Safe area inset for notched phones */
         "pb-[env(safe-area-inset-bottom)]"
       )}
     >

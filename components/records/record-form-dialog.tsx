@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTags } from "@/lib/hooks/use-tags";
 import { useToast } from "@/components/ui/toast";
-import { PRIORITY_LABELS } from "@/lib/types";
+import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
 import type { Activity } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { GoalFormDialog } from "@/components/goals/goal-form-dialog";
@@ -109,21 +109,25 @@ export function RecordFormDialog({ type, activity, prefill, onClose, onSaved }: 
             <Input id="a-reminders" value={reminders} onChange={(e) => setReminders(e.target.value)} placeholder="15, 60" />
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Priority</Label>
-            <div className="flex gap-2">
-              {[1,2,3,4,5].map((p) => (
-                <button key={p} type="button" onClick={() => setPriority(p as 1|2|3|4|5)}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-[var(--radius-md)] text-xs font-semibold border transition-colors",
-                    priority === p ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                      : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
-                  )}>
-                  P{p}
-                </button>
-              ))}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Priority</Label>
+              <span className="text-xs font-semibold" style={{ color: PRIORITY_COLORS[priority] }}>
+                {PRIORITY_LABELS[priority]}
+              </span>
             </div>
-            <p className="text-xs text-[var(--color-text-secondary)]">{PRIORITY_LABELS[priority]}</p>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              step={1}
+              value={priority}
+              onChange={(e) => setPriority(Number(e.target.value) as 1|2|3|4|5)}
+              className="w-full accent-[var(--color-brand)] cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-[var(--color-text-secondary)] px-0.5">
+              {[1,2,3,4,5].map((p) => <span key={p}>{PRIORITY_LABELS[p]}</span>)}
+            </div>
           </div>
 
           {tags.length > 0 && (
