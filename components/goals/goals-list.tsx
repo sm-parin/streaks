@@ -7,10 +7,11 @@ import { StreakCard } from "@/components/streaks/streak-card";
 import type { GoalWithStreak } from "@/lib/types";
 import type { SortDir } from "@/components/layout/search-filter-bar";
 
-export function GoalsList({ onAddNew, search = "", sortDir = "asc" }: {
+export function GoalsList({ onAddNew, search = "", sortDir = "asc", onHasData }: {
   onAddNew: () => void;
   search?: string;
   sortDir?: SortDir;
+  onHasData?: (has: boolean) => void;
 }) {
   const [goals, setGoals] = useState<GoalWithStreak[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,9 +19,9 @@ export function GoalsList({ onAddNew, search = "", sortDir = "asc" }: {
   const load = useCallback(async () => {
     setLoading(true);
     const r = await fetch("/api/goals?streaks=true");
-    if (r.ok) { const d = await r.json(); setGoals(d.goals ?? []); }
+    if (r.ok) { const d = await r.json(); const list = d.goals ?? []; setGoals(list); onHasData?.(list.length > 0); }
     setLoading(false);
-  }, []);
+  }, [onHasData]);
 
   useEffect(() => { load(); }, [load]);
 

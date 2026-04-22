@@ -1,11 +1,12 @@
+import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 type SpinnerSize = "sm" | "md" | "lg";
 
 const SIZE_CLASSES: Record<SpinnerSize, string> = {
-  sm: "w-3.5 h-3.5 border-[1.5px]",
-  md: "w-4 h-4 border-2",
-  lg: "w-5 h-5 border-2",
+  sm: "w-4 h-4",
+  md: "w-6 h-6",
+  lg: "w-8 h-8",
 };
 
 interface SpinnerProps {
@@ -13,20 +14,19 @@ interface SpinnerProps {
   className?: string;
 }
 
-/**
- * Accessible loading spinner.
- * Uses CSS border animation ΓÇô no external assets required.
- */
 export function Spinner({ size = "md", className }: SpinnerProps) {
   return (
     <span
       role="status"
       aria-label="Loading"
-      className={cn(
-        "inline-block rounded-full border-current border-t-transparent animate-spin",
-        SIZE_CLASSES[size],
-        className
-      )}
-    />
+      className={cn("inline-flex items-center justify-center", className)}
+    >
+      <Flame
+        className={cn(
+          SIZE_CLASSES[size],
+          "text-[var(--color-brand)] animate-[flame-pulse_1.2s_ease-in-out_infinite]"
+        )}
+      />
+    </span>
   );
 }

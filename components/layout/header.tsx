@@ -3,16 +3,13 @@
 import Link from "next/link";
 import { Flame } from "lucide-react";
 import { useUser } from "@/lib/hooks/use-user";
+import { getDisplayName, getInitials } from "@/lib/utils/display-name";
 
-/**
- * Top app bar. Shows brand name on the left.
- * Right side: 2-letter avatar + display name, tapping opens profile edit.
- */
 export function Header() {
   const { user } = useUser();
 
-  const displayName = user?.username || user?.email?.split("@")[0] || "User";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const displayName = user ? getDisplayName(user) : "…";
+  const initials = getInitials(displayName);
 
   return (
     <header className="sticky top-0 z-[200] w-full bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border)]">

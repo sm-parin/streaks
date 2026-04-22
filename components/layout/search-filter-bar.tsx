@@ -25,14 +25,14 @@ export function SearchFilterBar({
   className,
 }: SearchFilterBarProps) {
   return (
-    <div className={cn("flex items-center gap-2 mb-4", className)}>
-      {/* Search */}
-      <div className="relative flex-1 min-w-0">
+    <div className={cn("space-y-2 mb-4", className)}>
+      {/* Search row */}
+      <div className="relative">
         <input
           type="search"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search…"
+          placeholder="Searchâ€¦"
           className="w-full pl-3 pr-8 py-2 text-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-[var(--radius-md)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
         />
         {search && (
@@ -46,53 +46,63 @@ export function SearchFilterBar({
         )}
       </div>
 
-      {/* Goals pill + sort */}
-      <div className="flex items-stretch rounded-[var(--radius-md)] border overflow-hidden shrink-0"
-        style={{ borderColor: showGoals ? "#F07F13" : "var(--color-border)" }}>
+      {/* Filter row: < sort > [ Goals ] [ Activities ] < sort > */}
+      <div className="flex items-center gap-1.5">
+        {/* Goals sort */}
+        <button
+          onClick={onToggleGoalSort}
+          className={cn(
+            "p-1.5 rounded-[var(--radius-sm)] border transition-colors shrink-0",
+            showGoals
+              ? "border-orange-400 bg-orange-500 text-white"
+              : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+          )}
+          aria-label={`Sort goals ${goalSort === "asc" ? "descending" : "ascending"}`}
+        >
+          {goalSort === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* Goals pill */}
         <button
           onClick={onToggleGoals}
           className={cn(
-            "px-2.5 py-1.5 text-xs font-medium transition-colors",
-            showGoals ? "bg-orange-500 text-white" : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+            "flex-1 py-1.5 text-xs font-semibold rounded-[var(--radius-md)] border transition-colors",
+            showGoals
+              ? "bg-orange-500 border-orange-500 text-white"
+              : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
           )}
         >
           Goals
         </button>
-        <button
-          onClick={onToggleGoalSort}
-          className={cn(
-            "px-1.5 border-l transition-colors",
-            showGoals ? "border-orange-400 bg-orange-500 text-white" : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
-          )}
-          aria-label={`Sort goals ${goalSort === "asc" ? "descending" : "ascending"}`}
-        >
-          {goalSort === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-        </button>
-      </div>
 
-      {/* Activities pill + sort */}
-      <div className="flex items-stretch rounded-[var(--radius-md)] border overflow-hidden shrink-0"
-        style={{ borderColor: showActivities ? "#22C55E" : "var(--color-border)" }}>
+        {/* Activities pill */}
         <button
           onClick={onToggleActivities}
           className={cn(
-            "px-2.5 py-1.5 text-xs font-medium transition-colors",
-            showActivities ? "bg-green-500 text-white" : "bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+            "flex-1 py-1.5 text-xs font-semibold rounded-[var(--radius-md)] border transition-colors",
+            showActivities
+              ? "bg-green-500 border-green-500 text-white"
+              : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
           )}
         >
           Activities
         </button>
+
+        {/* Activities sort */}
         <button
           onClick={onToggleActivitySort}
           className={cn(
-            "px-1.5 border-l transition-colors",
-            showActivities ? "border-green-400 bg-green-500 text-white" : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
+            "p-1.5 rounded-[var(--radius-sm)] border transition-colors shrink-0",
+            showActivities
+              ? "border-green-400 bg-green-500 text-white"
+              : "border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)]"
           )}
           aria-label={`Sort activities ${activitySort === "asc" ? "descending" : "ascending"}`}
         >
-          {activitySort === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+          {activitySort === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
         </button>
       </div>
     </div>
   );
 }
+

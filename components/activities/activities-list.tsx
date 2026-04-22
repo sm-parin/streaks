@@ -9,10 +9,11 @@ import type { SortDir } from "@/components/layout/search-filter-bar";
 import { cn } from "@/lib/utils/cn";
 import { RecordFormDialog } from "@/components/records/record-form-dialog";
 
-export function ActivitiesList({ onAddNew, search = "", sortDir = "asc" }: {
+export function ActivitiesList({ onAddNew, search = "", sortDir = "asc", onHasData }: {
   onAddNew: () => void;
   search?: string;
   sortDir?: SortDir;
+  onHasData?: (has: boolean) => void;
 }) {
   const [activities, setActivities] = useState<ActivityType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,9 +22,9 @@ export function ActivitiesList({ onAddNew, search = "", sortDir = "asc" }: {
   const load = useCallback(async () => {
     setLoading(true);
     const r = await fetch("/api/activities");
-    if (r.ok) { const d = await r.json(); setActivities(d.activities ?? []); }
+    if (r.ok) { const d = await r.json(); const list = d.activities ?? []; setActivities(list); onHasData?.(list.length > 0); }
     setLoading(false);
-  }, []);
+  }, [onHasData]);
 
   useEffect(() => { load(); }, [load]);
 

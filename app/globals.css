@@ -171,3 +171,9 @@ body {
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+
+/* Flame pulse animation for Spinner */
+@keyframes flame-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}

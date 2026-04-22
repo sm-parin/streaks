@@ -72,6 +72,7 @@ export default function LoginPage() {
                 id="password"
                 type={showPw ? "text" : "password"}
                 autoComplete="current-password"
+                data-lpignore="true"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

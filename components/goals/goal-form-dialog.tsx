@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTags } from "@/lib/hooks/use-tags";
 import { useToast } from "@/components/ui/toast";
 import { useUser } from "@/lib/hooks/use-user";
 import { DAY_LABELS, PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/types";
@@ -25,23 +24,24 @@ export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
   const [desc, setDesc] = useState(goal?.description ?? "");
   const [activeDays, setActiveDays] = useState<number[]>(defaultDays);
   const [priority, setPriority] = useState(goal?.priority ?? 3);
-  const [selectedTags, setSelectedTags] = useState<string[]>(goal?.tag_ids ?? []);
   const [loading, setLoading] = useState(false);
-  const { tags } = useTags();
   const { showToast } = useToast();
 
   const toggleDay = (d: number) =>
     setActiveDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
-
-  const toggleTag = (id: string) =>
-    setSelectedTags((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return showToast("Title is required", "error");
     if (!activeDays.length) return showToast("Select at least one day", "error");
     setLoading(true);
-    const body = { title: title.trim(), description: desc || undefined, active_days: activeDays, priority, tag_ids: selectedTags };
+    const body = {
+      title: title.trim(),
+      description: desc || undefined,
+      active_days: activeDays,
+      priority,
+      tag_ids: [],
+    };
     const r = await fetch(isEdit ? `/api/goals/${goal!.id}` : "/api/goals", {
       method: isEdit ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
@@ -110,25 +110,6 @@ export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
             </div>
           </div>
 
-          {tags.length > 0 && (
-            <div className="space-y-1.5">
-              <Label>Tags</Label>
-              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                {tags.map((t) => (
-                  <button key={t.id} type="button" onClick={() => toggleTag(t.id)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs border transition-colors",
-                      selectedTags.includes(t.id)
-                        ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
-                        : "bg-[var(--color-bg-secondary)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
-                    )}>
-                    {t.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
             <Button type="submit" loading={loading} className="flex-1">{isEdit ? "Save" : "Create"}</Button>
@@ -137,4 +118,11 @@ export function GoalFormDialog({ goal, onClose, onSaved }: Props) {
       </div>
     </div>
   );
+}
+
+
+interface Props {
+  goal?: Partial<Goal>;
+  onClose: () => void;
+  onSaved: () => void;
 }

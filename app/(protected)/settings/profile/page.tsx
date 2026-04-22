@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { useUser } from "@/lib/hooks/use-user";
+import { getDisplayName, getInitials } from "@/lib/utils/display-name";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,8 +26,8 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const displayName = user?.username || user?.email?.split("@")[0] || "User";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const displayName = user ? getDisplayName(user) : "â€¦";
+  const initials = getInitials(displayName);
 
   const handleSave = async () => {
     setLoading(true);
@@ -61,10 +62,11 @@ export default function ProfilePage() {
       </div>
 
       {/* Avatar */}
-      <div className="flex justify-center mb-8">
+      <div className="flex flex-col items-center mb-8 gap-2">
         <div className="w-20 h-20 rounded-full bg-[var(--color-brand)] flex items-center justify-center">
           <span className="text-2xl font-bold text-white">{initials}</span>
         </div>
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{displayName}</p>
       </div>
 
       <div className="space-y-5">
@@ -78,16 +80,7 @@ export default function ProfilePage() {
             placeholder="Enter a username"
             maxLength={50}
           />
-          <p className="text-xs text-[var(--color-text-secondary)]">Not unique — just a display name.</p>
-        </div>
-
-        {/* Email (read-only) */}
-        <div className="space-y-1.5">
-          <Label>Email</Label>
-          <div className="px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)] select-none">
-            {user?.email ?? "—"}
-          </div>
-          <p className="text-xs text-[var(--color-text-secondary)]">Email cannot be changed.</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">Your display name across the app.</p>
         </div>
 
         {/* Bio */}
@@ -105,32 +98,21 @@ export default function ProfilePage() {
           <p className="text-xs text-[var(--color-text-secondary)]">{bio.length}/200</p>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-2">
+        {/* Save */}
+        <div className="pt-2">
           <Button
             type="button"
-            variant="outline"
-            className="flex-1"
-            onClick={() => {
-              setUsername(user?.username ?? "");
-              setBio(user?.bio ?? "");
-              setDirty(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            className="flex-1"
+            className="w-full"
             loading={loading}
             disabled={!dirty}
             onClick={handleSave}
             leftIcon={<Check className="w-4 h-4" />}
           >
-            Save
+            Save Changes
           </Button>
         </div>
       </div>
     </div>
   );
 }
+

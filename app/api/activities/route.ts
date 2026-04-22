@@ -12,6 +12,8 @@ const createSchema = z.object({
   priority: z.number().int().min(1).max(5).default(3),
   tag_ids: z.array(z.string().uuid()).default([]),
   reminder_minutes: z.array(z.number().int().positive()).optional().nullable(),
+  snooze_minutes: z.number().int().min(1).max(1440).optional().nullable(),
+  loop_count: z.number().int().min(1).max(99).optional().nullable(),
   assignee_user_id: z.string().uuid().optional().nullable(),
   group_id: z.string().uuid().optional().nullable(),
 });
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
       priority: data.priority,
       tag_ids: data.tag_ids,
       reminder_minutes: data.reminder_minutes,
+      snooze_minutes: data.snooze_minutes ?? 15,
+      loop_count: data.loop_count ?? 1,
       group_id: data.group_id ?? null,
       user_id: session.sub,
       assigner_user_id: session.sub,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/client";
 
 const createSchema = z.object({
   name: z.string().min(1).max(60),
@@ -11,7 +11,7 @@ const createSchema = z.object({
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const supabase = createServiceClient();
+  const supabase = await createClient();
 
   const { data: memberships } = await supabase
     .from("group_members")
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createClient();
   const { data: group, error } = await supabase
     .from("groups")
     .insert({ ...result.data, created_by: session.sub })
@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
 
   if (error || !group) return NextResponse.json({ error: error?.message }, { status: 500 });
 
-  // Creator becomes admin
   await supabase.from("group_members").insert({
     group_id: group.id,
     user_id: session.sub,

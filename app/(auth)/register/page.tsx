@@ -154,6 +154,8 @@ export default function RegisterPage() {
                 id="password"
                 type={showPw ? "text" : "password"}
                 autoComplete="new-password"
+                data-lpignore="true"
+                data-form-type="other"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min 8 characters"
@@ -169,6 +171,21 @@ export default function RegisterPage() {
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {/* Real-time password constraints */}
+            {password.length > 0 && (
+              <ul className="mt-2 space-y-1">
+                {[
+                  { ok: password.length >= 8, text: "At least 8 characters" },
+                  { ok: /[a-zA-Z]/.test(password), text: "Contains a letter" },
+                  { ok: /[0-9]/.test(password), text: "Contains a number" },
+                ].map(({ ok, text }) => (
+                  <li key={text} className={`flex items-center gap-1.5 text-xs ${ok ? "text-green-500" : "text-[var(--color-text-secondary)]"}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-green-500" : "bg-[var(--color-border-strong)]"}`} />
+                    {text}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div>

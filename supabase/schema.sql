@@ -127,6 +127,8 @@ create table public.activities (
   tag_ids           text[] not null default '{}',
   status            text not null default 'accepted' check (status in ('pending','accepted','completed','rejected')),
   reminder_minutes  integer[] not null default '{}',
+  snooze_minutes    integer not null default 15,
+  loop_count        integer not null default 1,
   created_at        timestamptz not null default now()
 );
 create index activities_user_id_idx on public.activities(user_id);
@@ -215,5 +217,42 @@ create table public.notifications (
 create index notifications_user_id_idx on public.notifications(user_id, read, created_at desc);
 alter table public.notifications enable row level security;
 create policy "Users manage own notifications" on public.notifications using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- =============================================================================
+-- profiles (public cache of auth.users user_metadata — synced via trigger)
+-- Allows joining without service role for display names.
+-- =============================================================================
+create table public.profiles (
+  id         uuid primary key references auth.users(id) on delete cascade,
+  username   text,
+  bio        text,
+  avatar_url text,
+  updated_at timestamptz not null default now()
+);
+alter table public.profiles enable row level security;
+create policy "Profiles are public read" on public.profiles for select using (true);
+create policy "Users update own profile" on public.profiles for update using (auth.uid() = id);
+
+create or replace function public.handle_user_profile_upsert()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles(id, username, bio, updated_at)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'bio',
+    now()
+  )
+  on conflict (id) do update set
+    username   = excluded.username,
+    bio        = excluded.bio,
+    updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_profile_sync
+  after insert or update on auth.users
+  for each row execute procedure public.handle_user_profile_upsert();
 
 notify pgrst, 'reload schema';

@@ -59,17 +59,20 @@ export default function SocialPage() {
       />
 
       {modal === "find" && (
-        <div className="mb-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4">
+        <div className="mt-2">
           <FindFriends />
         </div>
       )}
       {modal === "notifications" && (
-        <div className="mb-5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4">
+        <div className="mt-2">
           <NotificationsList />
         </div>
       )}
 
-      <div className="flex border-b border-[var(--color-border)] mb-4">
+      {/* Sub-tabs + content — hidden when a modal screen is active */}
+      {!modal && (
+        <>
+          <div className="flex border-b border-[var(--color-border)] mb-4">
         {(["friends", "groups"] as SubTab[]).map((tab) => {
           const Icon = tab === "friends" ? UserCheck : Shield;
           const label = tab === "friends" ? "Friends" : "Groups";
@@ -93,6 +96,8 @@ export default function SocialPage() {
 
       {subTab === "friends" && <FriendsList />}
       {subTab === "groups"  && <GroupsList />}
+        </>
+      )}
     </div>
   );
 }
