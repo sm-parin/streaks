@@ -246,3 +246,11 @@ export function getPerformanceLabel(rate: number): string {
 
 /** Severity levels for toast notifications */
 export type ToastType = "success" | "error" | "warning" | "info";
+
+/** A single toast notification item */
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+}
