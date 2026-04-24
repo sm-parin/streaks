@@ -54,9 +54,9 @@ export default function SocialPage() {
       {/* Find Friends full-screen slide-over */}
       <div
         className={cn(
-          "absolute inset-0 bg-[var(--color-bg)] z-50",
+          "fixed inset-0 bg-[var(--color-bg)] z-50",
           "transition-transform duration-[var(--transition-slow)] ease-out",
-          showFind ? "translate-x-0" : "translate-x-full"
+          showFind ? "translate-x-0" : "translate-x-full pointer-events-none"
         )}
         aria-hidden={!showFind}
       >

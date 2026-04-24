@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Search, UserPlus, UserCheck, Loader2, Clock } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  ArrowLeft, Search, UserPlus, UserCheck, Loader2, Clock, Link2, Copy, Check,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SubTabBar } from "@/components/ui/subtab-bar";
 import { useToast } from "@/components/ui/toast";
 import { useUser } from "@/lib/hooks/use-user";
 
-type SubTab = "search" | "sent";
+type SubTab = "search" | "sent" | "invite";
 
 interface FindFriendsProps {
   /** Called when the user taps the back arrow */
@@ -16,9 +18,18 @@ interface FindFriendsProps {
 }
 
 const TABS: { id: SubTab; label: string }[] = [
-  { id: "search", label: "Search" },
-  { id: "sent",   label: "Sent Requests" },
+  { id: "search", label: "Search"           },
+  { id: "sent",   label: "Sent Requests"    },
+  { id: "invite", label: "Invite Friends"   },
 ];
+
+type SearchUser = {
+  id: string;
+  username: string;
+  nickname: string | null;
+  avatar_url: string | null;
+  friendship: { id: string; status: string; is_requester: boolean } | null;
+};
 
 /**
  * Full-screen "Find Friends" experience.
@@ -26,21 +37,60 @@ const TABS: { id: SubTab; label: string }[] = [
  * not as a modal or bottom sheet.
  */
 export function FindFriends({ onBack }: FindFriendsProps) {
-  const { user }         = useUser();
-  const { showToast }    = useToast();
+  const { user }      = useUser();
+  const { showToast } = useToast();
   const [subTab, setSubTab] = useState<SubTab>("search");
 
-  const [query, setQuery]   = useState("");
-  const [result, setResult] = useState<{
-    user: { id: string; username: string; nickname: string; avatar_url: string | null };
-    friendship: { status: string } | null;
-  } | null>(null);
-  const [searching, setSearching]       = useState(false);
-  const [adding, setAdding]             = useState(false);
-  const [sentRequests, setSentRequests] = useState<{ id: string; username: string }[]>([]);
-  const [loadingSent, setLoadingSent]   = useState(false);
+  // ── Search tab ──────────────────────────────────────────────────────────
+  const [query,     setQuery]     = useState("");
+  const [results,   setResults]   = useState<SearchUser[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [addingId,  setAddingId]  = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /** Fetch pending sent requests (lazy — only on first visit to Sent tab) */
+  const runSearch = useCallback(async (q: string) => {
+    if (!q.trim()) { setResults([]); return; }
+    setSearching(true);
+    try {
+      const r = await fetch(`/api/users/search?q=${encodeURIComponent(q.trim())}`);
+      if (r.ok) {
+        const d = await r.json();
+        setResults(d.users ?? []);
+      }
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => runSearch(query), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, runSearch]);
+
+  const sendRequest = async (targetId: string) => {
+    setAddingId(targetId);
+    const r = await fetch("/api/social/friends", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ addressee_id: targetId }),
+    });
+    setAddingId(null);
+    if (!r.ok) { showToast("Failed to send request", "error"); return; }
+    showToast("Friend request sent!", "success");
+    setResults((prev) =>
+      prev.map((u) =>
+        u.id === targetId
+          ? { ...u, friendship: { id: "", status: "pending", is_requester: true } }
+          : u
+      )
+    );
+  };
+
+  // ── Sent tab ────────────────────────────────────────────────────────────
+  const [sentRequests, setSentRequests] = useState<{ id: string; username: string }[]>([]);
+  const [loadingSent,  setLoadingSent]  = useState(false);
+
   const fetchSent = async () => {
     if (loadingSent || sentRequests.length) return;
     setLoadingSent(true);
@@ -52,34 +102,31 @@ export function FindFriends({ onBack }: FindFriendsProps) {
     }
   };
 
+  // ── Invite tab ──────────────────────────────────────────────────────────
+  const [copied, setCopied] = useState(false);
+
+  const inviteLink =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/register${user?.username ? `?ref=${user.username}` : ""}`
+      : "";
+
+  const copyLink = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Join me on Streaks!", url: inviteLink });
+      } else {
+        await navigator.clipboard.writeText(inviteLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // share cancelled or clipboard denied — silent fail
+    }
+  };
+
   const handleTabChange = (id: SubTab) => {
     setSubTab(id);
     if (id === "sent") fetchSent();
-  };
-
-  const search = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    setSearching(true);
-    setResult(null);
-    const r = await fetch(`/api/users/${encodeURIComponent(query.toLowerCase().trim())}`);
-    setSearching(false);
-    if (!r.ok) { showToast("User not found", "error"); return; }
-    setResult(await r.json());
-  };
-
-  const sendRequest = async () => {
-    if (!result) return;
-    setAdding(true);
-    const r = await fetch("/api/social/friends", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ addressee_id: result.user.id }),
-    });
-    setAdding(false);
-    if (!r.ok) { showToast("Failed to send request", "error"); return; }
-    showToast("Friend request sent!", "success");
-    setResult((prev) => prev ? { ...prev, friendship: { status: "pending" } } : prev);
   };
 
   return (
@@ -107,48 +154,68 @@ export function FindFriends({ onBack }: FindFriendsProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        {subTab === "search" ? (
+
+        {/* ── Search ── */}
+        {subTab === "search" && (
           <>
-            <form onSubmit={search} className="flex gap-2 mb-5">
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-disabled)]" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Username..."
-                className="flex-1"
+                placeholder="Name or username…"
+                className="pl-9"
                 autoFocus
               />
-              <Button type="submit" disabled={searching}>
-                {searching
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Search className="w-4 h-4" />}
-              </Button>
-            </form>
+              {searching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-[var(--color-text-secondary)]" />
+              )}
+            </div>
 
-            {result && (
-              <div className="flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--color-border)]">
-                <div>
-                  <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                    {result.user.nickname || result.user.username}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">@{result.user.username}</p>
-                </div>
-                {result.user.id === user?.id ? (
-                  <span className="text-xs text-[var(--color-text-secondary)]">You</span>
-                ) : result.friendship?.status === "accepted" ? (
-                  <UserCheck className="w-5 h-5 text-[var(--tab-inbox)]" />
-                ) : result.friendship?.status === "pending" ? (
-                  <span className="text-xs text-[var(--color-text-secondary)]">Pending</span>
-                ) : (
-                  <Button size="sm" onClick={sendRequest} disabled={adding}>
-                    {adding
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <><UserPlus className="w-4 h-4 mr-1.5" />Add</>}
-                  </Button>
-                )}
+            {results.length > 0 ? (
+              <div className="space-y-2">
+                {results.map((u) => (
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--color-border)]"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                        {u.nickname || u.username}
+                      </p>
+                      <p className="text-xs text-[var(--color-text-secondary)]">@{u.username}</p>
+                    </div>
+
+                    {u.id === user?.id ? (
+                      <span className="text-xs text-[var(--color-text-secondary)]">You</span>
+                    ) : u.friendship?.status === "accepted" ? (
+                      <UserCheck className="w-5 h-5 text-[var(--tab-inbox)]" />
+                    ) : u.friendship?.status === "pending" ? (
+                      <span className="text-xs text-[var(--color-text-secondary)]">Pending</span>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled={addingId === u.id}
+                        onClick={() => sendRequest(u.id)}
+                      >
+                        {addingId === u.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <><UserPlus className="w-4 h-4 mr-1.5" />Add</>}
+                      </Button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
+            ) : query.trim() && !searching ? (
+              <p className="text-center text-sm text-[var(--color-text-secondary)] py-10">
+                No users found for &ldquo;{query}&rdquo;
+              </p>
+            ) : null}
           </>
-        ) : (
+        )}
+
+        {/* ── Sent Requests ── */}
+        {subTab === "sent" && (
           <>
             {loadingSent ? (
               <div className="flex justify-center py-12">
@@ -175,6 +242,47 @@ export function FindFriends({ onBack }: FindFriendsProps) {
             )}
           </>
         )}
+
+        {/* ── Invite Friends ── */}
+        {subTab === "invite" && (
+          <div className="flex flex-col items-center text-center pt-8 pb-4 gap-6">
+            <div className="w-14 h-14 rounded-xl bg-[var(--color-bg-secondary)] flex items-center justify-center">
+              <Link2 className="w-7 h-7 text-[var(--tab-social)]" />
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-[var(--color-text-primary)] mb-1">
+                Invite via link
+              </h3>
+              <p className="text-sm text-[var(--color-text-secondary)] max-w-xs">
+                Share your personal invite link. Anyone who signs up through it
+                will be suggested as a friend.
+              </p>
+            </div>
+
+            {/* Link preview */}
+            <div className="w-full max-w-sm flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+              <p className="flex-1 text-xs text-[var(--color-text-secondary)] truncate text-left">
+                {inviteLink}
+              </p>
+            </div>
+
+            <Button
+              onClick={copyLink}
+              className="gap-2"
+              style={{
+                backgroundColor: "var(--tab-social)",
+                borderColor:     "var(--tab-social)",
+                color:           "#fff",
+              }}
+            >
+              {copied
+                ? <><Check className="w-4 h-4" />Copied!</>
+                : <><Copy className="w-4 h-4" />Copy invite link</>}
+            </Button>
+          </div>
+        )}
+
       </div>
     </div>
   );
