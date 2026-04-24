@@ -1,154 +1,190 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { Plus, Flame, Activity, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Loader2, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { SearchFilterBar, type SortDir } from "@/components/layout/search-filter-bar";
-import { RecordFormDialog } from "@/components/records/record-form-dialog";
-import { GoalsList } from "@/components/goals/goals-list";
-import { ActivitiesList } from "@/components/activities/activities-list";
-import { TAB_COLORS } from "@/lib/types";
-
-const GREEN = "#22C55E";
-
-function NewDropdown({ onOpen }: { onOpen: (type: "goal" | "activity") => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onOutside);
-    return () => document.removeEventListener("mousedown", onOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={ref}>
-      <Button
-        size="sm"
-        style={{ backgroundColor: GREEN, borderColor: GREEN }}
-        onClick={() => setOpen((v) => !v)}
-        leftIcon={<Plus className="w-4 h-4" />}
-        rightIcon={<ChevronDown className="w-3.5 h-3.5" />}
-      >
-        New
-      </Button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] shadow-lg overflow-hidden">
-          <button
-            className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left hover:bg-[var(--color-bg-secondary)] transition-colors"
-            onClick={() => { setOpen(false); onOpen("goal"); }}
-          >
-            <Flame className="w-4 h-4 text-orange-500" /> Goal
-          </button>
-          <button
-            className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-left hover:bg-[var(--color-bg-secondary)] transition-colors"
-            onClick={() => { setOpen(false); onOpen("activity"); }}
-          >
-            <Activity className="w-4 h-4 text-green-500" /> Activity
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+import { Search } from "lucide-react";
+import { RecordCard } from "@/components/records/record-card";
+import { ListCard } from "@/components/records/list-card";
+import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
+import { RCM, type RCMMode } from "@/components/records/rcm";
+import { useRecords } from "@/lib/hooks/use-records";
+import { useTags } from "@/lib/hooks/use-tags";
+import { type AppRecord, type Task, type List, isList, isTask } from "@/lib/types";
 
 export default function RecordsPage() {
-  const [showForm, setShowForm] = useState(false);
-  const [formType, setFormType] = useState<"goal" | "activity">("goal");
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [hasRecords, setHasRecords] = useState<boolean | null>(null); // null = unknown
-
+  const { records, loading, error, refresh, deleteRecord } = useRecords();
+  const { tags } = useTags();
   const [search, setSearch] = useState("");
-  const [showGoals, setShowGoals] = useState(true);
-  const [goalSort, setGoalSort] = useState<SortDir>("asc");
-  const [showActivities, setShowActivities] = useState(true);
-  const [activitySort, setActivitySort] = useState<SortDir>("asc");
 
-  const openForm = (type: "goal" | "activity") => {
-    setFormType(type);
-    setShowForm(true);
+  const [rcmOpen, setRcmOpen] = useState(false);
+  const [rcmMode, setRcmMode] = useState<RCMMode>("create");
+  const [rcmKind, setRcmKind] = useState<"task" | "list">("task");
+  const [activeRecord, setActiveRecord] = useState<AppRecord | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const lists = records.filter(isList) as (List & { tasks: Task[] })[];
+  const tasks = records.filter(isTask) as Task[];
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const filteredLists = lists.filter((l) =>
+    l.title.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredTasks = tasks.filter((t) =>
+    t.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openInfo = (r: AppRecord) => {
+    setActiveRecord(r); setRcmMode("info"); setRcmKind(r.kind); setRcmOpen(true);
+  };
+  const openEdit = (r: AppRecord) => {
+    setActiveRecord(r); setRcmMode("edit"); setRcmKind(r.kind); setRcmOpen(true);
+  };
+  const openCreate = () => {
+    setActiveRecord(null); setRcmMode("create"); setRcmKind("task"); setRcmOpen(true);
   };
 
-  const onSaved = () => {
-    setShowForm(false);
-    setHasRecords(true);
-    setRefreshKey((k) => k + 1);
+  const handleDelete = async (id: string) => {
+    try { await deleteRecord(id); setConfirmDelete(null); refresh(); } catch {/* ignore */}
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <PageHeader
-        title="Records"
-        subtitle="Goals & Activities"
-        accentColor={GREEN}
-        right={hasRecords ? <NewDropdown onOpen={openForm} /> : undefined}
-      />
+    <>
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <PageHeader title="Records" />
+          <Button
+            size="sm"
+            onClick={openCreate}
+            style={{ backgroundColor: "var(--tab-records)", borderColor: "var(--tab-records)" }}
+            className="text-white flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            New
+          </Button>
+        </div>
 
-      {hasRecords !== false && (
-        <SearchFilterBar
-          search={search} onSearchChange={setSearch}
-          showGoals={showGoals} onToggleGoals={() => setShowGoals((v) => !v)}
-          goalSort={goalSort} onToggleGoalSort={() => setGoalSort((v) => v === "asc" ? "desc" : "asc")}
-          showActivities={showActivities} onToggleActivities={() => setShowActivities((v) => !v)}
-          activitySort={activitySort} onToggleActivitySort={() => setActivitySort((v) => v === "asc" ? "desc" : "asc")}
-        />
-      )}
-
-      {showGoals && (
-        <div className="mb-5">
-          <GoalsList
-            key={`goals-${refreshKey}`}
-            onAddNew={() => openForm("goal")}
-            search={search}
-            sortDir={goalSort}
-            onHasData={(v) => setHasRecords((prev) => prev === true ? true : v)}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-disabled)]" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search records..."
+            className="w-full px-3 py-2 pl-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:border-[var(--color-brand)]"
           />
         </div>
-      )}
 
-      {showActivities && (
-        <ActivitiesList
-          key={`acts-${refreshKey}`}
-          onAddNew={() => openForm("activity")}
-          search={search}
-          sortDir={activitySort}
-          onHasData={(v) => setHasRecords((prev) => prev === true ? true : v)}
-        />
-      )}
+        {error && (
+          <p className="text-sm text-[var(--color-error)] text-center py-4">{error}</p>
+        )}
 
-      {/* Empty state â€” only show when both lists report no data */}
-      {hasRecords === false && !showForm && (
-        <div className="flex flex-col items-center gap-5 py-16 text-center">
-          <p className="text-[var(--color-text-secondary)] text-sm">No records yet. Add your first one!</p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => openForm("goal")}
-              leftIcon={<Flame className="w-4 h-4 text-orange-500" />}
-            >
-              New Goal
-            </Button>
-            <Button
-              style={{ backgroundColor: GREEN, borderColor: GREEN }}
-              onClick={() => openForm("activity")}
-              leftIcon={<Activity className="w-4 h-4" />}
-            >
-              New Activity
-            </Button>
+        {filteredLists.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+              Lists
+            </p>
+            {filteredLists.map((list) => (
+              <SwipeableWrapper
+                key={list.id}
+                onSwipeLeft={() => setConfirmDelete(list.id)}
+                leftLabel="Delete"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                <ListCard
+                  list={list}
+                  tags={tags}
+                  onListClick={() => openInfo(list)}
+                  onListDoubleClick={() => openEdit(list)}
+                  onTaskClick={(t) => openInfo(t)}
+                  onTaskDoubleClick={(t) => openEdit(t)}
+                />
+              </SwipeableWrapper>
+            ))}
+          </div>
+        )}
+
+        {filteredTasks.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+              Tasks
+            </p>
+            {filteredTasks.map((task) => (
+              <SwipeableWrapper
+                key={task.id}
+                onSwipeLeft={() => setConfirmDelete(task.id)}
+                leftLabel="Delete"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                <RecordCard
+                  task={task}
+                  tags={tags}
+                  onClick={() => openInfo(task)}
+                  onDoubleClick={() => openEdit(task)}
+                />
+              </SwipeableWrapper>
+            ))}
+          </div>
+        )}
+
+        {filteredLists.length === 0 && filteredTasks.length === 0 && !loading && (
+          <div className="text-center py-16">
+            <p className="text-3xl mb-3">📋</p>
+            <p className="text-[var(--color-text-secondary)] text-sm mb-4">
+              {search ? "No results" : "No records yet"}
+            </p>
+            {!search && (
+              <button onClick={openCreate} className="text-sm text-[var(--color-brand)] underline">
+                Create your first task
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmDelete(null)} />
+          <div className="relative z-10 bg-[var(--color-surface-raised)] rounded-2xl p-5 w-full max-w-sm shadow-xl">
+            <h3 className="font-semibold text-[var(--color-text-primary)] mb-1">Delete record?</h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-4">This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete)}
+                className="flex-1 py-2 rounded-xl bg-[var(--priority-1)] text-white text-sm font-semibold"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {showForm && (
-        <RecordFormDialog
-          type={formType}
-          onClose={() => setShowForm(false)}
-          onSaved={onSaved}
-        />
-      )}
-    </div>
+      <RCM
+        open={rcmOpen}
+        onClose={() => { setRcmOpen(false); setActiveRecord(null); }}
+        mode={rcmMode}
+        initialKind={rcmKind}
+        task={isTask(activeRecord ?? {} as AppRecord) ? (activeRecord as Task) : undefined}
+        list={isList(activeRecord ?? {} as AppRecord) ? (activeRecord as List & { tasks: Task[] }) : undefined}
+        userLists={lists}
+        onSave={() => { setRcmOpen(false); refresh(); }}
+      />
+    </>
   );
 }
-

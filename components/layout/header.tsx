@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Flame } from "lucide-react";
+import { Flame, Settings } from "lucide-react";
 import { useUser } from "@/lib/hooks/use-user";
 import { getDisplayName, getInitials } from "@/lib/utils/display-name";
 
 export function Header() {
   const { user } = useUser();
 
-  const displayName = user ? getDisplayName(user) : "…";
+  const displayName = user ? getDisplayName(user) : "...";
   const initials = getInitials(displayName);
 
   return (
@@ -22,19 +22,26 @@ export function Header() {
           </span>
         </div>
 
-        {/* User avatar + name → profile edit */}
-        <Link
-          href="/settings/profile"
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          aria-label="Edit profile"
-        >
-          <div className="w-8 h-8 rounded-full bg-[var(--color-brand)] flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-white">{initials}</span>
-          </div>
-          <span className="text-sm font-medium text-[var(--color-text-primary)] max-w-[120px] truncate hidden sm:block">
-            {displayName}
-          </span>
-        </Link>
+        {/* Right side: gear => settings, avatar => profile */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/settings"
+            className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            aria-label="Settings"
+          >
+            <Settings className="w-5 h-5" aria-hidden="true" />
+          </Link>
+
+          <Link
+            href="/settings/profile"
+            className="hover:opacity-80 transition-opacity"
+            aria-label="Edit profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-[var(--color-brand)] flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-white">{initials}</span>
+            </div>
+          </Link>
+        </div>
       </div>
     </header>
   );

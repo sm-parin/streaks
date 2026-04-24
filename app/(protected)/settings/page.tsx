@@ -1,9 +1,6 @@
 "use client";
 import { useState } from "react";
-import {
-  User, Monitor, Settings2, LogOut,
-  ChevronRight, ArrowLeft, Lock,
-} from "lucide-react";
+import { User, Monitor, Settings2, LogOut, ChevronRight, ArrowLeft, Lock } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,24 +8,15 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { useToast } from "@/components/ui/toast";
 import { useUser, setUser } from "@/lib/hooks/use-user";
-import { TAB_COLORS, DAY_LABELS } from "@/lib/types";
+import { DAY_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 type Screen = "main" | "account" | "configure";
 
 const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Asia/Kolkata",
-  "Asia/Tokyo",
-  "Asia/Singapore",
-  "Australia/Sydney",
+  "UTC","America/New_York","America/Chicago","America/Denver","America/Los_Angeles",
+  "Europe/London","Europe/Paris","Europe/Berlin","Asia/Kolkata","Asia/Tokyo",
+  "Asia/Singapore","Australia/Sydney",
 ];
 
 export default function SettingsPage() {
@@ -87,10 +75,9 @@ export default function SettingsPage() {
   const toggleDay = (d: number) =>
     setActiveDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
 
-  // ── Account sub-screen ─────────────────────────────────────────────────────
   if (screen === "account") {
     return (
-      <div>
+      <div className="max-w-2xl mx-auto px-4 py-5">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => setScreen("main")} className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -128,10 +115,9 @@ export default function SettingsPage() {
     );
   }
 
-  // ── Configure sub-screen ───────────────────────────────────────────────────
   if (screen === "configure") {
     return (
-      <div>
+      <div className="max-w-2xl mx-auto px-4 py-5">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => setScreen("main")} className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -142,7 +128,7 @@ export default function SettingsPage() {
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3">
             <div>
               <p className="text-sm font-medium text-[var(--color-text-primary)]">Default Active Days</p>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">New goals will use these days by default.</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">New tasks will use these days by default.</p>
             </div>
             <div className="flex gap-1.5 flex-wrap">
               {DAY_LABELS.map((d, i) => (
@@ -161,7 +147,7 @@ export default function SettingsPage() {
           <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3">
             <div>
               <p className="text-sm font-medium text-[var(--color-text-primary)]">Timezone</p>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Drives all time-based features in the app.</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Drives all time-based features.</p>
             </div>
             <select
               value={timezone}
@@ -177,15 +163,14 @@ export default function SettingsPage() {
     );
   }
 
-  // ── Main settings list ─────────────────────────────────────────────────────
   const navRows: { icon: React.ElementType; label: string; desc: string; dest: Screen }[] = [
     { icon: User,      label: "Account",   desc: "Email, password",        dest: "account" },
     { icon: Settings2, label: "Configure", desc: "Default days, timezone", dest: "configure" },
   ];
 
   return (
-    <div>
-      <PageHeader title="Settings" accentColor={TAB_COLORS.settings} />
+    <div className="max-w-2xl mx-auto px-4 py-5">
+      <PageHeader title="Settings" accentColor="var(--color-brand)" />
       <div className="space-y-3">
         {navRows.map(({ icon: Icon, label, desc, dest }) => (
           <button key={label} onClick={() => setScreen(dest)}
@@ -208,8 +193,12 @@ export default function SettingsPage() {
         </div>
       </div>
       <div className="mt-8">
-        <Button variant="ghost" className="w-full text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
-          onClick={handleLogout} leftIcon={<LogOut className="w-4 h-4" />}>
+        <Button
+          variant="ghost"
+          className="w-full text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
+          onClick={handleLogout}
+          leftIcon={<LogOut className="w-4 h-4" />}
+        >
           Sign Out
         </Button>
       </div>

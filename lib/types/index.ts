@@ -1,256 +1,172 @@
-/** Day of week integer: 0 = Sunday, 1 = Monday ... 6 = Saturday */
+/** Day of week: 0=Sun, 1=Mon ... 6=Sat */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
-/** A habit task configured by the user */
-export interface Task {
+export type Priority = 1 | 2 | 3 | 4 | 5;
+
+export type RecordStatus = "pending" | "accepted" | "completed" | "rejected";
+
+/** Raw DB row — same shape for both tasks and lists */
+export interface DBRecord {
   id: string;
-  user_id: string;
-  name: string;
-  description: string | null;
-  /** Array of scheduled days. e.g. [1,2,3,4,5] = Mon-Fri */
-  active_days: DayOfWeek[];
-  /** Hex colour string used as a visual identifier */
-  color: string;
-  is_active: boolean;
-  created_at: string;
-}
-
-/** A single task completion record for one date */
-export interface TaskCompletion {
-  id: string;
-  task_id: string;
-  user_id: string;
-  /** ISO date string: YYYY-MM-DD */
-  completed_date: string;
-  created_at: string;
-}
-
-/** Computed streak analytics for a single task */
-export interface TaskStreak {
-  task: Task;
-  currentStreak: number;
-  longestStreak: number;
-  totalCompletions: number;
-  /** ISO date of the most recent completion, or null */
-  lastCompleted: string | null;
-  completedToday: boolean;
-  /** Raw completions used for history visualisation */
-  completions: TaskCompletion[];
-}
-
-/** A summary of task completions for a single calendar day */
-export interface DailyReport {
-  /** ISO date: YYYY-MM-DD */
-  date: string;
-  completedTasks: Task[];
-  scheduledTasks: Task[];
-  /** Fraction 0-1 */
-  completionRate: number;
-}
-
-/** Authenticated user profile */
-export interface Profile {
-  id: string;
-  email: string;
-  created_at: string;
-  username?: string;
-  bio?: string;
-  default_active_days?: number[];
-  timezone?: string;
-}
-
-/** Values submitted by the task creation / edit form */
-export interface TaskFormData {
-  name: string;
-  description?: string;
-  active_days: DayOfWeek[];
-  color: string;
-}
-
-/** Theme preference stored in localStorage */
-export type Theme = "light" | "dark" | "system";
-
-// --- New v2 domain types ---------------------------------------------------
-
-export interface Goal {
-  id: string;
+  kind: "task" | "list";
   user_id: string;
   title: string;
-  description: string | null;
-  active_days: number[];
-  priority: 1 | 2 | 3 | 4 | 5;
+  priority: Priority;
   tag_ids: string[];
-  is_active: boolean;
+  status: RecordStatus;
+  updated_at: string;
   created_at: string;
-}
-
-export interface GoalStreak {
-  current: number;
-  longest: number;
-  total: number;
-  last_completed: string | null;
-  completed_today: boolean;
-}
-
-export interface GoalWithStreak extends Goal {
-  streak: GoalStreak;
-}
-
-export interface Activity {
-  id: string;
-  user_id: string;
+  // task-only
+  description: string | null;
+  is_recurring: boolean;
+  active_days: DayOfWeek[];
+  specific_date: string | null;   // ISO date YYYY-MM-DD
+  time_from: string | null;       // HH:MM
+  time_to: string | null;         // HH:MM
   assigner_user_id: string | null;
   assignee_user_id: string | null;
   group_id: string | null;
-  title: string;
-  description: string | null;
-  activity_date: string | null;
-  activity_time: string | null;
-  priority: 1 | 2 | 3 | 4 | 5;
-  tag_ids: string[];
-  status: "pending" | "accepted" | "completed" | "rejected";
-  reminder_minutes: number[];
-  /** Joined username of the assigner, populated by API responses */
-  creator_username?: string;
+  list_id: string | null;
+  // list-only
+  social_mutual: Array<{ type: "user" | "group"; id: string }>;
+}
+
+/** Task record (kind = 'task') */
+export interface Task extends DBRecord {
+  kind: "task";
+  tasks?: never;
+}
+
+/** List record (kind = 'list') with its tasks populated */
+export interface List extends DBRecord {
+  kind: "list";
+  tasks?: Task[];
+}
+
+export type AppRecord = Task | List;
+
+export function isTask(r: DBRecord): r is Task { return r.kind === "task"; }
+export function isList(r: DBRecord): r is List  { return r.kind === "list"; }
+
+/** Completion entry for a recurring task (one row per day) */
+export interface RecordCompletion {
+  id: string;
+  record_id: string;
+  user_id: string;
+  completed_date: string;  // YYYY-MM-DD
   created_at: string;
 }
 
+/** Tag */
 export interface Tag {
   id: string;
   name: string;
-  color: string | null;
+  color: string;
+  created_at: string;
 }
 
-export interface SubRecord {
+/** Notification */
+export interface Notification {
   id: string;
-  goal_id: string | null;
-  activity_id: string | null;
   user_id: string;
-  title: string;
-  completed: boolean;
+  type: string;
+  payload: Record<string, unknown>;
+  read: boolean;
   created_at: string;
 }
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  created_at: string;
-  username?: string;
-  bio?: string;
-  default_active_days?: number[];
-  timezone?: string;
-}
-
-/** Alias used by use-user hook and auth API */
-export type User = UserProfile;
-
+/** Friendship */
 export interface Friendship {
   id: string;
+  requester_id: string;
+  addressee_id: string;
   status: "pending" | "accepted" | "blocked";
-  auto_accept_activities: boolean;
-  is_requester: boolean;
-  friend: {
-    id: string;
-    username: string;
-    nickname: string;
-    avatar_url: string | null;
-  };
+  auto_accept_tasks: boolean;
   created_at: string;
   updated_at: string;
+  friend?: { id: string; username: string; nickname: string };
+  is_requester?: boolean;
 }
 
+/** Group */
 export interface Group {
   id: string;
   name: string;
   description: string | null;
   created_by: string;
-  member_count: number;
-  my_role: "owner" | "admin" | "member";
-  my_status: "active" | "pending";
   created_at: string;
+  /** Populated by API when listing user's groups */
+  my_status?: "pending" | "active";
+  my_role?: "owner" | "admin" | "member";
 }
 
-export type NotificationType =
-  | "friend_request"
-  | "friend_accepted"
-  | "activity_assigned"
-  | "activity_accepted"
-  | "activity_rejected"
-  | "group_invite"
-  | "group_activity"
-  | "group_accepted";
-
-export interface Notification {
+/** Authenticated user */
+export interface User {
   id: string;
-  user_id: string;
-  type: NotificationType;
-  data: Record<string, unknown>;
-  read: boolean;
-  created_at: string;
+  email: string;
+  username?: string;
+  bio?: string;
+  default_active_days?: number[];
+  timezone?: string;
 }
 
-// --- Constants -------------------------------------------------------------
-
-/** Per-tab accent colours matching the spec */
-export const TAB_COLORS = {
-  streaks:  "#EAB308",   // yellow
-  records:  "#22C55E",   // green
-  today:    "#F07F13",   // orange (brand)
-  social:   "#3B82F6",   // blue
-  settings: "#EF4444",   // red
-} as const;
-
-/** Priority badge colours (1 = highest) */
-export const PRIORITY_COLORS: Record<number, string> = {
-  1: "#EF4444",  // red
-  2: "#F97316",  // orange
-  3: "#EAB308",  // yellow
-  4: "#3B82F6",  // blue
-  5: "#6B7280",  // gray
-};
-
-/** Human-readable priority labels */
-export const PRIORITY_LABELS: Record<number, string> = {
-  1: "Critical",
-  2: "High",
-  3: "Medium",
-  4: "Low",
-  5: "Minimal",
-};
-
-/** Short day-of-week labels indexed 0 (Sun) - 6 (Sat) */
-export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-
-// --- Performance helpers ---------------------------------------------------
-
-/**
- * Maps a completion rate (0-1) to one of the five colour names:
- * 0-20% red | 21-40% yellow | 41-60% blue | 61-80% green | 81-100% orange
- */
-export function getPerformanceColor(rate: number): string {
-  if (rate <= 0.20) return "red";
-  if (rate <= 0.40) return "yellow";
-  if (rate <= 0.60) return "blue";
-  if (rate <= 0.80) return "green";
-  return "orange";
-}
-
-/** Maps a completion rate to a human-readable performance label */
-export function getPerformanceLabel(rate: number): string {
-  if (rate <= 0.20) return "Poor";
-  if (rate <= 0.40) return "Bad";
-  if (rate <= 0.60) return "Average";
-  if (rate <= 0.80) return "Good";
-  return "Excellent";
-}
-
-/** Severity levels for toast notifications */
-export type ToastType = "success" | "error" | "warning" | "info";
-
-/** A single toast notification item */
+/** Toast notification */
 export interface Toast {
   id: string;
   message: string;
   type: ToastType;
   duration?: number;
 }
+
+/** Toast type alias (includes warning for backwards compat) */
+export type ToastType = "success" | "error" | "info" | "warning";
+
+/** Theme */
+export type Theme = "light" | "dark" | "system";
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Priority strip/label colors: P1=red, P2=yellow, P3=orange, P4=blue, P5=green */
+export const PRIORITY_COLORS: Record<Priority, string> = {
+  1: "#EF4444",
+  2: "#EAB308",
+  3: "#F07F13",
+  4: "#3B82F6",
+  5: "#22C55E",
+};
+
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  1: "P1", 2: "P2", 3: "P3", 4: "P4", 5: "P5",
+};
+
+export const PRIORITY_NAMES: Record<Priority, string> = {
+  1: "Critical", 2: "High", 3: "Medium", 4: "Low", 5: "Minimal",
+};
+
+/**
+ * Reminder fire times in minutes-before-start, by priority.
+ * P1 = 5 reminders, P5 = 1 (at start only).
+ */
+export const REMINDER_TIMES_BY_PRIORITY: Record<Priority, number[]> = {
+  1: [60, 30, 15, 5, 0],
+  2: [30, 15, 5, 0],
+  3: [15, 5, 0],
+  4: [5, 0],
+  5: [0],
+};
+
+/** Snooze gap in minutes by priority */
+export const SNOOZE_GAP_BY_PRIORITY: Record<Priority, number> = {
+  1: 5, 2: 10, 3: 15, 4: 20, 5: 30,
+};
+
+export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** Tab accent colors */
+export const TAB_COLORS = {
+  streaks: "#EF4444",
+  records: "#EAB308",
+  today:   "#F07F13",
+  social:  "#3B82F6",
+  inbox:   "#22C55E",
+} as const;

@@ -7,7 +7,7 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetch_ = useCallback(async () => {
+  const refresh = useCallback(async () => {
     const r = await fetch("/api/notifications");
     if (!r.ok) return;
     const d = await r.json();
@@ -16,7 +16,15 @@ export function useNotifications() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetch_(); }, [fetch_]);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const markRead = useCallback(async (id: string) => {
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    setUnreadCount((c) => Math.max(0, c - 1));
+  }, []);
 
   const markAllRead = useCallback(async () => {
     await fetch("/api/notifications", { method: "PATCH" });
@@ -24,5 +32,5 @@ export function useNotifications() {
     setUnreadCount(0);
   }, []);
 
-  return { notifications, unreadCount, loading, refetch: fetch_, markAllRead };
+  return { notifications, unreadCount, loading, refresh, markRead, markAllRead };
 }

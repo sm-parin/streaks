@@ -5,78 +5,96 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
 import { StreakCard } from "@/components/streaks/streak-card";
 import { ReportsView } from "@/components/streaks/reports-view";
-import { TAB_COLORS } from "@/lib/types";
-import type { GoalWithStreak } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
+import type { Task, RecordCompletion } from "@/lib/types";
+import { buildTaskStreak } from "@/lib/utils/streak";
+import { toLocalDateString } from "@/lib/utils/date";
 
-type SubTab = "streaks" | "reports";
+type SubTab = "reports" | "streaks";
 
 export default function StreaksPage() {
-  const [goals, setGoals] = useState<GoalWithStreak[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [completions, setCompletions] = useState<RecordCompletion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [subTab, setSubTab] = useState<SubTab>("streaks");
+  const [subTab, setSubTab] = useState<SubTab>("reports");
 
-  const fetchGoals = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const r = await fetch("/api/goals?streaks=true&active=true");
-    if (r.ok) { const d = await r.json(); setGoals(d.goals ?? []); }
-    setLoading(false);
+    try {
+      const [recRes, compRes] = await Promise.all([
+        fetch("/api/records"),
+        fetch("/api/completions"),
+      ]);
+      if (recRes.ok) {
+        const d = await recRes.json();
+        const recurring = (d.records ?? []).filter(
+          (r: Task) => r.kind === "task" && r.is_recurring
+        ) as Task[];
+        setTasks(recurring);
+      }
+      if (compRes.ok) {
+        const d = await compRes.json();
+        setCompletions(d.completions ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchGoals(); }, [fetchGoals]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const TABS: { id: SubTab; icon: React.ReactNode; label: string }[] = [
-    { id: "streaks", icon: <Flame className="w-4 h-4" />, label: "Streaks" },
-    { id: "reports", icon: <TrendingUp className="w-4 h-4" />, label: "Reports" },
+  const today = toLocalDateString(new Date());
+  const streaks = tasks.map((t) => buildTaskStreak(t, completions, today));
+
+  const TABS: { id: SubTab; label: string; icon: React.ReactNode }[] = [
+    { id: "reports", label: "Reports", icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "streaks", label: "Streaks", icon: <Flame className="w-4 h-4" /> },
   ];
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       <PageHeader
         title="Streaks"
-        subtitle="Your recurring goals"
-        accentColor={TAB_COLORS.streaks}
+        subtitle="Your recurring tasks"
+        accentColor="var(--tab-streaks)"
       />
 
-      {/* Sub-tabs â€” underline style */}
-      <div className="flex border-b border-[var(--color-border)] mb-4">
-        {TABS.map((t) => (
+      <div className="flex gap-1 p-1 bg-[var(--color-bg-secondary)] rounded-xl">
+        {TABS.map(({ id, label, icon }) => (
           <button
-            key={t.id}
-            onClick={() => setSubTab(t.id)}
+            key={id}
+            onClick={() => setSubTab(id)}
             className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-              subTab === t.id
-                ? "border-[var(--color-brand)] text-[var(--color-brand)]"
-                : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all",
+              subTab === id
+                ? "bg-[var(--color-surface-raised)] text-[var(--tab-streaks)] shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
             )}
           >
-            {t.icon}
-            {t.label}
+            {icon}
+            {label}
           </button>
         ))}
       </div>
 
-      {subTab === "streaks" && (
-        loading ? (
-          <div className="flex justify-center py-16"><Spinner /></div>
-        ) : goals.length === 0 ? (
-          <div className="text-center py-16 text-[var(--color-text-secondary)]">
-            <Flame className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No active goals</p>
-            <p className="text-sm mt-1">Create your first goal to start a streak</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {goals.map((g) => (
-              <StreakCard key={g.id} goal={g} onUpdate={fetchGoals} />
-            ))}
-          </div>
-        )
+      {loading ? (
+        <div className="flex justify-center py-12"><Spinner /></div>
+      ) : subTab === "reports" ? (
+        <ReportsView streaks={streaks} today={today} />
+      ) : (
+        <div className="space-y-3">
+          {streaks.length === 0 ? (
+            <div className="text-center py-16">
+              <Flame className="w-8 h-8 text-[var(--color-text-disabled)] mx-auto mb-3" />
+              <p className="text-sm text-[var(--color-text-secondary)]">No recurring tasks yet.</p>
+            </div>
+          ) : (
+            streaks.map((s) => (
+              <StreakCard key={s.task.id} streak={s} today={today} />
+            ))
+          )}
+        </div>
       )}
-
-      {subTab === "reports" && <ReportsView />}
     </div>
   );
 }
-

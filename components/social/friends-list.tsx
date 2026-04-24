@@ -1,11 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { UserCheck, UserX, MoreHorizontal, Activity } from "lucide-react";
+import { UserCheck, UserX, Activity } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/components/ui/toast";
 import type { Friendship } from "@/lib/types";
-import { cn } from "@/lib/utils/cn";
-import { RecordFormDialog } from "@/components/records/record-form-dialog";
+import { RCM } from "@/components/records/rcm";
 
 export function FriendsList() {
   const [friendships, setFriendships] = useState<Friendship[]>([]);
@@ -42,7 +41,9 @@ export function FriendsList() {
     <>
       {pending.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">Incoming Requests ({pending.length})</h3>
+          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">
+            Incoming Requests ({pending.length})
+          </h3>
           <div className="space-y-2">
             {pending.map((f) => (
               <div key={f.id} className="flex items-center gap-3 bg-[var(--color-surface)] border border-[var(--color-brand)] rounded-[var(--radius-lg)] p-3">
@@ -53,8 +54,12 @@ export function FriendsList() {
                   <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username}</p>
                 </div>
-                <button onClick={() => respond(f.id, "accept")} className="p-1.5 rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)]"><UserCheck className="w-4 h-4" /></button>
-                <button onClick={() => respond(f.id, "reject")} className="p-1.5 rounded-full bg-[var(--color-error-bg)] text-[var(--color-error)]"><UserX className="w-4 h-4" /></button>
+                <button onClick={() => respond(f.id, "accept")} className="p-1.5 rounded-full bg-[var(--color-success-bg)] text-[var(--color-success)]">
+                  <UserCheck className="w-4 h-4" />
+                </button>
+                <button onClick={() => respond(f.id, "reject")} className="p-1.5 rounded-full bg-[var(--color-error-bg)] text-[var(--color-error)]">
+                  <UserX className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>
@@ -63,7 +68,9 @@ export function FriendsList() {
 
       {accepted.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">Friends ({accepted.length})</h3>
+          <h3 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase mb-2">
+            Friends ({accepted.length})
+          </h3>
           <div className="space-y-2">
             {accepted.map((f) => (
               <div key={f.id} className="flex items-center gap-3 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3">
@@ -94,7 +101,7 @@ export function FriendsList() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username} Γö¼Γòû Pending</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username} — Pending</p>
                 </div>
               </div>
             ))}
@@ -111,11 +118,13 @@ export function FriendsList() {
       )}
 
       {assigning && (
-        <RecordFormDialog
-          type="activity"
-          prefill={{ assignee_user_id: assigning.friend?.id, assignee_label: assigning.friend?.nickname ?? "" }}
+        <RCM
+          open={!!assigning}
+          mode="create"
+          initialKind="task"
+          prefill={{ assignee_user_id: assigning.friend?.id }}
           onClose={() => setAssigning(null)}
-          onSaved={() => { setAssigning(null); showToast("Activity assigned!", "success"); }}
+          onSave={() => { setAssigning(null); showToast("Task assigned!", "success"); }}
         />
       )}
     </>
