@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Flame, Eye, EyeOff } from "lucide-react";
@@ -12,6 +12,14 @@ import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
+    return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const searchParams = useSearchParams();
   const refUsername  = searchParams.get("ref") ?? "";
   const [email, setEmail] = useState("");
