@@ -51,16 +51,23 @@ export default function SocialPage() {
         {subTab === "friends" ? <FriendsList /> : <GroupsList />}
       </div>
 
-      {/* Find Friends full-screen slide-over */}
+      {/* Find Friends full-screen slide-over — constrained to same width as page */}
       <div
         className={cn(
-          "fixed inset-0 bg-[var(--color-bg)] z-50",
-          "transition-transform duration-[var(--transition-slow)] ease-out",
-          showFind ? "translate-x-0" : "translate-x-full pointer-events-none"
+          "fixed inset-0 z-50 flex justify-center overflow-hidden",
+          !showFind && "pointer-events-none"
         )}
         aria-hidden={!showFind}
       >
-        <FindFriends onBack={() => setShowFind(false)} />
+        <div
+          className={cn(
+            "w-full max-w-2xl h-full bg-[var(--color-bg)]",
+            "transition-transform duration-[var(--transition-slow)] ease-out",
+            showFind ? "translate-x-0" : "translate-x-full"
+          )}
+        >
+          <FindFriends onBack={() => setShowFind(false)} />
+        </div>
       </div>
     </div>
   );

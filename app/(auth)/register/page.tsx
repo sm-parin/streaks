@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Flame, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
+  const refUsername  = searchParams.get("ref") ?? "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -69,7 +72,7 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback${refUsername ? `?ref=${encodeURIComponent(refUsername)}` : ""}`,
         },
       });
       if (error) {

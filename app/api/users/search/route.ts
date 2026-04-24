@@ -11,11 +11,11 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
 
-  // Partial, case-insensitive match on either username or nickname
+  // Partial, case-insensitive match on username
   const { data: users, error } = await supabase
-    .from("users")
-    .select("id, username, nickname, avatar_url")
-    .or(`username.ilike.%${q}%,nickname.ilike.%${q}%`)
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .ilike("username", `%${q}%`)
     .neq("id", session.sub)
     .limit(15);
 

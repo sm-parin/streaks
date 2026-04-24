@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import { CheckCircle2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { type Task, PRIORITY_COLORS, DAY_LABELS } from "@/lib/types";
 
@@ -13,28 +12,13 @@ interface RecordCardProps {
   onClick?: () => void;
   /** Called on double tap / double click — typically opens edit */
   onDoubleClick?: () => void;
-  /**
-   * Desktop-only: shown as an icon button on hover (right side of the card).
-   * Typically maps to the swipe-right complete action.
-   */
-  onComplete?: () => void;
-  /**
-   * Desktop-only: shown as an icon button on hover (right side of the card).
-   * Typically maps to the swipe-left delete action.
-   */
-  onDelete?: () => void;
   className?: string;
 }
 
 /**
  * Card representing a single task (record of kind = 'task').
- *
- * Layout:
- *  [priority strip | content | (hover) action icons]
- *
- * On mobile: action icons are hidden; swipe gestures handle complete/delete.
- * On desktop: compact icon buttons slide in from the right on hover and sit
- *   WITHIN allocated space — content gets slightly narrower, no overlap.
+ * Actions (complete, delete) are handled exclusively via swipe gestures on
+ * both mobile and desktop — no hover buttons are rendered.
  */
 export function RecordCard({
   task,
@@ -42,8 +26,6 @@ export function RecordCard({
   tags = [],
   onClick,
   onDoubleClick,
-  onComplete,
-  onDelete,
   className,
 }: RecordCardProps) {
   const clickCount = useRef(0);
@@ -83,8 +65,6 @@ export function RecordCard({
       ? `${task.time_from.slice(0, 5)}${task.time_to ? ` – ${task.time_to.slice(0, 5)}` : ""}`
       : "";
 
-  const hasActions = !!(onComplete || onDelete);
-
   return (
     <div
       role="button"
@@ -92,7 +72,7 @@ export function RecordCard({
       onClick={handleClick}
       onKeyDown={(e) => e.key === "Enter" && handleClick()}
       className={cn(
-        "group relative flex overflow-hidden rounded-lg border border-[var(--color-border)]",
+        "relative flex overflow-hidden rounded-lg border border-[var(--color-border)]",
         "bg-[var(--color-surface-raised)] select-none cursor-pointer",
         "hover:border-[var(--color-border-strong)] transition-colors duration-[var(--transition-fast)]",
         isCompleted && "opacity-55",
@@ -106,13 +86,8 @@ export function RecordCard({
         aria-label={`Priority ${task.priority}`}
       />
 
-      {/* Content — narrows on desktop hover to make room for action icons */}
-      <div
-        className={cn(
-          "flex-1 min-w-0 px-3 py-2.5 space-y-1 transition-[padding-right] duration-[var(--transition-fast)]",
-          hasActions && "md:group-hover:pr-16"
-        )}
-      >
+      {/* Content */}
+      <div className="flex-1 min-w-0 px-3 py-2.5 space-y-1">
         {/* Row 1: Title + schedule */}
         <div className="flex items-start justify-between gap-2">
           <p
@@ -161,39 +136,6 @@ export function RecordCard({
           </div>
         )}
       </div>
-
-      {/* Desktop hover action icons — slide in from right, sit in allocated space */}
-      {hasActions && (
-        <div
-          className={cn(
-            "absolute right-0 inset-y-0 hidden md:flex items-center gap-0.5 px-2",
-            "opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0",
-            "transition-all duration-[var(--transition-fast)] pointer-events-none group-hover:pointer-events-auto"
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {onComplete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onComplete(); }}
-              aria-label="Complete"
-              title="Mark complete"
-              className="p-1.5 rounded-md text-[var(--color-success)] hover:bg-[var(--color-success-bg)] transition-colors"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              aria-label="Delete"
-              title="Delete"
-              className="p-1.5 rounded-md text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

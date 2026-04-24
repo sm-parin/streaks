@@ -129,7 +129,6 @@ export default function RecordsPage() {
                   tags={tags}
                   onClick={() => openInfo(task)}
                   onDoubleClick={() => openEdit(task)}
-                  onDelete={() => setConfirmDelete(task.id)}
                 />
               </SwipeableWrapper>
             ))}

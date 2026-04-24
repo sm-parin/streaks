@@ -26,7 +26,6 @@ const TABS: { id: SubTab; label: string }[] = [
 type SearchUser = {
   id: string;
   username: string;
-  nickname: string | null;
   avatar_url: string | null;
   friendship: { id: string; status: string; is_requester: boolean } | null;
 };
@@ -181,9 +180,8 @@ export function FindFriends({ onBack }: FindFriendsProps) {
                   >
                     <div>
                       <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        {u.nickname || u.username}
+                        {u.username}
                       </p>
-                      <p className="text-xs text-[var(--color-text-secondary)]">@{u.username}</p>
                     </div>
 
                     {u.id === user?.id ? (

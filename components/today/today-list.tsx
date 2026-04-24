@@ -117,7 +117,6 @@ export function TodayList() {
                   completedToday={completedIds.has(task.id)}
                   tags={tags}
                   onClick={() => setInfoTask(task)}
-                  onComplete={isDone ? undefined : () => toggleComplete(task.id, task.is_recurring)}
                 />
               </SwipeableWrapper>
             );
