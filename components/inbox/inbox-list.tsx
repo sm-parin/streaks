@@ -1,48 +1,56 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { Bell, Loader2, Check, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { SubTabBar, type SubTab } from "@/components/ui/subtab-bar";
 import { type Notification } from "@/lib/types";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 
-const SUBTABS = ["All", "Notifications", "Incoming Records", "Friend Requests"] as const;
-type Subtab = typeof SUBTABS[number];
+type InboxTab = "all" | "notifications" | "incoming" | "friends";
 
-function notifType(n: Notification): Subtab {
-  if (n.type === "friend_request" || n.type === "friend_accepted") return "Friend Requests";
-  if (n.type === "task_assigned" || n.type === "task_accepted" || n.type === "task_rejected")
-    return "Incoming Records";
-  return "Notifications";
+const TABS: SubTab<InboxTab>[] = [
+  { id: "all",           label: "All"              },
+  { id: "notifications", label: "Notifications"    },
+  { id: "incoming",      label: "Incoming Records" },
+  { id: "friends",       label: "Friend Requests"  },
+];
+
+/** Maps a raw notification type to a subtab id */
+function notifTab(n: Notification): InboxTab {
+  if (n.type === "friend_request" || n.type === "friend_accepted") return "friends";
+  if (n.type === "task_assigned"  || n.type === "task_accepted"  || n.type === "task_rejected")
+    return "incoming";
+  return "notifications";
 }
 
-function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string) => void }) {
-  const label: Record<string, string> = {
-    friend_request: "Friend Request",
-    friend_accepted: "Friend Accepted",
-    task_assigned: "Task Assigned",
-    task_accepted: "Task Accepted",
-    task_rejected: "Task Rejected",
-    reminder: "Reminder",
-  };
+const TYPE_LABEL: Record<string, string> = {
+  friend_request:  "Friend Request",
+  friend_accepted: "Friend Accepted",
+  task_assigned:   "Task Assigned",
+  task_accepted:   "Task Accepted",
+  task_rejected:   "Task Rejected",
+  reminder:        "Reminder",
+};
 
+/** Individual notification card */
+function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string) => void }) {
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-3 rounded-xl border border-[var(--color-border)]",
-        !n.read && "bg-[var(--color-brand)]/5 border-[var(--color-brand)]/20"
+        "flex items-start gap-3 px-4 py-3 rounded-lg border border-[var(--color-border)]",
+        !n.read && "bg-[var(--color-brand)]/5 border-[var(--color-brand)]/25"
       )}
     >
-      <div className="mt-0.5">
-        <Bell className="w-4 h-4 text-[var(--tab-inbox)]" />
-      </div>
+      <Bell className="w-4 h-4 mt-0.5 shrink-0 text-[var(--tab-inbox)]" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
-          {label[n.type] ?? n.type}
+        <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
+          {TYPE_LABEL[n.type] ?? n.type}
         </p>
         <p className="text-sm text-[var(--color-text-primary)] mt-0.5 line-clamp-2">
           {(n.payload as { title?: string })?.title ?? JSON.stringify(n.payload)}
         </p>
-        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+        <p className="text-[11px] text-[var(--color-text-disabled)] mt-1">
           {new Date(n.created_at).toLocaleDateString(undefined, {
             month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
           })}
@@ -51,8 +59,8 @@ function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string
       {!n.read && (
         <button
           onClick={() => onMarkRead(n.id)}
-          className="shrink-0 text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] transition-colors"
           aria-label="Mark as read"
+          className="shrink-0 text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] transition-colors"
         >
           <Check className="w-4 h-4" />
         </button>
@@ -61,32 +69,32 @@ function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string
   );
 }
 
+/** Inbox list with filtered subtabs */
 export function InboxList() {
   const { notifications, loading, markRead, markAllRead, refresh } = useNotifications();
-  const [activeTab, setActiveTab] = useState<Subtab>("All");
+  const [activeTab, setActiveTab] = useState<InboxTab>("all");
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const filtered =
-    activeTab === "All"
-      ? notifications
-      : notifications.filter((n) => notifType(n) === activeTab);
-
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const filtered =
+    activeTab === "all"
+      ? notifications
+      : notifications.filter((n) => notifTab(n) === activeTab);
+
+  const tabsWithCounts: SubTab<InboxTab>[] = TABS.map((t) => ({
+    ...t,
+    count: t.id === "all"
+      ? unreadCount || undefined
+      : notifications.filter((n) => !n.read && notifTab(n) === t.id).length || undefined,
+  }));
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-lg font-bold text-[var(--color-text-primary)]">
-            Inbox
-            {unreadCount > 0 && (
-              <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[var(--tab-inbox)] text-white font-medium">
-                {unreadCount}
-              </span>
-            )}
-          </h1>
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="text-lg font-bold text-[var(--color-text-primary)]">Inbox</h1>
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
@@ -98,23 +106,14 @@ export function InboxList() {
         )}
       </div>
 
-      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
-        {SUBTABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border",
-              activeTab === tab
-                ? "border-[var(--tab-inbox)] text-white"
-                : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]"
-            )}
-            style={activeTab === tab ? { backgroundColor: "var(--tab-inbox)" } : {}}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      {/* Underline subtab bar */}
+      <SubTabBar
+        tabs={tabsWithCounts}
+        active={activeTab}
+        onChange={setActiveTab}
+        accentColor="var(--tab-inbox)"
+        className="mb-5 -mx-4 px-4"
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-16">

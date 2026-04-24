@@ -1,7 +1,7 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { CheckCircle, Circle, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { useToday } from "@/lib/hooks/use-today";
 import { useTags } from "@/lib/hooks/use-tags";
 import { type Task, type List } from "@/lib/types";
@@ -10,6 +10,13 @@ import { RecordCard } from "@/components/records/record-card";
 import { ListCard } from "@/components/records/list-card";
 import { RCM } from "@/components/records/rcm";
 
+/**
+ * Main view for the Today tab.
+ *
+ * Renders lists first, then standalone tasks. Completed tasks are sorted to
+ * the bottom of their section — no separate "Completed" heading is shown.
+ * Swipe right to complete, swipe left to undo.
+ */
 export function TodayList() {
   const { tasks, completedIds, lists, loading, error, refresh, toggleComplete } = useToday();
   const { tags } = useTags();
@@ -17,7 +24,7 @@ export function TodayList() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const today = new Date();
+  const today     = new Date();
   const dateLabel = today.toLocaleDateString(undefined, {
     weekday: "long", month: "long", day: "numeric",
   });
@@ -42,19 +49,21 @@ export function TodayList() {
   }
 
   const listIds = new Set(lists.map((l) => l.id));
+
+  /** Tasks not belonging to a visible list */
   const standaloneTasks = tasks.filter((t) => !t.list_id || !listIds.has(t.list_id));
 
+  /** Sort: incomplete first, completed at the end */
+  const sortedTasks = [...standaloneTasks].sort((a, b) => {
+    const aDone = completedIds.has(a.id) || a.status === "completed" ? 1 : 0;
+    const bDone = completedIds.has(b.id) || b.status === "completed" ? 1 : 0;
+    return aDone - bDone;
+  });
+
   const listItems = lists.map((l) => ({
-    list: l as List,
+    list:  l as List,
     tasks: tasks.filter((t) => t.list_id === l.id),
   }));
-
-  const incompleteTasks = standaloneTasks.filter(
-    (t) => !completedIds.has(t.id) && t.status !== "completed"
-  );
-  const completedTasks = standaloneTasks.filter(
-    (t) => completedIds.has(t.id) || t.status === "completed"
-  );
 
   const totalScheduled = tasks.length;
   const totalDone = tasks.filter(
@@ -63,6 +72,7 @@ export function TodayList() {
 
   return (
     <>
+      {/* Header */}
       <div className="mb-5">
         <h1 className="text-lg font-bold text-[var(--color-text-primary)]">{dateLabel}</h1>
         {totalScheduled > 0 && (
@@ -79,6 +89,7 @@ export function TodayList() {
         </div>
       ) : (
         <div className="space-y-2">
+          {/* Lists */}
           {listItems.map(({ list, tasks: listTasks }) => (
             <ListCard
               key={list.id}
@@ -89,50 +100,35 @@ export function TodayList() {
             />
           ))}
 
-          {incompleteTasks.map((task) => (
-            <SwipeableWrapper
-              key={task.id}
-              onSwipeRight={() => toggleComplete(task.id, task.is_recurring)}
-              rightLabel="Done"
-              rightIcon={<CheckCircle className="w-4 h-4" />}
-            >
-              <RecordCard
-                task={task}
-                completedToday={false}
-                tags={tags}
-                onClick={() => setInfoTask(task)}
-              />
-            </SwipeableWrapper>
-          ))}
-
-          {completedTasks.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs text-[var(--color-text-secondary)] uppercase tracking-wide font-medium px-1">
-                Completed
-              </p>
-              {completedTasks.map((task) => (
-                <SwipeableWrapper
-                  key={task.id}
-                  onSwipeLeft={() => toggleComplete(task.id, task.is_recurring)}
-                  leftLabel="Undo"
-                  leftIcon={<Circle className="w-4 h-4" />}
-                >
-                  <RecordCard
-                    task={task}
-                    completedToday={completedIds.has(task.id)}
-                    tags={tags}
-                    onClick={() => setInfoTask(task)}
-                  />
-                </SwipeableWrapper>
-              ))}
-            </div>
-          )}
+          {/* Standalone tasks — completed sink to the bottom, no section label */}
+          {sortedTasks.map((task) => {
+            const isDone = completedIds.has(task.id) || task.status === "completed";
+            return (
+              <SwipeableWrapper
+                key={task.id}
+                onSwipeRight={isDone ? undefined : () => toggleComplete(task.id, task.is_recurring)}
+                onSwipeLeft={isDone  ? () => toggleComplete(task.id, task.is_recurring) : undefined}
+                rightLabel="Done"
+                leftLabel="Undo"
+                rightIcon={<CheckCircle className="w-4 h-4" />}
+              >
+                <RecordCard
+                  task={task}
+                  completedToday={completedIds.has(task.id)}
+                  tags={tags}
+                  onClick={() => setInfoTask(task)}
+                  onComplete={isDone ? undefined : () => toggleComplete(task.id, task.is_recurring)}
+                />
+              </SwipeableWrapper>
+            );
+          })}
         </div>
       )}
 
+      {/* Info modal */}
       {infoTask && (
         <RCM
-          open={!!infoTask}
+          open
           onClose={() => setInfoTask(null)}
           mode="info"
           initialKind="task"

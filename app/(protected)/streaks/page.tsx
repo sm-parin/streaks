@@ -1,22 +1,29 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
+import { SubTabBar } from "@/components/ui/subtab-bar";
 import { StreakCard } from "@/components/streaks/streak-card";
 import { ReportsView } from "@/components/streaks/reports-view";
-import { cn } from "@/lib/utils/cn";
 import type { Task, RecordCompletion } from "@/lib/types";
 import { buildTaskStreak } from "@/lib/utils/streak";
 import { toLocalDateString } from "@/lib/utils/date";
 
 type SubTab = "reports" | "streaks";
 
+const TABS: { id: SubTab; label: string }[] = [
+  { id: "reports", label: "Reports" },
+  { id: "streaks", label: "Streaks" },
+];
+
+/** Streaks page — shows habit reports and per-task streak data */
 export default function StreaksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks,       setTasks]       = useState<Task[]>([]);
   const [completions, setCompletions] = useState<RecordCompletion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [subTab, setSubTab] = useState<SubTab>("reports");
+  const [loading,     setLoading]     = useState(true);
+  const [subTab,      setSubTab]      = useState<SubTab>("reports");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -27,10 +34,11 @@ export default function StreaksPage() {
       ]);
       if (recRes.ok) {
         const d = await recRes.json();
-        const recurring = (d.records ?? []).filter(
-          (r: Task) => r.kind === "task" && r.is_recurring
-        ) as Task[];
-        setTasks(recurring);
+        setTasks(
+          (d.records ?? []).filter(
+            (r: Task) => r.kind === "task" && r.is_recurring
+          ) as Task[]
+        );
       }
       if (compRes.ok) {
         const d = await compRes.json();
@@ -43,39 +51,24 @@ export default function StreaksPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const today = toLocalDateString(new Date());
+  const today   = toLocalDateString(new Date());
   const streaks = tasks.map((t) => buildTaskStreak(t, completions, today));
 
-  const TABS: { id: SubTab; label: string; icon: React.ReactNode }[] = [
-    { id: "reports", label: "Reports", icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "streaks", label: "Streaks", icon: <Flame className="w-4 h-4" /> },
-  ];
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-0">
       <PageHeader
         title="Streaks"
-        subtitle="Your recurring tasks"
         accentColor="var(--tab-streaks)"
+        className="mb-4"
       />
 
-      <div className="flex gap-1 p-1 bg-[var(--color-bg-secondary)] rounded-xl">
-        {TABS.map(({ id, label, icon }) => (
-          <button
-            key={id}
-            onClick={() => setSubTab(id)}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-all",
-              subTab === id
-                ? "bg-[var(--color-surface-raised)] text-[var(--tab-streaks)] shadow-sm"
-                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-            )}
-          >
-            {icon}
-            {label}
-          </button>
-        ))}
-      </div>
+      <SubTabBar
+        tabs={TABS}
+        active={subTab}
+        onChange={setSubTab}
+        accentColor="var(--tab-streaks)"
+        className="mb-5"
+      />
 
       {loading ? (
         <div className="flex justify-center py-12"><Spinner /></div>

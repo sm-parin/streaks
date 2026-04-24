@@ -9,8 +9,13 @@ create extension if not exists "uuid-ossp";
 -- Drop old triggers/functions/tables
 drop trigger if exists on_auth_user_created on auth.users;
 drop trigger if exists on_auth_user_profile_sync on auth.users;
-drop trigger if exists records_updated_at on public.records;
-drop trigger if exists task_list_updated_at on public.records;
+-- Trigger drops are handled by DROP TABLE CASCADE below; wrap in DO to avoid
+-- "relation does not exist" when running on a fresh database
+do $$ begin
+  drop trigger if exists records_updated_at on public.records;
+  drop trigger if exists task_list_updated_at on public.records;
+exception when undefined_table then null;
+end $$;
 drop function if exists public.handle_new_user() cascade;
 drop function if exists public.handle_user_profile_upsert() cascade;
 drop function if exists public.update_record_timestamp() cascade;
@@ -113,10 +118,7 @@ create table public.groups (
 );
 alter table public.groups enable row level security;
 create policy "Group owner manages group" on public.groups using (auth.uid() = created_by);
-create policy "Members view groups" on public.groups for select using (
-  auth.uid() = created_by or
-  exists (select 1 from public.group_members where group_id = id and user_id = auth.uid() and status = 'active')
-);
+-- "Members view groups" policy added after group_members table is created below
 
 create table public.group_members (
   id         uuid primary key default uuid_generate_v4(),
@@ -135,27 +137,26 @@ create policy "Users view own memberships" on public.group_members
             where gm.group_id = group_id and gm.user_id = auth.uid() and gm.status = 'active'));
 create policy "Users manage own memberships" on public.group_members using (auth.uid() = user_id);
 
+-- Now safe to add: group_members exists
+create policy "Members view groups" on public.groups for select using (
+  auth.uid() = created_by or
+  exists (select 1 from public.group_members where group_id = id and user_id = auth.uid() and status = 'active')
+);
+
 -- =============================================================================
 -- Records (Tasks and Lists — single polymorphic table)
---
--- kind = 'task'  => singular scheduled entity (recurring or one-off)
--- kind = 'list'  => container of tasks; attributes derived from its tasks
 -- =============================================================================
 create table public.records (
   id               uuid primary key default uuid_generate_v4(),
   kind             text not null check (kind in ('task','list')),
   user_id          uuid not null references auth.users(id) on delete cascade,
   title            text not null check (char_length(title) between 1 and 120),
-
-  -- Shared
   priority         integer not null default 3 check (priority between 1 and 5),
   tag_ids          uuid[]  not null default '{}',
   status           text    not null default 'accepted'
                    check (status in ('pending','accepted','completed','rejected')),
   updated_at       timestamptz not null default now(),
   created_at       timestamptz not null default now(),
-
-  -- Task-only columns (null for lists)
   description      text,
   is_recurring     boolean not null default false,
   active_days      integer[] not null default '{}',
@@ -166,9 +167,6 @@ create table public.records (
   assignee_user_id uuid references auth.users(id) on delete set null,
   group_id         uuid references public.groups(id) on delete set null,
   list_id          uuid references public.records(id) on delete set null,
-
-  -- List-only columns (empty array for tasks)
-  -- social_mutual: [{type:'user'|'group', id:'<uuid>'}]
   social_mutual    jsonb not null default '[]'
 );
 
@@ -180,7 +178,6 @@ create index records_updated_at_idx on public.records(updated_at desc);
 create index records_kind_user_idx  on public.records(kind, user_id);
 
 alter table public.records enable row level security;
-
 create policy "Users view own and assigned records" on public.records
   for select using (
     auth.uid() = user_id or
@@ -194,7 +191,6 @@ create policy "Users update own records" on public.records
 create policy "Users delete own records" on public.records
   for delete using (auth.uid() = user_id);
 
--- Auto-update updated_at on modification
 create or replace function public.update_record_timestamp()
 returns trigger language plpgsql as $$
 begin
@@ -206,7 +202,6 @@ create trigger records_updated_at
   before update on public.records
   for each row execute procedure public.update_record_timestamp();
 
--- When a task's updated_at changes, propagate to its parent list
 create or replace function public.propagate_task_updated_at()
 returns trigger language plpgsql as $$
 begin
@@ -222,7 +217,7 @@ create trigger task_list_updated_at
   execute procedure public.propagate_task_updated_at();
 
 -- =============================================================================
--- Record Completions (for recurring tasks — one row per day completed)
+-- Record Completions
 -- =============================================================================
 create table public.record_completions (
   id             uuid primary key default uuid_generate_v4(),
@@ -246,7 +241,6 @@ create table public.notifications (
   id         uuid primary key default uuid_generate_v4(),
   user_id    uuid not null references auth.users(id) on delete cascade,
   type       text not null,
-  -- types: 'friend_request','friend_accepted','task_assigned','task_accepted','task_rejected','reminder'
   payload    jsonb not null default '{}',
   read       boolean not null default false,
   created_at timestamptz not null default now()

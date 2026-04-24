@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Plus, Loader2, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 import { RecordCard } from "@/components/records/record-card";
 import { ListCard } from "@/components/records/list-card";
 import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
@@ -130,6 +129,7 @@ export default function RecordsPage() {
                   tags={tags}
                   onClick={() => openInfo(task)}
                   onDoubleClick={() => openEdit(task)}
+                  onDelete={() => setConfirmDelete(task.id)}
                 />
               </SwipeableWrapper>
             ))}
@@ -154,19 +154,19 @@ export default function RecordsPage() {
       {confirmDelete && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setConfirmDelete(null)} />
-          <div className="relative z-10 bg-[var(--color-surface-raised)] rounded-2xl p-5 w-full max-w-sm shadow-xl">
+          <div className="relative z-10 bg-[var(--color-surface-raised)] rounded-lg p-5 w-full max-w-sm shadow-xl">
             <h3 className="font-semibold text-[var(--color-text-primary)] mb-1">Delete record?</h3>
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">This cannot be undone.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]"
+                className="flex-1 py-2 rounded-md border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
-                className="flex-1 py-2 rounded-xl bg-[var(--priority-1)] text-white text-sm font-semibold"
+                className="flex-1 py-2 rounded-md bg-[var(--priority-1)] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Delete
               </button>
