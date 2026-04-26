@@ -358,3 +358,8 @@ ALTER TABLE public.task_completions
 DROP TABLE IF EXISTS public.records CASCADE;
 
 notify pgrst, 'reload schema';
+
+-- Sprint 1: Remove legacy tables
+DROP TABLE IF EXISTS activities CASCADE;
+DROP TABLE IF EXISTS goals CASCADE;
+notify pgrst, 'reload schema';

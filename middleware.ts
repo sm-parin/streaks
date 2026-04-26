@@ -32,10 +32,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/today") ||
     pathname.startsWith("/streaks") ||
     pathname.startsWith("/records") ||
+    pathname.startsWith("/habits") ||
     pathname.startsWith("/social") ||
-    pathname.startsWith("/settings") ||
-    pathname.startsWith("/analytics") ||
-    pathname.startsWith("/configure");
+    pathname.startsWith("/settings");
 
   const isAuthPage =
     pathname.startsWith("/login") ||
