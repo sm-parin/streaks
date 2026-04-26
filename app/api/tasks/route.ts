@@ -36,52 +36,6 @@ const createListSchema = z.object({
 
 const createSchema = z.discriminatedUnion("kind", [createTaskSchema, createListSchema]);
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: SECURITY_HEADERS });
-  }
-
-  const supabase = await createClient();
-
-  const [{ data: taskRows, error: taskErr }, { data: listRows, error: listErr }] =
-    await Promise.all([
-      supabase
-        .from("tasks")
-        .select("*")
-        .or(`user_id.eq.${session.sub},assignee_user_id.eq.${session.sub},assigner_user_id.eq.${session.sub}`)
-        .not("status", "eq", "rejected")
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("lists")
-        .select("*")
-        .eq("user_id", session.sub)
-        .order("created_at", { ascending: false }),
-    ]);
-
-  if (taskErr) {
-    return NextResponse.json({ error: taskErr.message }, { status: 500, headers: SECURITY_HEADERS });
-  }
-  if (listErr) {
-    return NextResponse.json({ error: listErr.message }, { status: 500, headers: SECURITY_HEADERS });
-  }
-
-  const allTasks = taskRows ?? [];
-  const allLists = listRows ?? [];
-
-  const listIds = new Set(allLists.map((l) => l.id as string));
-  const listsWithTasks = allLists.map((l) => ({
-    ...l,
-    tasks: allTasks.filter((t) => t.list_id === l.id),
-  }));
-  const standaloneTasks = allTasks.filter((t) => !t.list_id || !listIds.has(t.list_id as string));
-
-  return NextResponse.json(
-    { tasks: standaloneTasks, lists: listsWithTasks },
-    { headers: SECURITY_HEADERS }
-  );
-}
-
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {

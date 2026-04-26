@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { SubTabBar } from "@/components/ui/subtab-bar";
 import { StreakCard } from "@/components/streaks/streak-card";
 import { ReportsView } from "@/components/streaks/reports-view";
+import { createClient } from "@/lib/supabase/client";
 import type { Task, TaskCompletion } from "@/lib/types";
 import { buildTaskStreak } from "@/lib/utils/streak";
 import { toLocalDateString } from "@/lib/utils/date";
@@ -18,7 +19,6 @@ const TABS: { id: SubTab; label: string }[] = [
   { id: "streaks", label: "Streaks" },
 ];
 
-/** Streaks page — shows habit reports and per-task streak data */
 export default function StreaksPage() {
   const [tasks,       setTasks]       = useState<Task[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
@@ -27,26 +27,14 @@ export default function StreaksPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try {
-      const [recRes, compRes] = await Promise.all([
-        fetch("/api/tasks"),
-        fetch("/api/completions"),
-      ]);
-      if (recRes.ok) {
-        const d = await recRes.json();
-        setTasks(
-          (d.tasks ?? []).filter(
-            (r: Task) => r.is_recurring
-          ) as Task[]
-        );
-      }
-      if (compRes.ok) {
-        const d = await compRes.json();
-        setCompletions(d.completions ?? []);
-      }
-    } finally {
-      setLoading(false);
-    }
+    const supabase = createClient();
+    const [{ data: taskRows }, { data: compRows }] = await Promise.all([
+      supabase.from("tasks").select("*").eq("is_recurring", true).not("status", "eq", "rejected"),
+      supabase.from("task_completions").select("*").order("completed_date", { ascending: false }),
+    ]);
+    setTasks((taskRows ?? []) as Task[]);
+    setCompletions((compRows ?? []) as TaskCompletion[]);
+    setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -56,20 +44,8 @@ export default function StreaksPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5 space-y-0">
-      <PageHeader
-        title="Streaks"
-        accentColor="var(--tab-streaks)"
-        className="mb-4"
-      />
-
-      <SubTabBar
-        tabs={TABS}
-        active={subTab}
-        onChange={setSubTab}
-        accentColor="var(--tab-streaks)"
-        className="mb-5"
-      />
-
+      <PageHeader title="Streaks" accentColor="var(--tab-streaks)" className="mb-4" />
+      <SubTabBar tabs={TABS} active={subTab} onChange={setSubTab} accentColor="var(--tab-streaks)" className="mb-5" />
       {loading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : subTab === "reports" ? (
@@ -82,9 +58,7 @@ export default function StreaksPage() {
               <p className="text-sm text-[var(--color-text-secondary)]">No recurring tasks yet.</p>
             </div>
           ) : (
-            streaks.map((s) => (
-              <StreakCard key={s.task.id} streak={s} today={today} />
-            ))
+            streaks.map((s) => <StreakCard key={s.task.id} streak={s} today={today} />)
           )}
         </div>
       )}

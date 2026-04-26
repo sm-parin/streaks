@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { Task, List } from "@/lib/types";
 
 export function useTasks() {
@@ -12,11 +13,19 @@ export function useTasks() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/tasks");
-      if (!res.ok) throw new Error((await res.json()).error ?? "Failed to load");
-      const json = await res.json();
-      setTasks(json.tasks ?? []);
-      setLists(json.lists ?? []);
+      const supabase = createClient();
+      const [{ data: taskRows, error: tErr }, { data: listRows, error: lErr }] =
+        await Promise.all([
+          supabase.from("tasks").select("*").not("status", "eq", "rejected").order("updated_at", { ascending: false }),
+          supabase.from("lists").select("*").order("created_at", { ascending: false }),
+        ]);
+      if (tErr) throw new Error(tErr.message);
+      if (lErr) throw new Error(lErr.message);
+      const allTasks = (taskRows ?? []) as Task[];
+      const allLists = (listRows ?? []) as List[];
+      const listIdSet = new Set(allLists.map((l) => l.id));
+      setTasks(allTasks.filter((t) => !t.list_id || !listIdSet.has(t.list_id)));
+      setLists(allLists.map((l) => ({ ...l, tasks: allTasks.filter((t) => t.list_id === l.id) })));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
