@@ -1,4 +1,4 @@
-import type { Task, RecordCompletion, DayOfWeek } from "@/lib/types";
+import type { Task, TaskCompletion, DayOfWeek } from "@/lib/types";
 import { toLocalDateString } from "@/lib/utils/date";
 import { MAX_STREAK_LOOKBACK_DAYS } from "@/lib/utils/constants";
 
@@ -15,7 +15,7 @@ function subtractDay(dateStr: string): string {
 
 export function calculateCurrentStreak(
   task: Task,
-  completions: RecordCompletion[],
+  completions: TaskCompletion[],
   today: string
 ): number {
   const completedDates = new Set(completions.map((c) => c.completed_date));
@@ -36,7 +36,7 @@ export function calculateCurrentStreak(
 
 export function calculateLongestStreak(
   task: Task,
-  completions: RecordCompletion[],
+  completions: TaskCompletion[],
   today: string
 ): number {
   const completedDates = new Set(completions.map((c) => c.completed_date));
@@ -67,15 +67,15 @@ export interface TaskStreak {
   totalCompletions: number;
   lastCompleted: string | null;
   completedToday: boolean;
-  completions: RecordCompletion[];
+  completions: TaskCompletion[];
 }
 
 export function buildTaskStreak(
   task: Task,
-  completions: RecordCompletion[],
+  completions: TaskCompletion[],
   today: string
 ): TaskStreak {
-  const taskCompletions = completions.filter((c) => c.record_id === task.id);
+  const taskCompletions = completions.filter((c) => c.task_id === task.id);
   return {
     task,
     currentStreak: calculateCurrentStreak(task, taskCompletions, today),

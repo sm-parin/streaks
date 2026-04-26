@@ -12,9 +12,8 @@ export async function GET() {
   const todayDOW = new Date().getDay();
 
   const { data: tasks, error } = await supabase
-    .from("records")
+    .from("tasks")
     .select("*")
-    .eq("kind", "task")
     .or(`user_id.eq.${session.sub},assignee_user_id.eq.${session.sub}`)
     .in("status", ["accepted", "completed"])
     .or(
@@ -29,29 +28,28 @@ export async function GET() {
   const rows = tasks ?? [];
 
   // Fetch today's completions for recurring tasks
-  const recurringIds = rows.filter((t) => t.is_recurring).map((t) => t.id);
-  let completions: string[] = [];
+  const recurringIds = rows.filter((t) => t.is_recurring).map((t) => t.id as string);
+  let completedIds: string[] = [];
   if (recurringIds.length) {
     const { data: comps } = await supabase
-      .from("record_completions")
-      .select("record_id")
-      .in("record_id", recurringIds)
+      .from("task_completions")
+      .select("task_id")
+      .in("task_id", recurringIds)
       .eq("user_id", session.sub)
       .eq("completed_date", today);
-    completions = (comps ?? []).map((c) => c.record_id as string);
+    completedIds = (comps ?? []).map((c) => c.task_id as string);
   }
 
-  // Fetch parent lists so we can group tasks
+  // Fetch parent lists so the client can group tasks
   const listIds = [...new Set(rows.filter((t) => t.list_id).map((t) => t.list_id as string))];
   let lists: Record<string, unknown>[] = [];
   if (listIds.length) {
     const { data: listData } = await supabase
-      .from("records")
+      .from("lists")
       .select("*")
-      .in("id", listIds)
-      .eq("kind", "list");
+      .in("id", listIds);
     lists = listData ?? [];
   }
 
-  return NextResponse.json({ tasks: rows, completedIds: completions, lists });
+  return NextResponse.json({ tasks: rows, completedIds, lists });
 }

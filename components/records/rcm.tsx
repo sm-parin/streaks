@@ -33,7 +33,7 @@ interface RCMProps {
 // ── Step IDs ───────────────────────────────────────────────────────────────
 
 const TASK_STEPS = ["Info", "Schedule", "Organize", "Add to List", "Social"] as const;
-const LIST_STEPS = ["Info", "Add Tasks", "Social"] as const;
+const LIST_STEPS = ["Info", "Add Tasks"] as const;
 const INFO_STEPS = ["Overview", "Details"] as const;
 
 // ── Default state ──────────────────────────────────────────────────────────
@@ -60,7 +60,6 @@ function defaultState(
       listId: task?.list_id ?? null,
       assigneeUserId: task?.assignee_user_id ?? prefill?.assignee_user_id ?? null,
       groupId: task?.group_id ?? prefill?.group_id ?? null,
-      socialMutual: list?.social_mutual ?? [],
       selectedTaskIds: [] as string[],
     };
   }
@@ -79,7 +78,6 @@ function defaultState(
       listId: task.list_id,
       assigneeUserId: task.assignee_user_id,
       groupId: task.group_id,
-      socialMutual: [],
       selectedTaskIds: [] as string[],
     };
   }
@@ -98,7 +96,6 @@ function defaultState(
       listId: null,
       assigneeUserId: null,
       groupId: null,
-      socialMutual: list.social_mutual,
       selectedTaskIds: ((list as List & { tasks?: Task[] }).tasks ?? []).map((t) => t.id),
     };
   }
@@ -117,7 +114,6 @@ function defaultState(
     listId: prefill?.list_id ?? null,
     assigneeUserId: prefill?.assignee_user_id ?? null,
     groupId: prefill?.group_id ?? null,
-    socialMutual: [],
     selectedTaskIds: [] as string[],
   };
 }
@@ -226,7 +222,6 @@ export function RCM({
           ? {
               kind: "list",
               title: state.title.trim(),
-              social_mutual: state.socialMutual,
               task_ids: state.selectedTaskIds,
             }
           : {
@@ -247,7 +242,7 @@ export function RCM({
 
       const isEdit = mode === "edit";
       const editId = task?.id ?? list?.id;
-      const url = isEdit ? `/api/records/${editId}` : "/api/records";
+      const url = isEdit ? `/api/tasks/${editId}` : "/api/tasks";
       const method = isEdit ? "PATCH" : "POST";
 
       const res = await fetch(url, {
@@ -533,7 +528,7 @@ export function RCM({
             ))}
             {userLists.length === 0 && (
               <p className="text-xs text-[var(--color-text-secondary)] italic">
-                No lists yet. Create a list from the Records tab.
+                No lists yet. Create a list from the Habits tab.
               </p>
             )}
           </div>
@@ -581,18 +576,6 @@ export function RCM({
             </p>
             <p className="text-xs text-[var(--color-text-disabled)] italic text-center py-4">
               Task picker coming soon.
-            </p>
-          </div>
-        );
-      }
-      if (step === 2) {
-        return (
-          <div key="l2" className={animClass + " space-y-3"}>
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              Mutual sharing — share this list with friends/groups.
-            </p>
-            <p className="text-xs text-[var(--color-text-disabled)] italic text-center py-4">
-              Friend and group selection coming soon.
             </p>
           </div>
         );

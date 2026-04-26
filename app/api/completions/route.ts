@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
-// GET /api/completions — all record_completions for the current user
+// GET /api/completions — all task_completions for the current user
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("record_completions")
+    .from("task_completions")
     .select("*")
     .eq("user_id", session.sub)
     .order("completed_date", { ascending: false });

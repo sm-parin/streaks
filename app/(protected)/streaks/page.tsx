@@ -7,7 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { SubTabBar } from "@/components/ui/subtab-bar";
 import { StreakCard } from "@/components/streaks/streak-card";
 import { ReportsView } from "@/components/streaks/reports-view";
-import type { Task, RecordCompletion } from "@/lib/types";
+import type { Task, TaskCompletion } from "@/lib/types";
 import { buildTaskStreak } from "@/lib/utils/streak";
 import { toLocalDateString } from "@/lib/utils/date";
 
@@ -21,7 +21,7 @@ const TABS: { id: SubTab; label: string }[] = [
 /** Streaks page — shows habit reports and per-task streak data */
 export default function StreaksPage() {
   const [tasks,       setTasks]       = useState<Task[]>([]);
-  const [completions, setCompletions] = useState<RecordCompletion[]>([]);
+  const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [subTab,      setSubTab]      = useState<SubTab>("reports");
 
@@ -29,14 +29,14 @@ export default function StreaksPage() {
     setLoading(true);
     try {
       const [recRes, compRes] = await Promise.all([
-        fetch("/api/records"),
+        fetch("/api/tasks"),
         fetch("/api/completions"),
       ]);
       if (recRes.ok) {
         const d = await recRes.json();
         setTasks(
-          (d.records ?? []).filter(
-            (r: Task) => r.kind === "task" && r.is_recurring
+          (d.tasks ?? []).filter(
+            (r: Task) => r.is_recurring
           ) as Task[]
         );
       }

@@ -251,3 +251,110 @@ create policy "Users manage own notifications" on public.notifications
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 notify pgrst, 'reload schema';
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SPRINT 0: Schema migration — records → tasks + lists + list_tasks
+-- Run Steps 1, 3, 8 in order in the Supabase SQL Editor.
+-- Step 2 (data migration) is a one-time INSERT…SELECT run separately.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- ── Step 1: New normalised tables ─────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.lists (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title       text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 120),
+  description text,
+  priority    int  NOT NULL DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+  tag_ids     uuid[] DEFAULT '{}',
+  created_at  timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.tasks (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title              text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 120),
+  description        text,
+  priority           int  NOT NULL DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+  tag_ids            uuid[] DEFAULT '{}',
+  status             text NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending','accepted','completed','rejected')),
+  is_recurring       boolean NOT NULL DEFAULT true,
+  active_days        int[] DEFAULT '{}',
+  specific_date      date,
+  time_from          time,
+  time_to            time,
+  list_id            uuid REFERENCES public.lists(id) ON DELETE SET NULL,
+  assignee_user_id   uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  assigner_user_id   uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  group_id           uuid REFERENCES public.groups(id) ON DELETE SET NULL,
+  allow_grace        boolean NOT NULL DEFAULT true,
+  created_at         timestamptz DEFAULT now(),
+  updated_at         timestamptz DEFAULT now(),
+  CONSTRAINT tasks_single_social CHECK (
+    NOT (assignee_user_id IS NOT NULL AND group_id IS NOT NULL)
+  )
+);
+
+CREATE TABLE IF NOT EXISTS public.list_tasks (
+  list_id    uuid NOT NULL REFERENCES public.lists(id) ON DELETE CASCADE,
+  task_id    uuid NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  sort_order int  NOT NULL DEFAULT 0,
+  PRIMARY KEY (list_id, task_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tasks_user_id   ON public.tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_group_id  ON public.tasks(group_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee  ON public.tasks(assignee_user_id);
+CREATE INDEX IF NOT EXISTS idx_list_tasks_list ON public.list_tasks(list_id);
+
+ALTER TABLE public.tasks      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lists      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.list_tasks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own tasks" ON public.tasks
+  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Assignees read tasks" ON public.tasks
+  FOR SELECT USING (auth.uid() = assignee_user_id);
+CREATE POLICY "Group members read group tasks" ON public.tasks
+  FOR SELECT USING (
+    group_id IN (
+      SELECT group_id FROM public.group_members
+      WHERE user_id = auth.uid() AND status = 'active'
+    )
+  );
+CREATE POLICY "Users manage own lists" ON public.lists
+  FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own list_tasks" ON public.list_tasks
+  FOR ALL USING (
+    list_id IN (SELECT id FROM public.lists WHERE user_id = auth.uid())
+  );
+
+-- ── Step 3: Fix task_completions ──────────────────────────────────────────
+-- (record_completions was the old name; if running on a fresh DB these are no-ops)
+
+ALTER TABLE public.record_completions
+  DROP CONSTRAINT IF EXISTS record_completions_record_id_fkey;
+
+DO $$ BEGIN
+  ALTER TABLE public.record_completions RENAME TO task_completions;
+EXCEPTION WHEN undefined_table OR duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.task_completions RENAME COLUMN record_id TO task_id;
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
+
+ALTER TABLE public.task_completions
+  ADD CONSTRAINT task_completions_task_id_fkey
+  FOREIGN KEY (task_id) REFERENCES public.tasks(id) ON DELETE CASCADE;
+
+ALTER TABLE public.task_completions
+  ADD COLUMN IF NOT EXISTS is_grace boolean NOT NULL DEFAULT false;
+
+-- ── Step 8: Drop old polymorphic table (run only after full verification) ─
+
+DROP TABLE IF EXISTS public.records CASCADE;
+
+notify pgrst, 'reload schema';

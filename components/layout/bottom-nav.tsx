@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, ClipboardList, CalendarCheck, Users, Bell } from "lucide-react";
+import { Flame, BookOpen, CalendarCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 const NAV_ITEMS = [
   { href: "/streaks", icon: Flame,         label: "Streaks", color: "var(--tab-streaks)" },
-  { href: "/records", icon: ClipboardList, label: "Records", color: "var(--tab-records)" },
-  { href: "/today",   icon: CalendarCheck, label: "Today",   color: "var(--tab-today)"   },
-  { href: "/social",  icon: Users,         label: "Social",  color: "var(--tab-social)"  },
-  { href: "/inbox",   icon: Bell,          label: "Inbox",   color: "var(--tab-inbox)"   },
+  { href: "/habits",  icon: BookOpen,       label: "Habits",  color: "var(--tab-habits)"  },
+  { href: "/today",   icon: CalendarCheck,  label: "Today",   color: "var(--tab-today)"   },
+  { href: "/social",  icon: Users,          label: "Social",  color: "var(--tab-social)"  },
 ] as const;
 
 export function BottomNav() {

@@ -1,0 +1,195 @@
+"use client";
+import { useState, useEffect } from "react";
+import { Plus, Loader2, Trash2, Search } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { RecordCard } from "@/components/records/record-card";
+import { ListCard } from "@/components/records/list-card";
+import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
+import { RCM, type RCMMode } from "@/components/records/rcm";
+import { useTasks } from "@/lib/hooks/use-records";
+import { useTags } from "@/lib/hooks/use-tags";
+import { type Task, type List } from "@/lib/types";
+
+export default function HabitsPage() {
+  const { tasks, lists, loading, error, refresh, deleteTask } = useTasks();
+  const { tags } = useTags();
+  const [search, setSearch] = useState("");
+
+  const [rcmOpen, setRcmOpen] = useState(false);
+  const [rcmMode, setRcmMode] = useState<RCMMode>("create");
+  const [rcmKind, setRcmKind] = useState<"task" | "list">("task");
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeList, setActiveList] = useState<List | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  // Ensure tasks array is always present (API populates it; default to [] for type safety)
+  type PopulatedList = List & { tasks: Task[] };
+  const filteredLists = lists
+    .map((l): PopulatedList => ({ ...l, tasks: l.tasks ?? [] }))
+    .filter((l) => l.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredTasks = tasks.filter((t) =>
+    t.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openTaskInfo = (t: Task) => {
+    setActiveTask(t); setActiveList(null); setRcmMode("info"); setRcmKind("task"); setRcmOpen(true);
+  };
+  const openTaskEdit = (t: Task) => {
+    setActiveTask(t); setActiveList(null); setRcmMode("edit"); setRcmKind("task"); setRcmOpen(true);
+  };
+  const openListInfo = (l: List) => {
+    setActiveList(l); setActiveTask(null); setRcmMode("info"); setRcmKind("list"); setRcmOpen(true);
+  };
+  const openListEdit = (l: List) => {
+    setActiveList(l); setActiveTask(null); setRcmMode("edit"); setRcmKind("list"); setRcmOpen(true);
+  };
+  const openCreate = () => {
+    setActiveTask(null); setActiveList(null); setRcmMode("create"); setRcmKind("task"); setRcmOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try { await deleteTask(id); setConfirmDelete(null); refresh(); } catch { /* ignored */ }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--color-text-secondary)]" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <PageHeader title="Habits" />
+          <Button
+            size="sm"
+            onClick={openCreate}
+            style={{ backgroundColor: "var(--tab-habits)", borderColor: "var(--tab-habits)" }}
+            className="text-white flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            New
+          </Button>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-disabled)]" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search habits..."
+            className="w-full px-3 py-2 pl-9 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:border-[var(--color-brand)]"
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-[var(--color-error)] text-center py-4">{error}</p>
+        )}
+
+        {filteredTasks.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+              Tasks
+            </p>
+            {filteredTasks.map((task) => (
+              <SwipeableWrapper
+                key={task.id}
+                onSwipeLeft={() => setConfirmDelete(task.id)}
+                leftLabel="Delete"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                <RecordCard
+                  task={task}
+                  tags={tags}
+                  onClick={() => openTaskInfo(task)}
+                  onDoubleClick={() => openTaskEdit(task)}
+                />
+              </SwipeableWrapper>
+            ))}
+          </div>
+        )}
+
+        {filteredLists.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+              Lists
+            </p>
+            {filteredLists.map((list) => (
+              <SwipeableWrapper
+                key={list.id}
+                onSwipeLeft={() => setConfirmDelete(list.id)}
+                leftLabel="Delete"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                <ListCard
+                  list={list}
+                  tags={tags}
+                  onListClick={() => openListInfo(list)}
+                  onListDoubleClick={() => openListEdit(list)}
+                  onTaskClick={(t) => openTaskInfo(t)}
+                  onTaskDoubleClick={(t) => openTaskEdit(t)}
+                />
+              </SwipeableWrapper>
+            ))}
+          </div>
+        )}
+
+        {filteredTasks.length === 0 && filteredLists.length === 0 && !loading && (
+          <div className="text-center py-16">
+            <p className="text-3xl mb-3">📋</p>
+            <p className="text-[var(--color-text-secondary)] text-sm mb-4">
+              {search ? "No results" : "No habits yet"}
+            </p>
+            {!search && (
+              <button onClick={openCreate} className="text-sm text-[var(--color-brand)] underline">
+                Create your first habit
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmDelete(null)} />
+          <div className="relative z-10 w-full max-w-xs bg-[var(--color-surface-raised)] rounded-2xl p-6 shadow-xl text-center space-y-4">
+            <p className="text-sm text-[var(--color-text-primary)] font-medium">Delete this habit?</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">This cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete)}
+                className="flex-1 py-2 rounded-xl bg-[var(--color-error)] text-white text-sm font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <RCM
+        open={rcmOpen}
+        onClose={() => setRcmOpen(false)}
+        mode={rcmMode}
+        initialKind={rcmKind}
+        task={activeTask ?? undefined}
+        list={activeList ?? undefined}
+        userLists={lists}
+        onSave={() => { setRcmOpen(false); refresh(); }}
+      />
+    </>
+  );
+}

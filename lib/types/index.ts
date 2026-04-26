@@ -5,55 +5,55 @@ export type Priority = 1 | 2 | 3 | 4 | 5;
 
 export type RecordStatus = "pending" | "accepted" | "completed" | "rejected";
 
-/** Raw DB row — same shape for both tasks and lists */
-export interface DBRecord {
+/** Individual habit or one-off task */
+export interface Task {
   id: string;
-  kind: "task" | "list";
   user_id: string;
   title: string;
+  description: string | null;
   priority: Priority;
   tag_ids: string[];
   status: RecordStatus;
-  updated_at: string;
-  created_at: string;
-  // task-only
-  description: string | null;
   is_recurring: boolean;
   active_days: DayOfWeek[];
   specific_date: string | null;   // ISO date YYYY-MM-DD
   time_from: string | null;       // HH:MM
   time_to: string | null;         // HH:MM
-  assigner_user_id: string | null;
-  assignee_user_id: string | null;
-  group_id: string | null;
   list_id: string | null;
-  // list-only
-  social_mutual: Array<{ type: "user" | "group"; id: string }>;
+  assignee_user_id: string | null;
+  assigner_user_id: string | null;
+  group_id: string | null;
+  allow_grace: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-/** Task record (kind = 'task') */
-export interface Task extends DBRecord {
-  kind: "task";
-  tasks?: never;
-}
-
-/** List record (kind = 'list') with its tasks populated */
-export interface List extends DBRecord {
-  kind: "list";
+/** Ordered collection of tasks */
+export interface List {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  priority: Priority;
+  tag_ids: string[];
+  created_at: string;
   tasks?: Task[];
 }
 
-export type AppRecord = Task | List;
+/** Join record between a list and a task */
+export interface ListTask {
+  list_id: string;
+  task_id: string;
+  sort_order: number;
+}
 
-export function isTask(r: DBRecord): r is Task { return r.kind === "task"; }
-export function isList(r: DBRecord): r is List  { return r.kind === "list"; }
-
-/** Completion entry for a recurring task (one row per day) */
-export interface RecordCompletion {
+/** Completion log entry for a task (immutable — never deleted) */
+export interface TaskCompletion {
   id: string;
-  record_id: string;
+  task_id: string;
   user_id: string;
   completed_date: string;  // YYYY-MM-DD
+  is_grace: boolean;
   created_at: string;
 }
 
@@ -165,8 +165,7 @@ export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as c
 /** Tab accent colors */
 export const TAB_COLORS = {
   streaks: "#EF4444",
-  records: "#EAB308",
+  habits:  "#EAB308",
   today:   "#F07F13",
   social:  "#3B82F6",
-  inbox:   "#22C55E",
 } as const;
