@@ -262,13 +262,9 @@ create policy "Users manage own notifications" on public.notifications
 
 notify pgrst, 'reload schema';
 
--- ═══════════════════════════════════════════════════════════════════════════
--- SPRINT 0: Schema migration — records → tasks + lists + list_tasks
--- Run Steps 1, 3, 8 in order in the Supabase SQL Editor.
--- Step 2 (data migration) is a one-time INSERT…SELECT run separately.
--- ═══════════════════════════════════════════════════════════════════════════
-
--- ── Step 1: New normalised tables ─────────────────────────────────────────
+-- ===========================================================================
+-- SPRINT 0: Schema migration -- records -> tasks + lists + list_tasks
+-- ===========================================================================
 
 CREATE TABLE IF NOT EXISTS public.lists (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -340,9 +336,7 @@ CREATE POLICY "Users manage own list_tasks" ON public.list_tasks
     list_id IN (SELECT id FROM public.lists WHERE user_id = auth.uid())
   );
 
--- ── Step 3: Fix task_completions ──────────────────────────────────────────
--- (record_completions was the old name; if running on a fresh DB these are no-ops)
-
+-- Fix task_completions
 ALTER TABLE public.record_completions
   DROP CONSTRAINT IF EXISTS record_completions_record_id_fkey;
 
@@ -362,8 +356,6 @@ ALTER TABLE public.task_completions
 
 ALTER TABLE public.task_completions
   ADD COLUMN IF NOT EXISTS is_grace boolean NOT NULL DEFAULT false;
-
--- ── Step 8: Drop old polymorphic table (run only after full verification) ─
 
 DROP TABLE IF EXISTS public.records CASCADE;
 

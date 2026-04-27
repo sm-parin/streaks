@@ -30,17 +30,12 @@ type SearchUser = {
   friendship: { id: string; status: string; is_requester: boolean } | null;
 };
 
-/**
- * Full-screen "Find Friends" experience.
- * Rendered by SocialPage as a push-style screen (slides in from the right),
- * not as a modal or bottom sheet.
- */
 export function FindFriends({ onBack }: FindFriendsProps) {
   const { user }      = useUser();
   const { showToast } = useToast();
   const [subTab, setSubTab] = useState<SubTab>("search");
 
-  // ── Search tab ──────────────────────────────────────────────────────────
+  // Search tab
   const [query,     setQuery]     = useState("");
   const [results,   setResults]   = useState<SearchUser[]>([]);
   const [searching, setSearching] = useState(false);
@@ -86,7 +81,7 @@ export function FindFriends({ onBack }: FindFriendsProps) {
     );
   };
 
-  // ── Sent tab ────────────────────────────────────────────────────────────
+  // Sent tab
   const [sentRequests, setSentRequests] = useState<{ id: string; username: string }[]>([]);
   const [loadingSent,  setLoadingSent]  = useState(false);
 
@@ -101,7 +96,7 @@ export function FindFriends({ onBack }: FindFriendsProps) {
     }
   };
 
-  // ── Invite tab ──────────────────────────────────────────────────────────
+  // Invite tab
   const [copied, setCopied] = useState(false);
 
   const inviteLink =
@@ -129,9 +124,9 @@ export function FindFriends({ onBack }: FindFriendsProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Screen header */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2 border-b border-[var(--color-border)]">
+    <div className="flex flex-col">
+      {/* Back row */}
+      <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onBack}
           aria-label="Back"
@@ -148,13 +143,13 @@ export function FindFriends({ onBack }: FindFriendsProps) {
         active={subTab}
         onChange={handleTabChange}
         accentColor="var(--tab-social)"
-        className="px-4"
+        className="mb-4"
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div>
 
-        {/* ── Search ── */}
+        {/* Search */}
         {subTab === "search" && (
           <>
             <div className="relative mb-4">
@@ -212,7 +207,7 @@ export function FindFriends({ onBack }: FindFriendsProps) {
           </>
         )}
 
-        {/* ── Sent Requests ── */}
+        {/* Sent Requests */}
         {subTab === "sent" && (
           <>
             {loadingSent ? (
@@ -241,7 +236,7 @@ export function FindFriends({ onBack }: FindFriendsProps) {
           </>
         )}
 
-        {/* ── Invite Friends ── */}
+        {/* Invite Friends */}
         {subTab === "invite" && (
           <div className="flex flex-col items-center text-center pt-8 pb-4 gap-6">
             <div className="w-14 h-14 rounded-xl bg-[var(--color-bg-secondary)] flex items-center justify-center">
@@ -258,7 +253,6 @@ export function FindFriends({ onBack }: FindFriendsProps) {
               </p>
             </div>
 
-            {/* Link preview */}
             <div className="w-full max-w-sm flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
               <p className="flex-1 text-xs text-[var(--color-text-secondary)] truncate text-left">
                 {inviteLink}
