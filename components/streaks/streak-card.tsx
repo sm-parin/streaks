@@ -1,29 +1,29 @@
 "use client";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { PRIORITY_COLORS, DAY_LABELS, type Priority, type DayOfWeek } from "@/lib/types";
-import type { TaskStreak } from "@/lib/utils/streak";
+import type { StreakResult, DayStatus } from "@/lib/types";
 
 interface Props {
-  streak: TaskStreak;
-  today: string;
+  streak: StreakResult;
+  title: string;
 }
 
-export function StreakCard({ streak }: Props) {
-  const { task, currentStreak, longestStreak, totalCompletions, completedToday } = streak;
-  const priorityColor = PRIORITY_COLORS[task.priority as Priority];
+const DOT_CLASSES: Record<DayStatus, string> = {
+  completed:     "w-2.5 h-2.5 rounded-full bg-[var(--tab-streaks)]",
+  grace:         "w-2.5 h-2.5 rounded-full border-2 border-amber-400 bg-transparent",
+  missed:        "w-2.5 h-2.5 rounded-full bg-[var(--color-border)] opacity-40",
+  not_scheduled: "w-1 h-1 rounded-full bg-[var(--color-border)] opacity-20",
+};
+
+export function StreakCard({ streak, title }: Props) {
+  const { currentStreak, longestStreak, totalCompletions, completedToday, recentDays } = streak;
 
   return (
-    <div className="relative flex overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
-      <div
-        className="w-1.5 shrink-0 rounded-l-xl"
-        style={{ backgroundColor: priorityColor }}
-        aria-hidden="true"
-      />
-      <div className="flex-1 px-3 py-3 space-y-2">
+    <div className="flex overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
+      <div className="flex-1 px-3 py-3 space-y-2.5">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold text-[var(--color-text-primary)] leading-tight">
-            {task.title}
+            {title}
           </p>
           <div className="flex items-center gap-1 shrink-0">
             <Flame
@@ -43,20 +43,12 @@ export function StreakCard({ streak }: Props) {
           </div>
         </div>
 
-        <div className="flex gap-1">
-          {[0, 1, 2, 3, 4, 5, 6].map((d) => {
-            const active = (task.active_days ?? []).includes(d as DayOfWeek);
-            return (
-              <div
-                key={d}
-                title={DAY_LABELS[d]}
-                className={cn(
-                  "flex-1 h-1.5 rounded-full",
-                  active ? "bg-[var(--tab-streaks)]" : "bg-[var(--color-border)]"
-                )}
-              />
-            );
-          })}
+        <div className="flex items-center gap-1" aria-label="Last 14 days">
+          {recentDays.map(({ date, status }) => (
+            <div key={date} className="flex-1 flex justify-center" title={`${date}: ${status}`}>
+              <div className={DOT_CLASSES[status]} />
+            </div>
+          ))}
         </div>
 
         <div className="flex gap-4 text-xs text-[var(--color-text-secondary)]">

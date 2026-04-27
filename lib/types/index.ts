@@ -162,6 +162,29 @@ export const SNOOZE_GAP_BY_PRIORITY: Record<Priority, number> = {
 
 export const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+// ── Streak Edge Function result ───────────────────────────────────────────────
+
+export type DayStatus = "completed" | "grace" | "missed" | "not_scheduled";
+
+export interface RecentDay {
+  date: string;
+  status: DayStatus;
+}
+
+/**
+ * Pre-computed streak result returned by the streak-calc Edge Function.
+ * This replaces the old client-side TaskStreak / buildTaskStreak pattern.
+ */
+export interface StreakResult {
+  task_id: string;
+  currentStreak: number;
+  longestStreak: number;
+  totalCompletions: number;
+  completedToday: boolean;
+  lastCompleted: string | null;
+  recentDays: RecentDay[];
+}
+
 /** Tab accent colors */
 export const TAB_COLORS = {
   streaks: "#EF4444",

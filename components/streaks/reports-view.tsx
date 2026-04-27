@@ -1,38 +1,16 @@
 "use client";
-import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import type { TaskStreak } from "@/lib/utils/streak";
-import type { DayOfWeek } from "@/lib/types";
+import type { StreakResult } from "@/lib/types";
 
 interface Props {
-  streaks: TaskStreak[];
-  today: string;
+  streaks: { result: StreakResult; title: string }[];
 }
 
-type Period = "today" | "week" | "month" | "year";
-
-const PERIOD_LABELS: Record<Period, string> = {
-  today: "Today",
-  week:  "This Week",
-  month: "This Month",
-  year:  "This Year",
-};
-
-function completionRate(streak: TaskStreak, daysBack: number): number {
-  if (daysBack === 0) return streak.completedToday ? 1 : 0;
-  const today = new Date();
-  let scheduled = 0;
-  let completed = 0;
-  for (let i = 0; i < daysBack; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dow = d.getDay();
-    if (!streak.task.active_days?.includes(dow as DayOfWeek)) continue;
-    scheduled++;
-    const dateStr = d.toISOString().split("T")[0];
-    if (streak.completions.some((c) => c.completed_date === dateStr)) completed++;
-  }
-  return scheduled === 0 ? 0 : completed / scheduled;
+function completionRate(streak: StreakResult): number {
+  const scheduled = streak.recentDays.filter((d) => d.status !== "not_scheduled");
+  if (scheduled.length === 0) return streak.completedToday ? 1 : 0;
+  const done = scheduled.filter((d) => d.status === "completed" || d.status === "grace");
+  return done.length / scheduled.length;
 }
 
 function RateBar({ rate }: { rate: number }) {
@@ -56,51 +34,26 @@ function RateBar({ rate }: { rate: number }) {
 }
 
 export function ReportsView({ streaks }: Props) {
-  const [period, setPeriod] = useState<Period>("today");
-
-  const daysBack: Record<Period, number> = { today: 0, week: 7, month: 30, year: 365 };
-
   return (
-    <div className="space-y-4">
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
-        {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors",
-              period === p
-                ? "border-[var(--tab-streaks)] text-white"
-                : "border-[var(--color-border)] text-[var(--color-text-secondary)]"
-            )}
-            style={period === p ? { backgroundColor: "var(--tab-streaks)" } : {}}
-          >
-            {PERIOD_LABELS[p]}
-          </button>
-        ))}
-      </div>
-
+    <div className="space-y-3">
       {streaks.length === 0 ? (
         <p className="text-center text-sm text-[var(--color-text-secondary)] py-10">
           No recurring tasks to report on.
         </p>
       ) : (
-        <div className="space-y-3">
-          {streaks.map((s) => {
-            const rate = completionRate(s, daysBack[period]);
-            return (
-              <div
-                key={s.task.id}
-                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-3 space-y-2"
-              >
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                  {s.task.title}
-                </p>
-                <RateBar rate={rate} />
-              </div>
-            );
-          })}
-        </div>
+        streaks.map(({ result, title }) => {
+          const rate = completionRate(result);
+          return (
+            <div
+              key={result.task_id}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-3 space-y-2"
+            >
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{title}</p>
+              <RateBar rate={rate} />
+              <p className="text-xs text-[var(--color-text-disabled)]">Based on last 14 days</p>
+            </div>
+          );
+        })
       )}
     </div>
   );
