@@ -42,7 +42,7 @@ function NotifCard({ n, onMarkRead }: { n: Notification; onMarkRead: (id: string
         !n.read && "bg-[var(--color-brand)]/5 border-[var(--color-brand)]/25"
       )}
     >
-      <Bell className="w-4 h-4 mt-0.5 shrink-0 text-[var(--tab-inbox)]" />
+      <Bell className="w-4 h-4 mt-0.5 shrink-0 text-[var(--tab-social)]" />
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide">
           {TYPE_LABEL[n.type] ?? n.type}
@@ -111,7 +111,7 @@ export function InboxList() {
         tabs={tabsWithCounts}
         active={activeTab}
         onChange={setActiveTab}
-        accentColor="var(--tab-inbox)"
+        accentColor="var(--tab-social)"
         className="mb-5 -mx-4 px-4"
       />
 
@@ -134,3 +134,4 @@ export function InboxList() {
     </>
   );
 }
+

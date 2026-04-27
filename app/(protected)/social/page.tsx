@@ -48,10 +48,10 @@ export default function SocialPage() {
           className="mb-5"
         />
 
-        {subTab === "friends" ? <FriendsList /> : <GroupsList />}
+        {subTab === "friends" ? <FriendsList onFindFriends={() => setShowFind(true)} /> : <GroupsList />}
       </div>
 
-      {/* Find Friends full-screen slide-over — constrained to same width as page */}
+      {/* Find Friends full-screen slide-over â€” constrained to same width as page */}
       <div
         className={cn(
           "fixed inset-0 z-50 flex justify-center overflow-hidden",
@@ -72,3 +72,4 @@ export default function SocialPage() {
     </div>
   );
 }
+

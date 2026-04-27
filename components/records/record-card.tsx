@@ -8,9 +8,11 @@ interface RecordCardProps {
   task: Task;
   completedToday?: boolean;
   tags?: { id: string; name: string; color: string }[];
+  /** 0â€“1 completion rate over last 30 days; undefined = no dot */
+  healthRate?: number;
   /** Called on single tap / click */
   onClick?: () => void;
-  /** Called on double tap / double click — typically opens edit */
+  /** Called on double tap / double click â€” typically opens edit */
   onDoubleClick?: () => void;
   className?: string;
 }
@@ -18,12 +20,13 @@ interface RecordCardProps {
 /**
  * Card representing a single task (record of kind = 'task').
  * Actions (complete, delete) are handled exclusively via swipe gestures on
- * both mobile and desktop — no hover buttons are rendered.
+ * both mobile and desktop â€” no hover buttons are rendered.
  */
 export function RecordCard({
   task,
   completedToday,
   tags = [],
+  healthRate,
   onClick,
   onDoubleClick,
   className,
@@ -62,7 +65,7 @@ export function RecordCard({
 
   const timeRange =
     task.time_from
-      ? `${task.time_from.slice(0, 5)}${task.time_to ? ` – ${task.time_to.slice(0, 5)}` : ""}`
+      ? `${task.time_from.slice(0, 5)}${task.time_to ? ` â€“ ${task.time_to.slice(0, 5)}` : ""}`
       : "";
 
   return (
@@ -98,11 +101,27 @@ export function RecordCard({
           >
             {task.title}
           </p>
-          {scheduleSummary && (
-            <span className="text-[11px] text-[var(--color-text-disabled)] whitespace-nowrap shrink-0 pt-px">
-              {scheduleSummary}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5 shrink-0 pt-px">
+            {scheduleSummary && (
+              <span className="text-[11px] text-[var(--color-text-disabled)] whitespace-nowrap">
+                {scheduleSummary}
+              </span>
+            )}
+            {healthRate !== undefined && (
+              <span
+                title={`${Math.round(healthRate * 100)}% completion (30d)`}
+                className="w-2 h-2 rounded-full shrink-0 inline-block"
+                style={{
+                  backgroundColor:
+                    healthRate >= 0.8
+                      ? "var(--priority-5)"
+                      : healthRate >= 0.5
+                      ? "var(--priority-3)"
+                      : "var(--priority-1)",
+                }}
+              />
+            )}
+          </div>
         </div>
 
         {/* Row 2: Group badge */}
@@ -156,3 +175,4 @@ export function RecordCard({
     </div>
   );
 }
+

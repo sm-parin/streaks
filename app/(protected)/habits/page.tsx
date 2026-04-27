@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Plus, Loader2, Trash2, Search } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Loader2, Trash2, Search, ChevronDown, ChevronRight, Flame } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { RecordCard } from "@/components/records/record-card";
@@ -9,9 +10,125 @@ import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
 import { RCM, type RCMMode } from "@/components/records/rcm";
 import { useTasks } from "@/lib/hooks/use-records";
 import { useTags } from "@/lib/hooks/use-tags";
+import { createClient } from "@/lib/supabase/client";
 import { type Task, type List } from "@/lib/types";
+import { cn } from "@/lib/utils/cn";
+
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+type PopulatedList = List & { tasks: Task[] };
+
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
+/** Compute 0â€“1 completion rate for a recurring task over last 30 days */
+function computeRate(
+  task: Task,
+  completionsByTask: Record<string, Set<string>>
+): number {
+  if (!task.is_recurring || !task.active_days?.length) return 0;
+  const cutoff = daysAgo(29); // 30 days inclusive
+  let scheduled = 0, done = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split("T")[0];
+    if (ds < cutoff) break;
+    if (task.active_days.includes(d.getDay() as 0|1|2|3|4|5|6)) {
+      scheduled++;
+      if (completionsByTask[task.id]?.has(ds)) done++;
+    }
+  }
+  return scheduled > 0 ? done / scheduled : 0;
+}
+
+// â”€â”€ Collapsible list row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function CollapsibleList({
+  list,
+  tags,
+  completionsByTask,
+  onTaskInfo,
+  onTaskEdit,
+  onListInfo,
+  onListEdit,
+  onDelete,
+}: {
+  list: PopulatedList;
+  tags: { id: string; name: string; color: string }[];
+  completionsByTask: Record<string, Set<string>>;
+  onTaskInfo: (t: Task) => void;
+  onTaskEdit: (t: Task) => void;
+  onListInfo: (l: List) => void;
+  onListEdit: (l: List) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const count = list.tasks.length;
+
+  return (
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-hidden">
+      {/* Header row */}
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-[var(--color-bg-secondary)] transition-colors"
+      >
+        <span className="flex-1 text-sm font-medium text-[var(--color-text-primary)] truncate">
+          {list.title}{" "}
+          <span className="font-normal text-[var(--color-text-secondary)]">
+            ({count} task{count !== 1 ? "s" : ""})
+          </span>
+        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onListEdit(list); }}
+            className="text-[11px] text-[var(--color-text-disabled)] hover:text-[var(--color-text-secondary)] px-1"
+          >
+            Edit
+          </button>
+          {expanded
+            ? <ChevronDown className="w-4 h-4 text-[var(--color-text-disabled)]" />
+            : <ChevronRight className="w-4 h-4 text-[var(--color-text-disabled)]" />
+          }
+        </div>
+      </button>
+
+      {/* Tasks (expanded) */}
+      {expanded && (
+        <div className="border-t border-[var(--color-border)] divide-y divide-[var(--color-border)]">
+          {count === 0 ? (
+            <p className="px-3 py-3 text-xs text-[var(--color-text-disabled)] italic">No tasks in this list.</p>
+          ) : (
+            list.tasks.map((task) => (
+              <SwipeableWrapper
+                key={task.id}
+                onSwipeLeft={() => onDelete(task.id)}
+                leftLabel="Delete"
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                <RecordCard
+                  task={task}
+                  tags={tags}
+                  healthRate={task.is_recurring ? computeRate(task, completionsByTask) : undefined}
+                  onClick={() => onTaskInfo(task)}
+                  onDoubleClick={() => onTaskEdit(task)}
+                  className="rounded-none border-0"
+                />
+              </SwipeableWrapper>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function HabitsPage() {
+  const router = useRouter();
   const { tasks, lists, loading, error, refresh, deleteTask } = useTasks();
   const { tags } = useTags();
   const [search, setSearch] = useState("");
@@ -23,36 +140,50 @@ export default function HabitsPage() {
   const [activeList, setActiveList] = useState<List | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  // 30-day completions for health dots
+  const [completionsByTask, setCompletionsByTask] = useState<Record<string, Set<string>>>({});
+
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Ensure tasks array is always present (API populates it; default to [] for type safety)
-  type PopulatedList = List & { tasks: Task[] };
-  const filteredLists = lists
-    .map((l): PopulatedList => ({ ...l, tasks: l.tasks ?? [] }))
-    .filter((l) => l.title.toLowerCase().includes(search.toLowerCase()));
-  const filteredTasks = tasks.filter((t) =>
-    t.title.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    if (tasks.length === 0) return;
+    const supabase = createClient();
+    const cutoff = daysAgo(29);
+    const taskIds = tasks.filter((t) => t.is_recurring).map((t) => t.id);
+    if (!taskIds.length) return;
+    supabase
+      .from("task_completions")
+      .select("task_id, completed_date")
+      .in("task_id", taskIds)
+      .gte("completed_date", cutoff)
+      .then(({ data }) => {
+        const map: Record<string, Set<string>> = {};
+        for (const c of data ?? []) {
+          if (!map[c.task_id]) map[c.task_id] = new Set();
+          map[c.task_id].add(c.completed_date);
+        }
+        setCompletionsByTask(map);
+      });
+  }, [tasks]);
 
-  const openTaskInfo = (t: Task) => {
-    setActiveTask(t); setActiveList(null); setRcmMode("info"); setRcmKind("task"); setRcmOpen(true);
-  };
-  const openTaskEdit = (t: Task) => {
-    setActiveTask(t); setActiveList(null); setRcmMode("edit"); setRcmKind("task"); setRcmOpen(true);
-  };
-  const openListInfo = (l: List) => {
-    setActiveList(l); setActiveTask(null); setRcmMode("info"); setRcmKind("list"); setRcmOpen(true);
-  };
-  const openListEdit = (l: List) => {
-    setActiveList(l); setActiveTask(null); setRcmMode("edit"); setRcmKind("list"); setRcmOpen(true);
-  };
-  const openCreate = () => {
-    setActiveTask(null); setActiveList(null); setRcmMode("create"); setRcmKind("task"); setRcmOpen(true);
-  };
+  const openTaskInfo = (t: Task) => { setActiveTask(t); setActiveList(null); setRcmMode("info"); setRcmKind("task"); setRcmOpen(true); };
+  const openTaskEdit = (t: Task) => { setActiveTask(t); setActiveList(null); setRcmMode("edit"); setRcmKind("task"); setRcmOpen(true); };
+  const openListInfo = (l: List) => { setActiveList(l); setActiveTask(null); setRcmMode("info"); setRcmKind("list"); setRcmOpen(true); };
+  const openListEdit = (l: List) => { setActiveList(l); setActiveTask(null); setRcmMode("edit"); setRcmKind("list"); setRcmOpen(true); };
+  const openCreate   = () => { setActiveTask(null); setActiveList(null); setRcmMode("create"); setRcmKind("task"); setRcmOpen(true); };
 
   const handleDelete = async (id: string) => {
     try { await deleteTask(id); setConfirmDelete(null); refresh(); } catch { /* ignored */ }
   };
+
+  // Filtered
+  const q = search.toLowerCase();
+  const filteredLists = (lists as PopulatedList[]).filter((l) =>
+    l.title.toLowerCase().includes(q) || l.tasks?.some((t) => t.title.toLowerCase().includes(q))
+  );
+  const filteredTasks = tasks.filter(
+    (t) => t.title.toLowerCase().includes(q)
+  );
 
   if (loading) {
     return (
@@ -61,6 +192,17 @@ export default function HabitsPage() {
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <p className="text-sm text-[var(--color-text-secondary)]">Something went wrong</p>
+        <button onClick={refresh} className="text-sm text-[var(--color-brand)] underline">Retry</button>
+      </div>
+    );
+  }
+
+  const isEmpty = filteredTasks.length === 0 && filteredLists.length === 0;
 
   return (
     <>
@@ -89,70 +231,71 @@ export default function HabitsPage() {
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-[var(--color-error)] text-center py-4">{error}</p>
-        )}
-
-        {filteredTasks.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
-              Tasks
-            </p>
-            {filteredTasks.map((task) => (
-              <SwipeableWrapper
-                key={task.id}
-                onSwipeLeft={() => setConfirmDelete(task.id)}
-                leftLabel="Delete"
-                leftIcon={<Trash2 className="w-4 h-4" />}
-              >
-                <RecordCard
-                  task={task}
-                  tags={tags}
-                  onClick={() => openTaskInfo(task)}
-                  onDoubleClick={() => openTaskEdit(task)}
-                />
-              </SwipeableWrapper>
-            ))}
-          </div>
-        )}
-
-        {filteredLists.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
-              Lists
-            </p>
-            {filteredLists.map((list) => (
-              <SwipeableWrapper
-                key={list.id}
-                onSwipeLeft={() => setConfirmDelete(list.id)}
-                leftLabel="Delete"
-                leftIcon={<Trash2 className="w-4 h-4" />}
-              >
-                <ListCard
-                  list={list}
-                  tags={tags}
-                  onListClick={() => openListInfo(list)}
-                  onListDoubleClick={() => openListEdit(list)}
-                  onTaskClick={(t) => openTaskInfo(t)}
-                  onTaskDoubleClick={(t) => openTaskEdit(t)}
-                />
-              </SwipeableWrapper>
-            ))}
-          </div>
-        )}
-
-        {filteredTasks.length === 0 && filteredLists.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <p className="text-3xl mb-3">📋</p>
-            <p className="text-[var(--color-text-secondary)] text-sm mb-4">
+        {isEmpty ? (
+          <div className="text-center py-16 space-y-3">
+            <Flame className="w-10 h-10 mx-auto text-[var(--color-brand)]" />
+            <p className="text-base font-semibold text-[var(--color-text-primary)]">
               {search ? "No results" : "No habits yet"}
             </p>
             {!search && (
-              <button onClick={openCreate} className="text-sm text-[var(--color-brand)] underline">
-                Create your first habit
-              </button>
+              <>
+                <p className="text-sm text-[var(--color-text-secondary)]">Start building your first habit</p>
+                <button
+                  onClick={openCreate}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--color-brand)] text-white text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4" /> Create habit
+                </button>
+              </>
             )}
           </div>
+        ) : (
+          <>
+            {filteredTasks.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+                  Tasks
+                </p>
+                {filteredTasks.map((task) => (
+                  <SwipeableWrapper
+                    key={task.id}
+                    onSwipeLeft={() => setConfirmDelete(task.id)}
+                    leftLabel="Delete"
+                    leftIcon={<Trash2 className="w-4 h-4" />}
+                  >
+                    <RecordCard
+                      task={task}
+                      tags={tags}
+                      healthRate={task.is_recurring ? computeRate(task, completionsByTask) : undefined}
+                      onClick={() => openTaskInfo(task)}
+                      onDoubleClick={() => openTaskEdit(task)}
+                    />
+                  </SwipeableWrapper>
+                ))}
+              </div>
+            )}
+
+            {filteredLists.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+                  Lists
+                </p>
+                {filteredLists.map((list) => (
+                  <CollapsibleList
+                    key={list.id}
+                    list={list}
+                    tags={tags}
+                    completionsByTask={completionsByTask}
+                    onTaskInfo={openTaskInfo}
+                    onTaskEdit={openTaskEdit}
+                    onListInfo={openListInfo}
+                    onListEdit={openListEdit}
+                    onDelete={(id) => setConfirmDelete(id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -163,16 +306,10 @@ export default function HabitsPage() {
             <p className="text-sm text-[var(--color-text-primary)] font-medium">Delete this habit?</p>
             <p className="text-xs text-[var(--color-text-secondary)]">This cannot be undone.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]"
-              >
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
                 Cancel
               </button>
-              <button
-                onClick={() => handleDelete(confirmDelete)}
-                className="flex-1 py-2 rounded-xl bg-[var(--color-error)] text-white text-sm font-medium"
-              >
+              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2 rounded-xl bg-[var(--color-error)] text-white text-sm font-medium">
                 Delete
               </button>
             </div>
@@ -193,3 +330,4 @@ export default function HabitsPage() {
     </>
   );
 }
+

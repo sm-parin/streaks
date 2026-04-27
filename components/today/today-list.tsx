@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useToday } from "@/lib/hooks/use-today";
 import { useUser } from "@/lib/hooks/use-user";
 import { useTags } from "@/lib/hooks/use-tags";
@@ -18,6 +19,7 @@ export function TodayList() {
   const { tasks, completedIds, lists, streaks, todayTotal, todayDone, loading, error, refresh, toggleComplete } = useToday();
   const { user } = useUser();
   const { tags } = useTags();
+  const router = useRouter();
   const [infoTask, setInfoTask] = useState<Task | null>(null);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -44,11 +46,9 @@ export function TodayList() {
 
   if (error) {
     return (
-      <div className="text-center py-12 text-[var(--color-text-secondary)]">
-        <p className="text-sm mb-3">{error}</p>
-        <button onClick={refresh} className="text-xs underline text-[var(--color-brand)]">
-          Retry
-        </button>
+      <div className="text-center py-16 space-y-3">
+        <p className="text-sm text-[var(--color-text-secondary)]">Something went wrong</p>
+        <button onClick={refresh} className="text-sm text-[var(--color-brand)] underline">Retry</button>
       </div>
     );
   }
@@ -84,9 +84,22 @@ export function TodayList() {
       <MilestoneCard />
 
       {todayTotal === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-4xl mb-3">🎉</p>
-          <p className="text-[var(--color-text-secondary)] text-sm">Nothing scheduled for today.</p>
+        <div className="text-center py-16 space-y-3">
+          {/* Calendar SVG icon */}
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <p className="text-base font-semibold text-[var(--color-text-primary)]">Nothing scheduled for today</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">Add habits from the Habits tab</p>
+          <button
+            onClick={() => router.push("/habits")}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--color-brand)] text-white text-sm font-medium"
+          >
+            Add a habit
+          </button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -135,3 +148,4 @@ export function TodayList() {
     </>
   );
 }
+

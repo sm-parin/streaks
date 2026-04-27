@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -9,7 +10,7 @@ import {
 import { useTags } from "@/lib/hooks/use-tags";
 import { usePush } from "@/lib/hooks/use-push";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type RCMMode = "create" | "edit" | "info";
 
@@ -31,13 +32,13 @@ interface RCMProps {
   userLists?: Array<List>;
 }
 
-// ── Step IDs ───────────────────────────────────────────────────────────────
+// â”€â”€ Step IDs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TASK_STEPS = ["Info", "Schedule", "Organize", "Add to List", "Social"] as const;
 const LIST_STEPS = ["Info", "Add Tasks"] as const;
 const INFO_STEPS = ["Overview", "Details"] as const;
 
-// ── Default state ──────────────────────────────────────────────────────────
+// â”€â”€ Default state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function defaultState(
   mode: RCMMode,
@@ -61,6 +62,7 @@ function defaultState(
       listId: task?.list_id ?? null,
       assigneeUserId: task?.assignee_user_id ?? prefill?.assignee_user_id ?? null,
       groupId: task?.group_id ?? prefill?.group_id ?? null,
+      allowGrace: task?.allow_grace ?? true,
       selectedTaskIds: [] as string[],
     };
   }
@@ -79,6 +81,7 @@ function defaultState(
       listId: task.list_id,
       assigneeUserId: task.assignee_user_id,
       groupId: task.group_id,
+      allowGrace: task.allow_grace,
       selectedTaskIds: [] as string[],
     };
   }
@@ -97,6 +100,7 @@ function defaultState(
       listId: null,
       assigneeUserId: null,
       groupId: null,
+      allowGrace: true,
       selectedTaskIds: ((list as List & { tasks?: Task[] }).tasks ?? []).map((t) => t.id),
     };
   }
@@ -115,11 +119,12 @@ function defaultState(
     listId: prefill?.list_id ?? null,
     assigneeUserId: prefill?.assignee_user_id ?? null,
     groupId: prefill?.group_id ?? null,
+    allowGrace: true,
     selectedTaskIds: [] as string[],
   };
 }
 
-// ── Dot nav ────────────────────────────────────────────────────────────────
+// â”€â”€ Dot nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DotNav({ total, current }: { total: number; current: number }) {
   return (
@@ -139,7 +144,7 @@ function DotNav({ total, current }: { total: number; current: number }) {
   );
 }
 
-// ── Main RCM ──────────────────────────────────────────────────────────────
+// â”€â”€ Main RCM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function RCM({
   open,
@@ -153,10 +158,28 @@ export function RCM({
   userLists = [],
 }: RCMProps) {
   const { tags } = useTags();
+  const { isSupported: pushSupported, permission: pushPermission, requestPermission } = usePush();
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState<"right" | "left">("right");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Social step: user's active groups
+  const [myGroups, setMyGroups] = useState<{ id: string; name: string }[]>([]);
+  const fetchGroups = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("group_members")
+      .select("groups(id, name)")
+      .eq("status", "active");
+    if (data) {
+      setMyGroups(
+        (data as unknown as Array<{ groups: { id: string; name: string } | null }>)
+          .map((r) => r.groups)
+          .filter((g): g is { id: string; name: string } => g !== null)
+      );
+    }
+  }, []);
 
   const [state, setState] = useState(() =>
     defaultState(mode, initialKind, task, list, prefill)
@@ -168,6 +191,7 @@ export function RCM({
       setDir("right");
       setErrors({});
       setState(defaultState(mode, initialKind, task, list, prefill));
+      fetchGroups();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, initialKind, task?.id, list?.id]);
@@ -237,8 +261,9 @@ export function RCM({
               time_from: state.timeFrom || null,
               time_to: state.timeTo || null,
               list_id: state.listId,
-              assignee_user_id: state.assigneeUserId,
-              group_id: state.groupId,
+              assignee_user_id: state.groupId ? null : state.assigneeUserId,
+              group_id: state.assigneeUserId ? null : state.groupId,
+              allow_grace: state.allowGrace,
             };
 
       const isEdit = mode === "edit";
@@ -279,7 +304,7 @@ export function RCM({
         : [...s.tagIds, id],
     }));
 
-  // ── Step renderers ──────────────────────────────────────────────────────
+  // â”€â”€ Step renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const renderStep = () => {
     const animClass =
@@ -309,11 +334,11 @@ export function RCM({
                 <InfoRow label="Recurring">{state.isRecurring ? "Yes" : "No"}</InfoRow>
                 {state.isRecurring && (
                   <InfoRow label="Days">
-                    {state.activeDays.map((d) => DAY_LABELS[d]).join(", ") || "—"}
+                    {state.activeDays.map((d) => DAY_LABELS[d]).join(", ") || "â€”"}
                   </InfoRow>
                 )}
                 {!state.isRecurring && (
-                  <InfoRow label="Date">{state.specificDate || "—"}</InfoRow>
+                  <InfoRow label="Date">{state.specificDate || "â€”"}</InfoRow>
                 )}
                 {state.timeFrom && (
                   <InfoRow label="Time">
@@ -324,7 +349,7 @@ export function RCM({
             )}
             <InfoRow label="Priority">
               <span style={{ color: PRIORITY_COLORS[state.priority] }}>
-                P{state.priority} — {PRIORITY_NAMES[state.priority]}
+                P{state.priority} â€” {PRIORITY_NAMES[state.priority]}
               </span>
             </InfoRow>
             {tags.filter((t) => state.tagIds.includes(t.id)).length > 0 && (
@@ -442,6 +467,32 @@ export function RCM({
                 />
               </Field>
             </div>
+
+            {state.isRecurring && (
+              <div className="flex items-center justify-between gap-3 py-2">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">Allow grace day</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">One missed day per week won&apos;t break your streak</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={state.allowGrace}
+                  onClick={() => setState((s) => ({ ...s, allowGrace: !s.allowGrace }))}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors",
+                    state.allowGrace ? "bg-[var(--color-brand)]" : "bg-[var(--color-border-strong)]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transform transition-transform",
+                      state.allowGrace ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
+            )}
           </div>
         );
       }
@@ -537,13 +588,49 @@ export function RCM({
       }
       if (step === 4) {
         return (
-          <div key="t4" className={animClass + " space-y-3"}>
+          <div key="t4" className={animClass + " space-y-4"}>
             <p className="text-sm text-[var(--color-text-secondary)]">
               Assign to a friend or group (optional).
             </p>
-            <p className="text-xs text-[var(--color-text-disabled)] italic text-center py-4">
-              Friend and group search coming soon.
-            </p>
+
+            {/* Group picker */}
+            {myGroups.length > 0 && (
+              <Field label="Group">
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => setState((s) => ({ ...s, groupId: null }))}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors",
+                      !state.groupId
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 text-[var(--color-brand)]"
+                        : "border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                    )}
+                  >
+                    No group
+                  </button>
+                  {myGroups.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setState((s) => ({ ...s, groupId: g.id, assigneeUserId: null }))}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors",
+                        state.groupId === g.id
+                          ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 text-[var(--color-brand)]"
+                          : "border-[var(--color-border)] text-[var(--color-text-primary)]"
+                      )}
+                    >
+                      {g.name}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
+
+            {myGroups.length === 0 && (
+              <p className="text-xs text-[var(--color-text-disabled)] italic text-center py-4">
+                Join a group first to assign tasks to it.
+              </p>
+            )}
           </div>
         );
       }
@@ -677,7 +764,7 @@ export function RCM({
   );
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function KindToggle({ value, onChange }: { value: "task" | "list"; onChange: (k: "task" | "list") => void }) {
   return (
@@ -724,3 +811,4 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
     </div>
   );
 }
+

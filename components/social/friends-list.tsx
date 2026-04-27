@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/toast";
 import type { Friendship } from "@/lib/types";
 import { RCM } from "@/components/records/rcm";
 
-export function FriendsList() {
+export function FriendsList({ onFindFriends }: { onFindFriends?: () => void }) {
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState<Friendship | null>(null);
@@ -101,7 +101,7 @@ export function FriendsList() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-[var(--color-text-primary)]">{f.friend?.nickname}</p>
-                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username} — Pending</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">@{f.friend?.username} â€” Pending</p>
                 </div>
               </div>
             ))}
@@ -110,10 +110,15 @@ export function FriendsList() {
       )}
 
       {!accepted.length && !pending.length && !sent.length && (
-        <div className="text-center py-12 text-[var(--color-text-secondary)]">
-          <UserCheck className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No friends yet</p>
-          <p className="text-sm mt-1">Find friends using the Find tab</p>
+        <div className="text-center py-12 space-y-3">
+          <UserCheck className="w-10 h-10 mx-auto text-[var(--color-text-disabled)]" />
+          <p className="font-medium text-[var(--color-text-primary)]">No friends yet</p>
+          <button
+            onClick={onFindFriends}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--tab-social)] text-white text-sm font-medium"
+          >
+            Find friends
+          </button>
         </div>
       )}
 
@@ -130,3 +135,4 @@ export function FriendsList() {
     </>
   );
 }
+

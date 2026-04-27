@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     pathname.startsWith("/today") ||
     pathname.startsWith("/streaks") ||
-    pathname.startsWith("/records") ||
+    pathname.startsWith("/habits") ||
     pathname.startsWith("/habits") ||
     pathname.startsWith("/social") ||
     pathname.startsWith("/settings") ||
@@ -61,3 +61,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.json|icons|sw.js|workbox-|api/).*)"],
 };
+

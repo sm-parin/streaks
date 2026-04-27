@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Flame, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
@@ -92,7 +93,7 @@ function GroupMatrix({ matrix }: { matrix: MatrixMember[] }) {
               {habits.map((h) => (
                 <th key={h.task_id} className="pb-2 px-1 text-[var(--color-text-secondary)] font-medium">
                   <span className="block" style={{ writingMode: "vertical-lr", transform: "rotate(180deg)", maxHeight: 60, overflow: "hidden" }}>
-                    {h.task_title.length > 12 ? h.task_title.slice(0, 12) + "…" : h.task_title}
+                    {h.task_title.length > 12 ? h.task_title.slice(0, 12) + "â€¦" : h.task_title}
                   </span>
                 </th>
               ))}
@@ -152,8 +153,8 @@ function GroupRecord({ record }: { record: { username: string; longestStreak: nu
       <div>
         <p className="text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-0.5">All-time group record</p>
         <p className="text-sm text-[var(--color-text-primary)]">
-          <span className="font-semibold">@{record.username}</span>{" · "}
-          <span className="font-bold text-[#EF4444]">{record.longestStreak} days</span>{" · "}
+          <span className="font-semibold">@{record.username}</span>{" Â· "}
+          <span className="font-bold text-[#EF4444]">{record.longestStreak} days</span>{" Â· "}
           {record.task_title}
         </p>
       </div>
@@ -162,6 +163,7 @@ function GroupRecord({ record }: { record: { username: string; longestStreak: nu
 }
 
 export default function StreaksPage() {
+  const router = useRouter();
   const { streaks, isLoading: streaksLoading, error: streaksError, refresh } = useStreaks();
   const [titles, setTitles] = useState<Record<string, string>>({});
   const [mainTab, setMainTab] = useState<MainTab>("personal");
@@ -209,7 +211,7 @@ export default function StreaksPage() {
   useEffect(() => { fetchTitles(); refresh(); fetchPersonal(); fetchGroups(); }, [fetchTitles, refresh, fetchPersonal, fetchGroups]);
   useEffect(() => { if (mainTab === "group" && selectedGroupId) fetchGroupAnalytics(selectedGroupId); }, [mainTab, selectedGroupId, fetchGroupAnalytics]);
 
-  const paired = streaks.map((r: StreakResult) => ({ result: r, title: titles[r.task_id] ?? "…" }));
+  const paired = streaks.map((r: StreakResult) => ({ result: r, title: titles[r.task_id] ?? "â€¦" }));
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5">
@@ -237,7 +239,17 @@ export default function StreaksPage() {
           {streaksLoading ? (<div className="flex justify-center py-6"><Spinner /></div>
           ) : streaksError ? (<p className="text-center text-sm text-red-500">{streaksError}</p>
           ) : paired.length === 0 ? (
-            <div className="text-center py-10"><Flame className="w-8 h-8 text-[var(--color-text-disabled)] mx-auto mb-3" /><p className="text-sm text-[var(--color-text-secondary)]">No recurring tasks yet.</p></div>
+            <div className="text-center py-10 space-y-3">
+              <Flame className="w-10 h-10 text-[var(--tab-streaks)] mx-auto" />
+              <p className="text-base font-semibold text-[var(--color-text-primary)]">No streak data yet</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">Create recurring habits to track your streaks</p>
+              <button
+                onClick={() => router.push("/habits")}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--tab-streaks)] text-white text-sm font-medium"
+              >
+                Add a habit
+              </button>
+            </div>
           ) : (
             <div className="space-y-3">{paired.map(({ result, title }) => (<StreakCard key={result.task_id} streak={result} title={title} />))}</div>
           )}
@@ -275,3 +287,4 @@ export default function StreaksPage() {
     </div>
   );
 }
+
