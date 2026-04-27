@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
+import webpush from "web-push";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Context } from "./context";
 
@@ -264,6 +265,38 @@ const socialRouter = router({
       return updated;
     }),
 });
+
+
+// ─── milestone helper ─────────────────────────────────────────────────────
+
+const MILESTONE_STREAKS = [7, 30, 100, 365];
+
+async function checkAndFireMilestone(userId: string, taskId: string): Promise<void> {
+  const admin = createServiceClient();
+  const { data: task } = await admin.from("tasks").select("title").eq("id", taskId).maybeSingle();
+  if (!task) return;
+  const { data, error } = await admin.functions.invoke("streak-calc", { body: { user_id: userId } });
+  if (error || !Array.isArray(data)) return;
+  const streakRow = (data as Array<{ task_id: string; currentStreak: number }>).find((s) => s.task_id === taskId);
+  if (!streakRow) return;
+  const { currentStreak } = streakRow;
+  if (!MILESTONE_STREAKS.includes(currentStreak)) return;
+  await admin.from("notifications").insert({
+    user_id: userId, type: "streak_milestone",
+    payload: { streak: currentStreak, streak_days: currentStreak, task_title: task.title, task_id: taskId },
+  });
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT!, process.env.VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+  const { data: subs } = await admin.from("push_subscriptions").select("endpoint, keys_p256dh, keys_auth").eq("user_id", userId);
+  if (!subs?.length) return;
+  const payload = JSON.stringify({ title: "Streaks", body: `You hit a ${currentStreak}-day streak on '${task.title}'!`, url: "/streaks" });
+  const toDelete: string[] = [];
+  for (const sub of subs) {
+    try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } }, payload); }
+    catch (err: unknown) { if ((err as { statusCode?: number }).statusCode === 410) toDelete.push(sub.endpoint); }
+  }
+  if (toDelete.length) await admin.from("push_subscriptions").delete().in("endpoint", toDelete);
+}
 
 export const appRouter = router({ tasks: taskRouter, lists: listRouter, social: socialRouter });
 export type AppRouter = typeof appRouter;
