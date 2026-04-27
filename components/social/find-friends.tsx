@@ -187,7 +187,7 @@ export function FindFriends({ onBack }: FindFriendsProps) {
                     {u.id === user?.id ? (
                       <span className="text-xs text-[var(--color-text-secondary)]">You</span>
                     ) : u.friendship?.status === "accepted" ? (
-                      <UserCheck className="w-5 h-5 text-[var(--tab-inbox)]" />
+                      <UserCheck className="w-5 h-5 text-[var(--tab-social)]" />
                     ) : u.friendship?.status === "pending" ? (
                       <span className="text-xs text-[var(--color-text-secondary)]">Pending</span>
                     ) : (
