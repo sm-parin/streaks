@@ -23,6 +23,7 @@ export interface Task {
   assignee_user_id: string | null;
   assigner_user_id: string | null;
   group_id: string | null;
+  group_name?: string;
   allow_grace: boolean;
   created_at: string;
   updated_at: string;

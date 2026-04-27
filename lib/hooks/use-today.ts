@@ -2,9 +2,11 @@
 import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { trpc } from "@/lib/trpc";
+import { useStreaks } from "@/lib/hooks/use-streaks";
 import type { Task, List } from "@/lib/types";
 
 export function useToday() {
+  const { streaks, refresh: refreshStreaks } = useStreaks();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [lists, setLists] = useState<List[]>([]);
@@ -33,7 +35,20 @@ export function useToday() {
       if (taskErr) throw new Error(taskErr.message);
       const rows = (taskRows ?? []) as Task[];
 
-      const recurringIds = rows.filter((t) => t.is_recurring).map((t) => t.id);
+      // Fetch group names for tasks that belong to a group
+      const groupIds = [...new Set(rows.filter((t) => t.group_id).map((t) => t.group_id as string))];
+      let groupMap: Record<string, string> = {};
+      if (groupIds.length) {
+        const { data: gd } = await supabase.from("groups").select("id, name").in("id", groupIds);
+        groupMap = Object.fromEntries((gd ?? []).map((g) => [g.id as string, g.name as string]));
+      }
+
+      const rowsWithGroups: Task[] = rows.map((t) => ({
+        ...t,
+        group_name: t.group_id ? groupMap[t.group_id] : undefined,
+      }));
+
+      const recurringIds = rowsWithGroups.filter((t) => t.is_recurring).map((t) => t.id);
       let completedIdList: string[] = [];
       if (recurringIds.length) {
         const { data: comps } = await supabase
@@ -44,14 +59,14 @@ export function useToday() {
         completedIdList = (comps ?? []).map((c) => c.task_id as string);
       }
 
-      const listIds = [...new Set(rows.filter((t) => t.list_id).map((t) => t.list_id as string))];
+      const listIds = [...new Set(rowsWithGroups.filter((t) => t.list_id).map((t) => t.list_id as string))];
       let listData: List[] = [];
       if (listIds.length) {
         const { data: ld } = await supabase.from("lists").select("*").in("id", listIds);
         listData = (ld ?? []) as List[];
       }
 
-      setTasks(rows);
+      setTasks(rowsWithGroups);
       setCompletedIds(new Set(completedIdList));
       setLists(listData);
     } catch (e) {
@@ -59,14 +74,16 @@ export function useToday() {
     } finally {
       setLoading(false);
     }
-  }, []);
+
+    // Refresh streaks in parallel (non-blocking)
+    refreshStreaks();
+  }, [refreshStreaks]);
 
   const toggleComplete = useCallback(
     async (taskId: string, isRecurring: boolean) => {
       const wasCompleted = completedIds.has(taskId);
       const today = new Date().toISOString().split("T")[0];
 
-      // Optimistic update
       setCompletedIds((prev) => {
         const next = new Set(prev);
         if (wasCompleted) next.delete(taskId);
@@ -86,7 +103,6 @@ export function useToday() {
       try {
         await toggleCompleteMutation.mutateAsync({ task_id: taskId, date: today, is_grace: false });
       } catch {
-        // Rollback
         setCompletedIds((prev) => {
           const next = new Set(prev);
           if (wasCompleted) next.add(taskId);
@@ -107,5 +123,10 @@ export function useToday() {
     [completedIds, toggleCompleteMutation]
   );
 
-  return { tasks, completedIds, lists, loading, error, refresh, toggleComplete };
+  const todayTotal = tasks.length;
+  const todayDone = tasks.filter(
+    (t) => completedIds.has(t.id) || t.status === "completed"
+  ).length;
+
+  return { tasks, completedIds, lists, streaks, todayTotal, todayDone, loading, error, refresh, toggleComplete };
 }

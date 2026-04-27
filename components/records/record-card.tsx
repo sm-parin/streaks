@@ -105,7 +105,24 @@ export function RecordCard({
           )}
         </div>
 
-        {/* Row 2: Description + time */}
+        {/* Row 2: Group badge */}
+        {task.group_name && (
+          <div>
+            <span
+              className="inline-block text-[11px] font-medium"
+              style={{
+                backgroundColor: "rgba(59,130,246,0.15)",
+                color: "var(--tab-social, #3B82F6)",
+                borderRadius: "var(--radius-sm, 4px)",
+                padding: "2px 6px",
+              }}
+            >
+              {task.group_name}
+            </span>
+          </div>
+        )}
+
+        {/* Row 3: Description + time */}
         {(task.description || timeRange) && (
           <div className="flex items-center justify-between gap-2">
             {task.description ? (

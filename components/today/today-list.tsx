@@ -3,22 +3,20 @@
 import { useEffect, useState } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useToday } from "@/lib/hooks/use-today";
+import { useUser } from "@/lib/hooks/use-user";
 import { useTags } from "@/lib/hooks/use-tags";
 import { type Task, type List } from "@/lib/types";
 import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
 import { RecordCard } from "@/components/records/record-card";
 import { ListCard } from "@/components/records/list-card";
 import { RCM } from "@/components/records/rcm";
+import { PageHeader } from "@/components/layout/page-header";
+import { MorningBrief } from "@/components/today/morning-brief";
+import { MilestoneCard } from "@/components/today/milestone-card";
 
-/**
- * Main view for the Today tab.
- *
- * Renders lists first, then standalone tasks. Completed tasks are sorted to
- * the bottom of their section — no separate "Completed" heading is shown.
- * Swipe right to complete, swipe left to undo.
- */
 export function TodayList() {
-  const { tasks, completedIds, lists, loading, error, refresh, toggleComplete } = useToday();
+  const { tasks, completedIds, lists, streaks, todayTotal, todayDone, loading, error, refresh, toggleComplete } = useToday();
+  const { user } = useUser();
   const { tags } = useTags();
   const [infoTask, setInfoTask] = useState<Task | null>(null);
 
@@ -28,6 +26,13 @@ export function TodayList() {
   const dateLabel = today.toLocaleDateString(undefined, {
     weekday: "long", month: "long", day: "numeric",
   });
+
+  const progressTitle =
+    todayTotal === 0
+      ? "Nothing scheduled"
+      : todayDone === todayTotal
+      ? "All done today"
+      : `${todayDone} of ${todayTotal} done`;
 
   if (loading) {
     return (
@@ -49,11 +54,7 @@ export function TodayList() {
   }
 
   const listIds = new Set(lists.map((l) => l.id));
-
-  /** Tasks not belonging to a visible list */
   const standaloneTasks = tasks.filter((t) => !t.list_id || !listIds.has(t.list_id));
-
-  /** Sort: incomplete first, completed at the end */
   const sortedTasks = [...standaloneTasks].sort((a, b) => {
     const aDone = completedIds.has(a.id) || a.status === "completed" ? 1 : 0;
     const bDone = completedIds.has(b.id) || b.status === "completed" ? 1 : 0;
@@ -65,31 +66,30 @@ export function TodayList() {
     tasks: tasks.filter((t) => t.list_id === l.id),
   }));
 
-  const totalScheduled = tasks.length;
-  const totalDone = tasks.filter(
-    (t) => completedIds.has(t.id) || t.status === "completed"
-  ).length;
-
   return (
     <>
-      {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-lg font-bold text-[var(--color-text-primary)]">{dateLabel}</h1>
-        {totalScheduled > 0 && (
-          <p className="text-sm text-[var(--color-text-secondary)] mt-0.5">
-            {totalDone} of {totalScheduled} done
-          </p>
-        )}
-      </div>
+      <PageHeader
+        title={progressTitle}
+        subtitle={dateLabel}
+        progressBar={todayTotal > 0 ? { total: todayTotal, done: todayDone } : undefined}
+      />
 
-      {totalScheduled === 0 ? (
+      <MorningBrief
+        username={user?.username ?? "there"}
+        todayTotal={todayTotal}
+        completedIds={completedIds}
+        streaks={streaks}
+        tasks={tasks}
+      />
+      <MilestoneCard />
+
+      {todayTotal === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-3">🎉</p>
           <p className="text-[var(--color-text-secondary)] text-sm">Nothing scheduled for today.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {/* Lists */}
           {listItems.map(({ list, tasks: listTasks }) => (
             <ListCard
               key={list.id}
@@ -100,7 +100,6 @@ export function TodayList() {
             />
           ))}
 
-          {/* Standalone tasks — completed sink to the bottom, no section label */}
           {sortedTasks.map((task) => {
             const isDone = completedIds.has(task.id) || task.status === "completed";
             return (
@@ -124,7 +123,6 @@ export function TodayList() {
         </div>
       )}
 
-      {/* Info modal */}
       {infoTask && (
         <RCM
           open
