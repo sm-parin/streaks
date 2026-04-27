@@ -131,10 +131,20 @@ create table public.group_members (
   constraint group_members_unique unique (group_id, user_id)
 );
 alter table public.group_members enable row level security;
+
+-- Helper: avoids RLS self-recursion by running with SECURITY DEFINER
+create or replace function public.is_group_member(p_group_id uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.group_members
+    where group_id = p_group_id and user_id = auth.uid() and status = 'active'
+  );
+$$;
+
 create policy "Users view own memberships" on public.group_members
-  for select using (auth.uid() = user_id or
-    exists (select 1 from public.group_members gm
-            where gm.group_id = group_id and gm.user_id = auth.uid() and gm.status = 'active'));
+  for select using (
+    auth.uid() = user_id or public.is_group_member(group_id)
+  );
 create policy "Users manage own memberships" on public.group_members using (auth.uid() = user_id);
 
 -- Now safe to add: group_members exists
