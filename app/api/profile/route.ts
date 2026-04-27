@@ -9,10 +9,11 @@ const passwordSchema = z.object({
 });
 
 const metaSchema = z.object({
-  username: z.string().max(50).optional(),
+  username: z.string().min(3).max(20).regex(/^[a-z0-9_]+$/, "Username: 3-20 chars, a-z 0-9 _ only").optional(),
   bio: z.string().max(200).optional(),
   default_active_days: z.array(z.number().int().min(0).max(6)).optional(),
   timezone: z.string().max(100).optional(),
+  onboarding_complete: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -66,16 +67,26 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
-  // Metadata update (username, bio, default_active_days, timezone)
+  // Metadata update (username, bio, default_active_days, timezone, onboarding_complete)
   const result = metaSchema.safeParse(body);
   if (!result.success) {
     return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
   }
-  const { error: updateError } = await supabase.auth.updateUser({
-    data: result.data,
-  });
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+
+  const updateData = { ...result.data };
+
+  if (updateData.username !== undefined) {
+    const username = updateData.username.trim().toLowerCase();
+    updateData.username = username;
+    const serviceClient = createServiceClient();
+    const { data: existing } = await serviceClient
+      .from("profiles").select("id").eq("username", username).neq("id", user.id).maybeSingle();
+    if (existing) return NextResponse.json({ error: "Username taken" }, { status: 409 });
+    await serviceClient.from("profiles")
+      .upsert({ id: user.id, username, updated_at: new Date().toISOString() }, { onConflict: "id" });
   }
+
+  const { error: updateError } = await supabase.auth.updateUser({ data: updateData });
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
