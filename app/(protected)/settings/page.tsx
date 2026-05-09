@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Monitor, Settings2, LogOut, ChevronRight, ArrowLeft, Lock } from "lucide-react";
+import type { UserStatsCache } from "@/lib/types";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,20 @@ import { DAY_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 type Screen = "main" | "account" | "configure";
+
+function StatValue({ value, isPercent }: { value: number | null; isPercent?: boolean }) {
+  if (value === null) return <span className="font-mono text-[var(--color-text-disabled)]">—</span>;
+  return (
+    <span className="font-mono font-semibold text-[var(--color-text-primary)]">
+      {isPercent ? `${value.toFixed(3)}%` : value.toFixed(3)}
+    </span>
+  );
+}
+
+function Percentile({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-xs text-[var(--color-text-disabled)]">—</span>;
+  return <span className="text-xs text-[var(--color-text-disabled)]">top {(100 - value).toFixed(0)}%</span>;
+}
 
 const TIMEZONES = [
   "UTC","America/New_York","America/Chicago","America/Denver","America/Los_Angeles",
@@ -36,6 +51,20 @@ export default function SettingsPage() {
     user?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   );
   const [configLoading, setConfigLoading] = useState(false);
+  const [statsData, setStatsData] = useState<UserStatsCache | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  const fetchStats = useCallback(async (userId: string) => {
+    setStatsLoading(true);
+    try {
+      const r = await fetch(`/api/profile/stats/${userId}`);
+      if (r.ok) { const d = await r.json(); setStatsData(d.stats ?? null); }
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { if (user?.id) fetchStats(user.id); }, [user?.id, fetchStats]);
 
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,6 +221,60 @@ export default function SettingsPage() {
           <ThemeToggle />
         </div>
       </div>
+      {/* ── Your Stats ── */}
+      {statsLoading ? (
+        <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3 animate-pulse mt-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-4 bg-[var(--color-border)] rounded" style={{ width: `${60 + i * 8}%` }} />
+          ))}
+        </div>
+      ) : statsData ? (
+        <div className="mt-4 space-y-3">
+          <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide px-1">Your Stats</p>
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-2.5">
+            <p className="text-[10px] font-semibold text-[var(--color-text-disabled)] uppercase tracking-wide">Streak Stats</p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-[var(--color-text-primary)]">Consistency Rating</span>
+              <div className="flex items-center gap-2">
+                <StatValue value={statsData.streak_consistency_rating} />
+                <Percentile value={statsData.streak_consistency_percentile} />
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-[var(--color-text-primary)]">Discipline</span>
+              <div className="flex items-center gap-2">
+                <StatValue value={statsData.streak_discipline_pct} isPercent />
+                <Percentile value={statsData.streak_discipline_percentile} />
+              </div>
+            </div>
+          </div>
+          <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-2.5">
+            <p className="text-[10px] font-semibold text-[var(--color-text-disabled)] uppercase tracking-wide">Milestone Stats</p>
+            <div className="flex justify-between items-start">
+              <span className="text-sm text-[var(--color-text-primary)]">Today · Week · Month · Year</span>
+              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                <StatValue value={statsData.daily_milestone} />
+                <span className="text-[var(--color-text-disabled)] text-xs">·</span>
+                <StatValue value={statsData.weekly_milestone} />
+                <span className="text-[var(--color-text-disabled)] text-xs">·</span>
+                <StatValue value={statsData.monthly_milestone} />
+                <span className="text-[var(--color-text-disabled)] text-xs">·</span>
+                <StatValue value={statsData.yearly_milestone} />
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-[var(--color-text-primary)]">Consistency Rating</span>
+              <div className="flex items-center gap-2">
+                <StatValue value={statsData.milestone_consistency_rating} />
+                <Percentile value={statsData.milestone_consistency_percentile} />
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-[var(--color-text-disabled)] text-center mt-4">Stats not available yet. Check back tomorrow.</p>
+      )}
+
       <div className="mt-8">
         <Button
           variant="ghost"

@@ -459,3 +459,17 @@ CREATE TRIGGER on_auth_user_email_sync
   FOR EACH ROW EXECUTE FUNCTION public.sync_profile_email();
 
 notify pgrst, 'reload schema';
+
+-- ===========================================================================
+-- SPRINT 19: User stats computation engine
+-- Change milestone columns from integer to numeric for decimal precision.
+-- Add public read policy (any authenticated user may read any profile stats).
+-- ===========================================================================
+ALTER TABLE public.user_stats_cache
+  ALTER COLUMN daily_milestone   TYPE numeric,
+  ALTER COLUMN weekly_milestone  TYPE numeric,
+  ALTER COLUMN monthly_milestone TYPE numeric,
+  ALTER COLUMN yearly_milestone  TYPE numeric;
+
+CREATE POLICY "Authenticated users read any stats" ON public.user_stats_cache
+  FOR SELECT USING (auth.uid() IS NOT NULL);
