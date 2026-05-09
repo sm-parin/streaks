@@ -124,6 +124,21 @@ export function TodayList() {
           {sortedTasks.map((task) => {
             // Recurring: completedIds is source of truth. One-off/global: task.status.
             const isDone = task.is_recurring ? completedIds.has(task.id) : completedIds.has(task.id) || task.status === "completed";
+
+            // Global tasks: tap-to-complete only — no swipe wrapper
+            if (task.is_global) {
+              return (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  completedToday={isDone}
+                  showDays={false}
+                  onClick={() => toggleComplete(task.id, false)}
+                  onDoubleClick={() => setInfoTask(task)}
+                />
+              );
+            }
+
             return (
               <SwipeableWrapper
                 key={task.id}
@@ -135,7 +150,7 @@ export function TodayList() {
               >
                 <TaskCard
                   task={task}
-                  completedToday={completedIds.has(task.id)}
+                  completedToday={isDone}
                   showDays={false}
                   onClick={() => setInfoTask(task)}
                 />
