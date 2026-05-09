@@ -2,23 +2,28 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Flame, TrendingUp, TrendingDown, Minus, Check, Search } from "lucide-react";
+import { Flame, TrendingUp, TrendingDown, Minus, Check, Search, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
 import { SubTabBar } from "@/components/ui/subtab-bar";
 import { StreakCard } from "@/components/streaks/streak-card";
+import { MilestoneFilterBar, type FilterState } from "@/components/streaks/milestone-filter-bar";
+import { LineGraph } from "@/components/streaks/line-graph";
 import { createClient } from "@/lib/supabase/client";
 import { useStreaks } from "@/lib/hooks/use-streaks";
-import type { Group, StreakResult, Priority } from "@/lib/types";
+import type { Group, StreakResult, Priority, Task } from "@/lib/types";
+import { PRIORITY_COLORS } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 type MainTab = "personal" | "group";
+type PersonalSubTab = "streaks" | "milestones";
 interface PersonalAnalytics { momentumScore: number; trend: "up"|"down"|"flat"; heatmapData: { date: string; count: number }[]; bestDayOfWeek: { day: number; label: string; rate: number }[]; }
 interface HabitCompletion { task_id: string; task_title: string; completedDates: string[]; }
 interface MatrixMember { user_id: string; username: string; habitCompletions: HabitCompletion[]; }
 interface Standing { rank: number; user_id: string; username: string; currentStreak: number; }
 interface GroupAnalytics { memberMatrix: MatrixMember[]; standings: Standing[]; groupRecord: { username: string; longestStreak: number; task_title: string } | null; }
 const MAIN_TABS: { id: MainTab; label: string }[] = [{ id: "personal", label: "Personal" }, { id: "group", label: "Group" }];
+const PERSONAL_SUB_TABS: { id: PersonalSubTab; label: string }[] = [{ id: "streaks", label: "Streaks" }, { id: "milestones", label: "Milestones" }];
 const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function heatColor(count: number): string { if (count === 0) return "var(--color-surface-raised)"; if (count === 1) return "rgba(240,127,19,0.20)"; if (count === 2) return "rgba(240,127,19,0.60)"; return "rgba(240,127,19,1)"; }
 
@@ -153,11 +158,80 @@ function GroupRecord({ record }: { record: { username: string; longestStreak: nu
       <div>
         <p className="text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wide mb-0.5">All-time group record</p>
         <p className="text-sm text-[var(--color-text-primary)]">
-          <span className="font-semibold">@{record.username}</span>{" Â· "}
-          <span className="font-bold text-[#EF4444]">{record.longestStreak} days</span>{" Â· "}
+          <span className="font-semibold">@{record.username}</span>{" · "}
+          <span className="font-bold text-[#EF4444]">{record.longestStreak} days</span>{" · "}
           {record.task_title}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ── MilestonesView ────────────────────────────────────────────────────────────
+
+interface DailyData { tasks: Task[]; completedTaskIds: string[]; }
+interface GraphData  { points: { label: string; value: number }[]; label: string; }
+
+function MilestonesView({ data, mode }: { data: unknown; mode: string }) {
+  if (!data) return null;
+
+  const isDailyMode = mode === "Today" || mode === "Daily";
+
+  if (isDailyMode) {
+    const d = data as DailyData;
+    if (!d.tasks?.length) {
+      return <p className="text-center text-sm text-[var(--color-text-secondary)] py-8">No tasks scheduled for this day.</p>;
+    }
+    return (
+      <div className="space-y-2">
+        {d.tasks.map((task) => {
+          const done = d.completedTaskIds.includes(task.id);
+          const priorityColor = PRIORITY_COLORS[task.priority] ?? "#F07F13";
+          return (
+            <div
+              key={task.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 12px",
+                borderRadius: "var(--radius-lg)",
+                borderLeft: `4px solid ${priorityColor}`,
+                backgroundColor: "var(--color-surface-raised)",
+                opacity: done ? 0.6 : 1,
+              }}
+            >
+              <CheckCircle2
+                style={{ width: "18px", height: "18px", flexShrink: 0,
+                  color: done ? "#22C55E" : "var(--color-border)" }}
+              />
+              <span
+                style={{
+                  flex: 1,
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  color: "var(--color-text-primary)",
+                  textDecoration: done ? "line-through" : "none",
+                }}
+              >
+                {task.title}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Weekly / Monthly / Yearly → line graph
+  const g = data as GraphData;
+  const points = (g.points ?? []).map((p) => ({ label: p.label, value: p.value }));
+  return (
+    <div className="space-y-2">
+      {g.label && (
+        <p className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">{g.label}</p>
+      )}
+      <LineGraph points={points} />
     </div>
   );
 }
@@ -167,6 +241,7 @@ export default function StreaksPage() {
   const { streaks, isLoading: streaksLoading, error: streaksError, refresh } = useStreaks();
   const [taskMeta, setTaskMeta] = useState<Record<string, { title: string; priority: Priority; allow_grace: boolean }>>({});
   const [mainTab, setMainTab] = useState<MainTab>("personal");
+  const [personalSubTab, setPersonalSubTab] = useState<PersonalSubTab>("streaks");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"current" | "best" | "broken">("current");
   const [personal, setPersonal] = useState<PersonalAnalytics | null>(null);
@@ -176,6 +251,17 @@ export default function StreaksPage() {
   const [groupAnalytics, setGroupAnalytics] = useState<GroupAnalytics | null>(null);
   const [groupLoading, setGroupLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  // Milestones state
+  const todayDate = new Date();
+  const [filterState, setFilterState] = useState<FilterState>({
+    mode: "Today",
+    day: todayDate.getDate(),
+    month: todayDate.getMonth() + 1,
+    year: todayDate.getFullYear(),
+  });
+  const [milestonesData, setMilestonesData] = useState<unknown>(null);
+  const [milestonesLoading, setMilestonesLoading] = useState(false);
 
   const fetchTaskMeta = useCallback(async () => {
     const supabase = createClient();
@@ -190,6 +276,22 @@ export default function StreaksPage() {
         map[t.id] = { title: t.title, priority: t.priority as Priority, allow_grace: t.allow_grace };
       }
       setTaskMeta(map);
+    }
+  }, []);
+
+  const fetchMilestones = useCallback(async (fs: FilterState) => {
+    setMilestonesLoading(true);
+    try {
+      const params = new URLSearchParams({
+        mode: fs.mode,
+        day: String(fs.day),
+        month: String(fs.month),
+        year: String(fs.year),
+      });
+      const r = await fetch(`/api/analytics/milestones?${params}`);
+      if (r.ok) setMilestonesData(await r.json());
+    } finally {
+      setMilestonesLoading(false);
     }
   }, []);
 
@@ -222,6 +324,7 @@ export default function StreaksPage() {
 
   useEffect(() => { fetchTaskMeta(); refresh(); fetchPersonal(); fetchGroups(); }, [fetchTaskMeta, refresh, fetchPersonal, fetchGroups]);
   useEffect(() => { if (mainTab === "group" && selectedGroupId) fetchGroupAnalytics(selectedGroupId); }, [mainTab, selectedGroupId, fetchGroupAnalytics]);
+  useEffect(() => { if (personalSubTab === "milestones") fetchMilestones(filterState); }, [personalSubTab, filterState, fetchMilestones]);
 
   // Filtered + sorted streak cards
   const filteredAndSorted = useMemo(() => {
@@ -245,7 +348,31 @@ export default function StreaksPage() {
       <SubTabBar tabs={MAIN_TABS} active={mainTab} onChange={setMainTab} accentColor="var(--tab-streaks)" className="mb-5" />
 
       {mainTab === "personal" && (
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* ── Streaks | Milestones sub-tab ── */}
+          <SubTabBar
+            tabs={PERSONAL_SUB_TABS}
+            active={personalSubTab}
+            onChange={setPersonalSubTab}
+            accentColor="var(--tab-streaks)"
+          />
+
+          {personalSubTab === "milestones" && (
+            <div className="space-y-4">
+              <MilestoneFilterBar
+                value={filterState}
+                onChange={(fs) => { setFilterState(fs); }}
+              />
+              {milestonesLoading ? (
+                <div className="flex justify-center py-8"><Spinner /></div>
+              ) : (
+                <MilestonesView data={milestonesData} mode={filterState.mode} />
+              )}
+            </div>
+          )}
+
+          {personalSubTab === "streaks" && (
+            <div className="space-y-6">
           {personalLoading ? (
             <div className="flex justify-center py-8"><Spinner /></div>
           ) : personal && (
@@ -334,6 +461,8 @@ export default function StreaksPage() {
 
           {personal && personal.heatmapData.length > 0 && <Heatmap data={personal.heatmapData} />}
           {personal && <BestDayChart data={personal.bestDayOfWeek} />}
+            </div>
+          )}
         </div>
       )}
 
