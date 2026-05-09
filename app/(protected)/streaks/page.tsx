@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Flame, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
+import { Flame, TrendingUp, TrendingDown, Minus, Check, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Spinner } from "@/components/ui/spinner";
 import { SubTabBar } from "@/components/ui/subtab-bar";
 import { StreakCard } from "@/components/streaks/streak-card";
 import { createClient } from "@/lib/supabase/client";
 import { useStreaks } from "@/lib/hooks/use-streaks";
-import type { Group, StreakResult } from "@/lib/types";
+import type { Group, StreakResult, Priority } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 
 type MainTab = "personal" | "group";
@@ -165,8 +165,10 @@ function GroupRecord({ record }: { record: { username: string; longestStreak: nu
 export default function StreaksPage() {
   const router = useRouter();
   const { streaks, isLoading: streaksLoading, error: streaksError, refresh } = useStreaks();
-  const [titles, setTitles] = useState<Record<string, string>>({});
+  const [taskMeta, setTaskMeta] = useState<Record<string, { title: string; priority: Priority; allow_grace: boolean }>>({});
   const [mainTab, setMainTab] = useState<MainTab>("personal");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"current" | "best" | "broken">("current");
   const [personal, setPersonal] = useState<PersonalAnalytics | null>(null);
   const [personalLoading, setPersonalLoading] = useState(false);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -175,10 +177,20 @@ export default function StreaksPage() {
   const [groupLoading, setGroupLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
-  const fetchTitles = useCallback(async () => {
+  const fetchTaskMeta = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("tasks").select("id, title").eq("is_recurring", true).not("status", "eq", "rejected");
-    if (data) setTitles(Object.fromEntries(data.map((t: { id: string; title: string }) => [t.id, t.title])));
+    const { data } = await supabase
+      .from("tasks")
+      .select("id, title, priority, allow_grace")
+      .eq("is_recurring", true)
+      .not("status", "eq", "rejected");
+    if (data) {
+      const map: Record<string, { title: string; priority: Priority; allow_grace: boolean }> = {};
+      for (const t of data as Array<{ id: string; title: string; priority: number; allow_grace: boolean }>) {
+        map[t.id] = { title: t.title, priority: t.priority as Priority, allow_grace: t.allow_grace };
+      }
+      setTaskMeta(map);
+    }
   }, []);
 
   const fetchPersonal = useCallback(async () => {
@@ -208,10 +220,24 @@ export default function StreaksPage() {
     supabase.auth.getUser().then(({ data }) => { if (data.user) setCurrentUserId(data.user.id); });
   }, []);
 
-  useEffect(() => { fetchTitles(); refresh(); fetchPersonal(); fetchGroups(); }, [fetchTitles, refresh, fetchPersonal, fetchGroups]);
+  useEffect(() => { fetchTaskMeta(); refresh(); fetchPersonal(); fetchGroups(); }, [fetchTaskMeta, refresh, fetchPersonal, fetchGroups]);
   useEffect(() => { if (mainTab === "group" && selectedGroupId) fetchGroupAnalytics(selectedGroupId); }, [mainTab, selectedGroupId, fetchGroupAnalytics]);
 
-  const paired = streaks.map((r: StreakResult) => ({ result: r, title: titles[r.task_id] ?? "â€¦" }));
+  // Filtered + sorted streak cards
+  const filteredAndSorted = useMemo(() => {
+    const q = search.toLowerCase();
+    let list = streaks.map((r: StreakResult) => ({
+      result: r,
+      meta: taskMeta[r.task_id] ?? { title: "…", priority: 3 as Priority, allow_grace: false },
+    }));
+    if (q) list = list.filter((p) => p.meta.title.toLowerCase().includes(q));
+    list = [...list].sort((a, b) => {
+      if (sortBy === "current") return b.result.currentStreak - a.result.currentStreak;
+      if (sortBy === "best")    return b.result.longestStreak  - a.result.longestStreak;
+      return a.result.timesStreakBroken - b.result.timesStreakBroken; // asc: fewer broken first
+    });
+    return list;
+  }, [streaks, taskMeta, search, sortBy]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5">
@@ -236,9 +262,22 @@ export default function StreaksPage() {
             </div>
           )}
 
-          {streaksLoading ? (<div className="flex justify-center py-6"><Spinner /></div>
-          ) : streaksError ? (<p className="text-center text-sm text-red-500">{streaksError}</p>
-          ) : paired.length === 0 ? (
+          {streaksLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3 animate-pulse" style={{ minHeight: "128px" }}>
+                  <div className="h-5 rounded bg-[var(--color-border)] w-2/3 mb-3" />
+                  <div className="flex gap-2 mb-3">
+                    {[1, 2, 3].map((j) => <div key={j} className="flex-1 h-14 rounded bg-[var(--color-border)]" />)}
+                  </div>
+                  <div className="h-2.5 rounded bg-[var(--color-border)] w-full mb-2" />
+                  <div className="h-2.5 rounded bg-[var(--color-border)] w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : streaksError ? (
+            <p className="text-center text-sm text-red-500">{streaksError}</p>
+          ) : streaks.length === 0 ? (
             <div className="text-center py-10 space-y-3">
               <Flame className="w-10 h-10 text-[var(--tab-streaks)] mx-auto" />
               <p className="text-base font-semibold text-[var(--color-text-primary)]">No streak data yet</p>
@@ -251,7 +290,46 @@ export default function StreaksPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">{paired.map(({ result, title }) => (<StreakCard key={result.task_id} streak={result} title={title} />))}</div>
+            <>
+              {/* ── Search + Sort controls ── */}
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-disabled)]" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search habits..."
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none focus:border-[var(--color-brand)]"
+                  />
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "current" | "best" | "broken")}
+                  className="shrink-0 text-xs border border-[var(--color-border)] rounded-xl px-3 py-2 bg-[var(--color-bg)] text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-brand)] cursor-pointer"
+                >
+                  <option value="current">Sort: Current Streak</option>
+                  <option value="best">Sort: Best Streak</option>
+                  <option value="broken">Sort: Times Broken</option>
+                </select>
+              </div>
+
+              {filteredAndSorted.length === 0 ? (
+                <p className="text-center text-sm text-[var(--color-text-secondary)] py-8">No habits match your search.</p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredAndSorted.map(({ result, meta }) => (
+                    <StreakCard
+                      key={result.task_id}
+                      streak={result}
+                      title={meta.title}
+                      priority={meta.priority}
+                      allowGrace={meta.allow_grace}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {personal && personal.heatmapData.length > 0 && <Heatmap data={personal.heatmapData} />}
