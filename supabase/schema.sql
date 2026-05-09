@@ -406,3 +406,56 @@ CREATE POLICY "Users read own stats" ON public.user_stats_cache
   FOR SELECT USING (auth.uid() = user_id);
 
 notify pgrst, 'reload schema';
+
+-- ===========================================================================
+-- SPRINT 12: profiles table -- add email, created_at, last_active_at columns;
+--            update profile upsert trigger to sync email + created_at
+-- ===========================================================================
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS email          text,
+  ADD COLUMN IF NOT EXISTS created_at    timestamptz DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS last_active_at timestamptz;
+
+-- Backfill from auth.users
+UPDATE public.profiles p
+   SET email      = u.email,
+       created_at = u.created_at
+  FROM auth.users u
+ WHERE u.id = p.id;
+
+CREATE OR REPLACE FUNCTION public.handle_user_profile_upsert()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.profiles(id, username, bio, email, created_at, updated_at)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'username',
+    NEW.raw_user_meta_data->>'bio',
+    NEW.email,
+    NEW.created_at,
+    now()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username   = EXCLUDED.username,
+    bio        = EXCLUDED.bio,
+    email      = EXCLUDED.email,
+    updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_profile_email()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  UPDATE public.profiles SET email = NEW.email WHERE id = NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_email_sync ON auth.users;
+CREATE TRIGGER on_auth_user_email_sync
+  AFTER UPDATE OF email ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.sync_profile_email();
+
+notify pgrst, 'reload schema';

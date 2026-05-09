@@ -56,8 +56,8 @@ export function TodayList() {
   const listIds = new Set(lists.map((l) => l.id));
   const standaloneTasks = tasks.filter((t) => !t.list_id || !listIds.has(t.list_id));
   const sortedTasks = [...standaloneTasks].sort((a, b) => {
-    const aDone = completedIds.has(a.id) || a.status === "completed" ? 1 : 0;
-    const bDone = completedIds.has(b.id) || b.status === "completed" ? 1 : 0;
+    const aDone = (a.is_recurring ? completedIds.has(a.id) : completedIds.has(a.id) || a.status === "completed") ? 1 : 0;
+    const bDone = (b.is_recurring ? completedIds.has(b.id) : completedIds.has(b.id) || b.status === "completed") ? 1 : 0;
     return aDone - bDone;
   });
 
@@ -114,7 +114,8 @@ export function TodayList() {
           ))}
 
           {sortedTasks.map((task) => {
-            const isDone = completedIds.has(task.id) || task.status === "completed";
+            // Recurring: completedIds is source of truth. One-off/global: task.status.
+            const isDone = task.is_recurring ? completedIds.has(task.id) : completedIds.has(task.id) || task.status === "completed";
             return (
               <SwipeableWrapper
                 key={task.id}

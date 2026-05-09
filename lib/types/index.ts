@@ -108,6 +108,7 @@ export interface Group {
 export interface User {
   id: string;
   email: string;
+  created_at?: string;
   username?: string;
   bio?: string;
   default_active_days?: number[];

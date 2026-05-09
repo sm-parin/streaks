@@ -147,11 +147,14 @@ const taskRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { data: task } = await ctx.supabase
         .from("tasks")
-        .select("is_recurring, status")
+        .select("is_recurring, is_global, status")
         .eq("id", input.task_id)
         .single();
       if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
 
+      // Recurring habit: completion tracked via task_completions rows (one per date). NEVER touch task.status.
+      // One-off task (specific_date, not recurring): toggle task.status.
+      // Global task (is_global=true): toggle task.status; task disappears from Today on completion.
       if (task.is_recurring) {
         const { data: existing } = await ctx.supabase
           .from("task_completions")
@@ -173,7 +176,7 @@ const taskRouter = router({
         return { completed: true, date: input.date };
       }
 
-      // One-off task: toggle status
+      // One-off or global task: toggle task.status
       const newStatus = task.status === "completed" ? "accepted" : "completed";
       await ctx.supabase.from("tasks").update({ status: newStatus }).eq("id", input.task_id);
       return { completed: newStatus === "completed", date: input.date };

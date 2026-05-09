@@ -78,10 +78,8 @@ export async function PATCH(request: NextRequest) {
   if (updateData.username !== undefined) {
     const username = updateData.username.trim().toLowerCase();
     updateData.username = username;
+    // Usernames are intentionally non-unique — duplicates are allowed; only a client-side warning is shown.
     const serviceClient = createServiceClient();
-    const { data: existing } = await serviceClient
-      .from("profiles").select("id").eq("username", username).neq("id", user.id).maybeSingle();
-    if (existing) return NextResponse.json({ error: "Username taken" }, { status: 409 });
     await serviceClient.from("profiles")
       .upsert({ id: user.id, username, updated_at: new Date().toISOString() }, { onConflict: "id" });
   }

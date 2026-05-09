@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { useUser } from "@/lib/hooks/use-user";
 import { getDisplayName, getInitials } from "@/lib/utils/display-name";
+
+const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,6 +20,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [loading, setLoading] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [usernameWarning, setUsernameWarning] = useState<string | null>(null);
+  const usernameCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -28,7 +32,31 @@ export default function ProfilePage() {
 
   const displayName = user ? getDisplayName(user) : "â€¦";
   const initials = getInitials(displayName);
-
+  // Debounced duplicate check for username — warning only, never blocks save
+  useEffect(() => {
+    if (!dirty) { setUsernameWarning(null); return; }
+    const q = username.trim().toLowerCase();
+    if (!USERNAME_REGEX.test(q)) { setUsernameWarning(null); return; }
+    if (usernameCheckRef.current) clearTimeout(usernameCheckRef.current);
+    usernameCheckRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
+        const json = await res.json();
+        const users: { username: string; created_at?: string }[] = json.users ?? [];
+        const exact = users.find((u) => u.username.toLowerCase() === q);
+        if (exact) {
+          const theyWereFirst =
+            exact.created_at && user?.created_at ? exact.created_at < user.created_at : true;
+          setUsernameWarning(
+            theyWereFirst ? "Someone else is also using this username. Consider a different one." : null
+          );
+        } else {
+          setUsernameWarning(null);
+        }
+      } catch { setUsernameWarning(null); }
+    }, 400);
+    return () => { if (usernameCheckRef.current) clearTimeout(usernameCheckRef.current); };
+  }, [username, dirty, user?.created_at]);
   const handleSave = async () => {
     setLoading(true);
     const r = await fetch("/api/profile", {
@@ -79,8 +107,9 @@ export default function ProfilePage() {
             onChange={(e) => { setUsername(e.target.value); setDirty(true); }}
             placeholder="Enter a username"
             maxLength={50}
-          />
-          <p className="text-xs text-[var(--color-text-secondary)]">Your display name across the app.</p>
+          />          {usernameWarning && (
+            <p className="text-xs text-amber-500 px-1">{usernameWarning}</p>
+          )}          <p className="text-xs text-[var(--color-text-secondary)]">Your display name across the app.</p>
         </div>
 
         {/* Bio */}

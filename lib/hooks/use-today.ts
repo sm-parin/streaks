@@ -49,7 +49,8 @@ export function useToday() {
         group_name: t.group_id ? groupMap[t.group_id] : undefined,
       }));
 
-      const recurringIds = rowsWithGroups.filter((t) => t.is_recurring || t.is_global).map((t) => t.id);
+      // Only recurring tasks use task_completions; global tasks use task.status and are excluded from Today once completed.
+      const recurringIds = rowsWithGroups.filter((t) => t.is_recurring).map((t) => t.id);
       let completedIdList: string[] = [];
       if (recurringIds.length) {
         const { data: comps } = await supabase
@@ -126,7 +127,9 @@ export function useToday() {
 
   const todayTotal = tasks.length;
   const todayDone = tasks.filter(
-    (t) => completedIds.has(t.id) || t.status === "completed"
+    // Recurring: tracked via completedIds (task_completions). NEVER use task.status for recurring.
+    // One-off / global: task.status toggled optimistically until task disappears from list.
+    (t) => t.is_recurring ? completedIds.has(t.id) : completedIds.has(t.id) || t.status === "completed"
   ).length;
 
   return { tasks, completedIds, lists, streaks, todayTotal, todayDone, loading, error, refresh, toggleComplete };
