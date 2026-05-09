@@ -28,8 +28,9 @@ export function useToday() {
         .select("*")
         .in("status", ["accepted", "completed"])
         .or(
-          `and(is_recurring.eq.true,active_days.cs.{${todayDOW}}),` +
-          `and(is_recurring.eq.false,specific_date.lte.${today},status.neq.completed)`
+          `and(is_recurring.eq.true,is_disabled.eq.false,active_days.cs.{${todayDOW}}),` +
+          `and(is_recurring.eq.false,is_global.eq.false,specific_date.lte.${today},status.neq.completed),` +
+          `and(is_global.eq.true,is_disabled.eq.false,status.neq.completed)`
         );
 
       if (taskErr) throw new Error(taskErr.message);
@@ -48,7 +49,7 @@ export function useToday() {
         group_name: t.group_id ? groupMap[t.group_id] : undefined,
       }));
 
-      const recurringIds = rowsWithGroups.filter((t) => t.is_recurring).map((t) => t.id);
+      const recurringIds = rowsWithGroups.filter((t) => t.is_recurring || t.is_global).map((t) => t.id);
       let completedIdList: string[] = [];
       if (recurringIds.length) {
         const { data: comps } = await supabase

@@ -365,3 +365,44 @@ notify pgrst, 'reload schema';
 DROP TABLE IF EXISTS activities CASCADE;
 DROP TABLE IF EXISTS goals CASCADE;
 notify pgrst, 'reload schema';
+
+-- ===========================================================================
+-- SPRINT 11: v4 columns -- is_global, is_disabled on tasks; category on tags;
+--            user_stats_cache table; auto_accept_tasks rename
+-- ===========================================================================
+
+ALTER TABLE public.tasks
+  ADD COLUMN IF NOT EXISTS is_global   boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_disabled boolean NOT NULL DEFAULT false;
+
+ALTER TABLE public.tags
+  ADD COLUMN IF NOT EXISTS category text;
+
+DO $$ BEGIN
+  ALTER TABLE public.friendships RENAME COLUMN auto_accept_activities TO auto_accept_tasks;
+EXCEPTION WHEN undefined_column THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.user_stats_cache (
+  id                               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                          uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  streak_consistency_rating        numeric,
+  streak_discipline_pct            numeric,
+  milestone_consistency_rating     numeric,
+  daily_milestone                  integer,
+  weekly_milestone                 integer,
+  monthly_milestone                integer,
+  yearly_milestone                 integer,
+  streak_consistency_percentile    numeric,
+  streak_discipline_percentile     numeric,
+  milestone_consistency_percentile numeric,
+  computed_at                      timestamptz,
+  created_at                       timestamptz DEFAULT now(),
+  updated_at                       timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.user_stats_cache ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users read own stats" ON public.user_stats_cache
+  FOR SELECT USING (auth.uid() = user_id);
+
+notify pgrst, 'reload schema';

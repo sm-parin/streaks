@@ -34,11 +34,11 @@ export async function GET() {
   const [sentRes, receivedRes] = await Promise.all([
     supabase
       .from("friendships")
-      .select("id, status, auto_accept_activities, created_at, updated_at, addressee_id")
+      .select("id, status, auto_accept_tasks, created_at, updated_at, addressee_id")
       .eq("requester_id", session.sub),
     supabase
       .from("friendships")
-      .select("id, status, auto_accept_activities, created_at, updated_at, requester_id")
+      .select("id, status, auto_accept_tasks, created_at, updated_at, requester_id")
       .eq("addressee_id", session.sub),
   ]);
 

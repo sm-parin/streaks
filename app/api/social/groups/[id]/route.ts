@@ -62,7 +62,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const { data: target } = await supabase
-      .from("users")
+      .from("profiles")
       .select("id")
       .eq("username", inviteResult.data.username.toLowerCase())
       .single();

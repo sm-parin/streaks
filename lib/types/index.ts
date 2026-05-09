@@ -25,6 +25,8 @@ export interface Task {
   group_id: string | null;
   group_name?: string;
   allow_grace: boolean;
+  is_global: boolean;
+  is_disabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +65,7 @@ export interface Tag {
   id: string;
   name: string;
   color: string;
+  category: string | null;
   created_at: string;
 }
 
@@ -181,6 +184,7 @@ export interface StreakResult {
   currentStreak: number;
   longestStreak: number;
   totalCompletions: number;
+  timesStreakBroken: number;
   completedToday: boolean;
   lastCompleted: string | null;
   recentDays: RecentDay[];
@@ -193,3 +197,20 @@ export const TAB_COLORS = {
   today:   "#F07F13",
   social:  "#3B82F6",
 } as const;
+
+/** Nightly-computed analytics cache — read from user_stats_cache, never computed live */
+export interface UserStatsCache {
+  id: string;
+  user_id: string;
+  streak_consistency_rating: number | null;
+  streak_discipline_pct: number | null;
+  milestone_consistency_rating: number | null;
+  daily_milestone: number | null;
+  weekly_milestone: number | null;
+  monthly_milestone: number | null;
+  yearly_milestone: number | null;
+  streak_consistency_percentile: number | null;
+  streak_discipline_percentile: number | null;
+  milestone_consistency_percentile: number | null;
+  computed_at: string | null;
+}

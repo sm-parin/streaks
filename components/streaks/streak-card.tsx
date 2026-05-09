@@ -16,7 +16,7 @@ const DOT_CLASSES: Record<DayStatus, string> = {
 };
 
 export function StreakCard({ streak, title }: Props) {
-  const { currentStreak, longestStreak, totalCompletions, completedToday, recentDays } = streak;
+  const { currentStreak, longestStreak, totalCompletions, timesStreakBroken, completedToday, recentDays } = streak;
 
   return (
     <div className="flex overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
@@ -55,6 +55,7 @@ export function StreakCard({ streak, title }: Props) {
           <span>🔥 {currentStreak} current</span>
           <span>🏆 {longestStreak} best</span>
           <span>✅ {totalCompletions} total</span>
+          <span>💔 {timesStreakBroken} broken</span>
         </div>
       </div>
     </div>

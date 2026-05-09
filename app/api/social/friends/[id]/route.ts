@@ -10,7 +10,7 @@ const actionSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  auto_accept_activities: z.boolean(),
+  auto_accept_tasks: z.boolean(),
 });
 
 export async function PATCH(request: NextRequest, { params }: Params) {
@@ -28,7 +28,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (settingsResult.success) {
     const { data, error } = await supabase
       .from("friendships")
-      .update({ auto_accept_activities: settingsResult.data.auto_accept_activities })
+      .update({ auto_accept_tasks: settingsResult.data.auto_accept_tasks })
       .eq("id", id)
       .or(`requester_id.eq.${session.sub},addressee_id.eq.${session.sub}`)
       .select()

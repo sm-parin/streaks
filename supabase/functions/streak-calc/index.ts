@@ -10,7 +10,7 @@ type DayStatus = "completed" | "grace" | "missed" | "not_scheduled";
 interface RecentDay { date: string; status: DayStatus; }
 interface StreakResult {
   task_id: string; currentStreak: number; longestStreak: number;
-  totalCompletions: number; completedToday: boolean; lastCompleted: string | null;
+  totalCompletions: number; timesStreakBroken: number; completedToday: boolean; lastCompleted: string | null;
   recentDays: RecentDay[];
 }
 interface Task { id: string; title: string; priority: number; active_days: number[]; allow_grace: boolean; }
@@ -55,6 +55,21 @@ function computeLongestStreak(task: Task, completedDates: Set<string>): number {
   return longest;
 }
 
+function computeTimesStreakBroken(task: Task, completionMap: Map<string, boolean>, today: string): number {
+  let broken = 0; let cursor = today; let graceUsedAt: string | null = null; let inStreak = false;
+  for (let i = 0; i < 730; i++) {
+    if (!isScheduled(task, cursor)) { cursor = subtractDays(cursor, 1); continue; }
+    const hasCompletion = completionMap.has(cursor);
+    const isGraceRow = hasCompletion && completionMap.get(cursor) === true;
+    if (hasCompletion) { inStreak = true; if (isGraceRow && !graceUsedAt) graceUsedAt = cursor; cursor = subtractDays(cursor, 1); continue; }
+    if (!inStreak) { cursor = subtractDays(cursor, 1); continue; }
+    const canUseGrace = task.allow_grace && (graceUsedAt === null || daysBetween(cursor, graceUsedAt) > 7);
+    if (canUseGrace) { graceUsedAt = cursor; } else { broken++; graceUsedAt = null; inStreak = false; }
+    cursor = subtractDays(cursor, 1);
+  }
+  return broken;
+}
+
 function buildRecentDays(task: Task, completionMap: Map<string, boolean>, today: string, graceDaysSet: Set<string>): RecentDay[] {
   const days: RecentDay[] = [];
   for (let i = 13; i >= 0; i--) {
@@ -84,7 +99,7 @@ Deno.serve(async (req: Request) => {
     if (authErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
     const targetUserId = user.id;
     const db = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const { data: tasks, error: taskErr } = await db.from("tasks").select("id, title, priority, active_days, allow_grace").eq("user_id", targetUserId).eq("is_recurring", true).not("status", "eq", "rejected");
+    const { data: tasks, error: taskErr } = await db.from("tasks").select("id, title, priority, active_days, allow_grace").eq("user_id", targetUserId).eq("is_recurring", true).eq("is_global", false).eq("is_disabled", false);
     if (taskErr) throw new Error(taskErr.message);
     if (!tasks || tasks.length === 0) return new Response(JSON.stringify([]), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
     const taskIds = tasks.map((t: Task) => t.id);
@@ -102,8 +117,9 @@ Deno.serve(async (req: Request) => {
       for (const gd of graceDays) { if (!completedDates.has(gd)) graceInserts.push({ task_id: task.id, user_id: targetUserId, completed_date: gd, is_grace: true }); }
       const graceDaysSet = new Set(graceDays);
       const longestStreak = computeLongestStreak(task, completedDates);
+      const timesStreakBroken = computeTimesStreakBroken(task, completionMap, today);
       const sortedDates = [...completedDates].sort((a, b) => b.localeCompare(a));
-      return { task_id: task.id, currentStreak, longestStreak, totalCompletions: taskCompletions.length, completedToday: completedDates.has(today), lastCompleted: sortedDates[0] ?? null, recentDays: buildRecentDays(task, completionMap, today, graceDaysSet) };
+      return { task_id: task.id, currentStreak, longestStreak, totalCompletions: taskCompletions.length, timesStreakBroken, completedToday: completedDates.has(today), lastCompleted: sortedDates[0] ?? null, recentDays: buildRecentDays(task, completionMap, today, graceDaysSet) };
     });
     if (graceInserts.length > 0) await db.from("task_completions").upsert(graceInserts, { onConflict: "task_id,user_id,completed_date" }).select();
     return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });

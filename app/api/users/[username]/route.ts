@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const supabase = createServiceClient();
 
   const { data: user } = await supabase
-    .from("users")
+    .from("profiles")
     .select("id, username, nickname, bio, avatar_url, created_at")
     .eq("username", username.toLowerCase())
     .single();
@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   // Check friendship status with current user
   const { data: friendship } = await supabase
     .from("friendships")
-    .select("id, status, requester_id, auto_accept_activities")
+    .select("id, status, requester_id, auto_accept_tasks")
     .or(
       `and(requester_id.eq.${session.sub},addressee_id.eq.${user.id}),and(requester_id.eq.${user.id},addressee_id.eq.${session.sub})`
     )
@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
           id: friendship.id,
           status: friendship.status,
           is_requester: friendship.requester_id === session.sub,
-          auto_accept_activities: friendship.auto_accept_activities,
+          auto_accept_tasks: friendship.auto_accept_tasks,
         }
       : null,
   });
