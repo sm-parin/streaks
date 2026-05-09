@@ -165,7 +165,7 @@ export function RCM({
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Social step: user's active groups
+  // Social step: user'\''s active groups
   const [myGroups, setMyGroups] = useState<{ id: string; name: string }[]>([]);
   const fetchGroups = useCallback(async () => {
     const supabase = createClient();
@@ -225,10 +225,7 @@ export function RCM({
         setErrors({ activeDays: "Select at least one day" });
         return false;
       }
-      if (!state.isRecurring && !state.specificDate) {
-        setErrors({ specificDate: "Please pick a date" });
-        return false;
-      }
+      // One-off with no date → becomes a global task (no deadline). Allowed.
     }
     return true;
   };
@@ -265,6 +262,7 @@ export function RCM({
               assignee_user_id: state.groupId ? null : state.assigneeUserId,
               group_id: state.assigneeUserId ? null : state.groupId,
               allow_grace: state.allowGrace,
+              is_global: !state.isRecurring && !state.specificDate,
             };
 
       const isEdit = mode === "edit";
@@ -440,6 +438,12 @@ export function RCM({
                   className="rcm-input"
                 />
               </Field>
+            )}
+
+            {!state.isRecurring && !state.specificDate && (
+              <p className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] rounded-lg px-3 py-2">
+                No date set — this will be a global task (no deadline).
+              </p>
             )}
 
             <div className="flex gap-3">

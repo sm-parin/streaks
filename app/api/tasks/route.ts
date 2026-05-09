@@ -23,6 +23,7 @@ const createTaskSchema = z.object({
   list_id: z.string().uuid().nullable().optional(),
   assignee_user_id: z.string().uuid().nullable().optional(),
   group_id: z.string().uuid().nullable().optional(),
+  is_global: z.boolean().optional(),
 });
 
 const createListSchema = z.object({
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
   const isSelf = !assigneeId || assigneeId === session.sub;
 
   if (!isSelf && !data.group_id) {
-    // Service client required to read another user's friendships (cross-user read)
+    // Service client required to read another user'\''s friendships (cross-user read)
     const admin = createServiceClient();
     const { data: friendship } = await admin
       .from("friendships")
@@ -140,6 +141,7 @@ export async function POST(request: NextRequest) {
       assignee_user_id: assigneeId,
       group_id: data.group_id ?? null,
       allow_grace: true,
+      is_global: data.is_global ?? (!data.is_recurring && !data.specific_date),
     })
     .select()
     .single();
@@ -152,7 +154,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!isSelf && assigneeId) {
-    // Service client required to write to another user's notifications row
+    // Service client required to write to another user'\''s notifications row
     const admin = createServiceClient();
     await admin.from("notifications").insert({
       user_id: assigneeId,

@@ -24,6 +24,7 @@ const updateTaskSchema = z.object({
   list_id: z.string().uuid().nullable().optional(),
   status: z.enum(["pending", "accepted", "completed", "rejected"]).optional(),
   allow_grace: z.boolean().optional(),
+  is_disabled: z.boolean().optional(),
 });
 
 const updateListSchema = z.object({
@@ -169,6 +170,18 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ success: true }, { headers: SECURITY_HEADERS });
   }
 
+  // Check for completion history before deleting
+  const { count } = await supabase
+    .from("task_completions")
+    .select("id", { count: "exact", head: true })
+    .eq("task_id", id);
+  if ((count ?? 0) > 0) {
+    return NextResponse.json(
+      { action: "suggest_disable", message: "This habit has history and cannot be deleted. Disable it instead to keep your data." },
+      { headers: SECURITY_HEADERS }
+    );
+  }
+
   const { error } = await supabase.from("tasks").delete().eq("id", id).eq("user_id", session.sub);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500, headers: SECURITY_HEADERS });
@@ -187,7 +200,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const action = body?.action as "accept" | "reject" | undefined;
   if (action !== "accept" && action !== "reject") {
     return NextResponse.json(
-      { error: "action must be 'accept' or 'reject'" },
+      { error: "action must be '\''accept'\'' or '\''reject'\''" },
       { status: 400, headers: SECURITY_HEADERS }
     );
   }
@@ -208,7 +221,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   await supabase.from("tasks").update({ status: newStatus }).eq("id", id);
 
   if (task.assigner_user_id && task.assigner_user_id !== session.sub) {
-    // Service client required to write to another user's notifications row
+    // Service client required to write to another user'\''s notifications row
     const admin = createServiceClient();
     await admin.from("notifications").insert({
       user_id: task.assigner_user_id,

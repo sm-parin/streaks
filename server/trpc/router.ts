@@ -133,13 +133,40 @@ const taskRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
+      // Check for completion history — habits with history must be disabled, not deleted
+      const { count } = await ctx.supabase
+        .from("task_completions")
+        .select("id", { count: "exact", head: true })
+        .eq("task_id", input.id);
+      if ((count ?? 0) > 0) {
+        return {
+          action: "suggest_disable" as const,
+          message: "This habit has history and cannot be deleted. Disable it instead to keep your data.",
+        };
+      }
       const { error } = await ctx.supabase
         .from("tasks")
         .delete()
         .eq("id", input.id)
         .eq("user_id", ctx.session.sub);
       if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
-      return { success: true };
+      return { action: "deleted" as const };
+    }),
+
+  disable: protectedProcedure
+    .input(z.object({ id: z.string().uuid(), disabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const { data: task, error } = await ctx.supabase
+        .from("tasks")
+        .update({ is_disabled: input.disabled })
+        .eq("id", input.id)
+        .eq("user_id", ctx.session.sub)
+        .select()
+        .single();
+      if (error || !task) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not found or unauthorized" });
+      }
+      return task;
     }),
 
   toggleComplete: protectedProcedure
@@ -292,7 +319,7 @@ async function checkAndFireMilestone(userId: string, taskId: string): Promise<vo
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!, process.env.VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   const { data: subs } = await admin.from("push_subscriptions").select("endpoint, keys_p256dh, keys_auth").eq("user_id", userId);
   if (!subs?.length) return;
-  const payload = JSON.stringify({ title: "Streaks", body: `You hit a ${currentStreak}-day streak on '${task.title}'!`, url: "/streaks" });
+  const payload = JSON.stringify({ title: "Streaks", body: `You hit a ${currentStreak}-day streak on '\''${task.title}'\''!`, url: "/streaks" });
   const toDelete: string[] = [];
   for (const sub of subs) {
     try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } }, payload); }

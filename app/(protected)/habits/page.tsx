@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Loader2, Trash2, Search, ChevronDown, ChevronRight, Flame } from "lucide-react";
+import { Plus, Loader2, Trash2, Search, ChevronDown, ChevronRight, Flame, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { RCM, type RCMMode } from "@/components/records/rcm";
 import { useTasks } from "@/lib/hooks/use-records";
 import { useTags } from "@/lib/hooks/use-tags";
 import { useProfileCache } from "@/lib/hooks/use-profile-cache";
+import { trpc } from "@/lib/trpc";
 import { createClient } from "@/lib/supabase/client";
 import { type Task, type List } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
@@ -137,12 +138,37 @@ export default function HabitsPage() {
   const [rcmKind, setRcmKind] = useState<"task" | "list">("task");
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeList, setActiveList] = useState<List | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Delete dialog state: tracks id + whether backend suggests disable instead
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string;
+    suggestDisable?: boolean;
+    message?: string;
+  } | null>(null);
+
+  // Archived tasks
+  const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
+
+  const disableTaskMutation = trpc.tasks.disable.useMutation();
 
   // 30-day completions for health dots
   const [completionsByTask, setCompletionsByTask] = useState<Record<string, Set<string>>>({});
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  // Fetch archived (disabled) tasks separately
+  const fetchArchived = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("is_disabled", true)
+      .order("updated_at", { ascending: false });
+    setArchivedTasks((data ?? []) as Task[]);
+  };
+
+  useEffect(() => { fetchArchived(); }, []);
 
   useEffect(() => {
     if (tasks.length === 0) return;
@@ -171,8 +197,32 @@ export default function HabitsPage() {
   const openListEdit = (l: List) => { setActiveList(l); setActiveTask(null); setRcmMode("edit"); setRcmKind("list"); setRcmOpen(true); };
   const openCreate   = () => { setActiveTask(null); setActiveList(null); setRcmMode("create"); setRcmKind("task"); setRcmOpen(true); };
 
+  // Called from swipe — shows confirm dialog first
+  const requestDelete = (id: string) => {
+    setConfirmDelete({ id, suggestDisable: false });
+  };
+
+  // Called from confirm dialog'\''s "Delete" button — actually calls the API
   const handleDelete = async (id: string) => {
-    try { await deleteTask(id); setConfirmDelete(null); refresh(); } catch { /* ignored */ }
+    try {
+      const result = await deleteTask(id);
+      if (result.action === "suggest_disable") {
+        // Backend says: has history — switch dialog to disable variant
+        setConfirmDelete({ id, suggestDisable: true, message: result.message });
+        return;
+      }
+      setConfirmDelete(null);
+      refresh();
+    } catch { /* ignored */ }
+  };
+
+  const handleDisable = async (id: string, disabled: boolean) => {
+    try {
+      await disableTaskMutation.mutateAsync({ id, disabled });
+      setConfirmDelete(null);
+      refresh();
+      fetchArchived();
+    } catch { /* ignored */ }
   };
 
   // Batch-prefetch assigner profiles
@@ -265,7 +315,7 @@ export default function HabitsPage() {
                 {filteredTasks.map((task) => (
                   <SwipeableWrapper
                     key={task.id}
-                    onSwipeLeft={() => setConfirmDelete(task.id)}
+                    onSwipeLeft={() => requestDelete(task.id)}
                     leftLabel="Delete"
                     leftIcon={<Trash2 className="w-4 h-4" />}
                   >
@@ -295,12 +345,50 @@ export default function HabitsPage() {
                     onTaskEdit={openTaskEdit}
                     onListInfo={openListInfo}
                     onListEdit={openListEdit}
-                    onDelete={(id) => setConfirmDelete(id)}
+                    onDelete={(id) => requestDelete(id)}
                   />
                 ))}
               </div>
             )}
           </>
+        )}
+
+        {/* ── Archived section (always shown, collapsed by default) ── */}
+        {archivedTasks.length > 0 && (
+          <div className="space-y-2">
+            <button
+              onClick={() => setArchivedExpanded((e) => !e)}
+              className="w-full flex items-center gap-2 py-1 text-left"
+            >
+              <p className="flex-1 text-xs font-medium uppercase tracking-wide text-[var(--color-text-secondary)] px-1">
+                Archived ({archivedTasks.length})
+              </p>
+              {archivedExpanded
+                ? <ChevronDown className="w-4 h-4 text-[var(--color-text-disabled)]" />
+                : <ChevronRight className="w-4 h-4 text-[var(--color-text-disabled)]" />
+              }
+            </button>
+            {archivedExpanded && (
+              <div className="space-y-2">
+                {archivedTasks.map((task) => (
+                  <div key={task.id} className="relative" style={{ opacity: 0.6 }}>
+                    <TaskCard
+                      task={task}
+                      completedToday={false}
+                      showDays={true}
+                    />
+                    <button
+                      onClick={() => handleDisable(task.id, false)}
+                      className="absolute top-2 right-2 flex items-center gap-1 text-xs text-[var(--color-brand)] bg-[var(--color-surface-raised)] rounded-lg px-2 py-1 border border-[var(--color-border)] z-10"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Re-enable
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -308,16 +396,39 @@ export default function HabitsPage() {
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmDelete(null)} />
           <div className="relative z-10 w-full max-w-xs bg-[var(--color-surface-raised)] rounded-2xl p-6 shadow-xl text-center space-y-4">
-            <p className="text-sm text-[var(--color-text-primary)] font-medium">Delete this habit?</p>
-            <p className="text-xs text-[var(--color-text-secondary)]">This cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
-                Cancel
-              </button>
-              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2 rounded-xl bg-[var(--color-error)] text-white text-sm font-medium">
-                Delete
-              </button>
-            </div>
+            {confirmDelete.suggestDisable ? (
+              <>
+                <p className="text-sm text-[var(--color-text-primary)] font-medium">This habit has history.</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">{confirmDelete.message}</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDisable(confirmDelete.id, true)}
+                    className="flex-1 py-2 rounded-xl bg-[var(--color-brand)] text-white text-sm font-medium"
+                  >
+                    Disable (keep history)
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-[var(--color-text-primary)] font-medium">Delete habit?</p>
+                <p className="text-xs text-[var(--color-text-secondary)]">This cannot be undone.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)]">
+                    Cancel
+                  </button>
+                  <button onClick={() => handleDelete(confirmDelete.id)} className="flex-1 py-2 rounded-xl bg-[var(--color-error)] text-white text-sm font-medium">
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

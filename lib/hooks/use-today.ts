@@ -29,7 +29,7 @@ export function useToday() {
         .in("status", ["accepted", "completed"])
         .or(
           `and(is_recurring.eq.true,is_disabled.eq.false,active_days.cs.{${todayDOW}}),` +
-          `and(is_recurring.eq.false,is_global.eq.false,specific_date.lte.${today},status.neq.completed),` +
+          `and(is_recurring.eq.false,is_global.eq.false,is_disabled.eq.false,specific_date.lte.${today},status.neq.completed),` +
           `and(is_global.eq.true,is_disabled.eq.false,status.neq.completed)`
         );
 

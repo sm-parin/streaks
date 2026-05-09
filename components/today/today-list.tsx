@@ -11,6 +11,7 @@ import { type Task, type List } from "@/lib/types";
 import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
 import { TaskCard } from "@/components/tasks/task-card";
 import { ListCard } from "@/components/records/list-card";
+import { BacklogSection } from "@/components/today/backlog-section";
 import { RCM } from "@/components/records/rcm";
 import { PageHeader } from "@/components/layout/page-header";
 import { MorningBrief } from "@/components/today/morning-brief";
@@ -23,7 +24,7 @@ export function TodayList() {
   const router = useRouter();
   const [infoTask, setInfoTask] = useState<Task | null>(null);
 
-  // Batch-prefetch assigner profiles so TaskCard doesn't fetch one-by-one
+  // Batch-prefetch assigner profiles so TaskCard doesn'\''t fetch one-by-one
   const allAssignerIds = useMemo(
     () => tasks.map((t) => t.assigner_user_id).filter((id): id is string => !!id),
     [tasks]
@@ -63,7 +64,11 @@ export function TodayList() {
 
   const listIds = new Set(lists.map((l) => l.id));
   const standaloneTasks = tasks.filter((t) => !t.list_id || !listIds.has(t.list_id));
-  const sortedTasks = [...standaloneTasks].sort((a, b) => {
+
+  // Separate global (backlog) from scheduled tasks
+  const globalTasks = standaloneTasks.filter((t) => t.is_global);
+  const scheduledTasks = standaloneTasks.filter((t) => !t.is_global);
+  const sortedTasks = [...scheduledTasks].sort((a, b) => {
     const aDone = (a.is_recurring ? completedIds.has(a.id) : completedIds.has(a.id) || a.status === "completed") ? 1 : 0;
     const bDone = (b.is_recurring ? completedIds.has(b.id) : completedIds.has(b.id) || b.status === "completed") ? 1 : 0;
     return aDone - bDone;
@@ -122,22 +127,8 @@ export function TodayList() {
           ))}
 
           {sortedTasks.map((task) => {
-            // Recurring: completedIds is source of truth. One-off/global: task.status.
+            // Recurring: completedIds is source of truth. One-off: task.status.
             const isDone = task.is_recurring ? completedIds.has(task.id) : completedIds.has(task.id) || task.status === "completed";
-
-            // Global tasks: tap-to-complete only — no swipe wrapper
-            if (task.is_global) {
-              return (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  completedToday={isDone}
-                  showDays={false}
-                  onClick={() => toggleComplete(task.id, false)}
-                  onDoubleClick={() => setInfoTask(task)}
-                />
-              );
-            }
 
             return (
               <SwipeableWrapper
@@ -157,9 +148,15 @@ export function TodayList() {
               </SwipeableWrapper>
             );
           })}
+
+          <BacklogSection
+            tasks={globalTasks}
+            completedIds={completedIds}
+            onTap={(id) => toggleComplete(id, false)}
+            onDoubleTap={(t) => setInfoTask(t)}
+          />
         </div>
       )}
-
       {infoTask && (
         <RCM
           open

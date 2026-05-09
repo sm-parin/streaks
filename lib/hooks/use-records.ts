@@ -57,10 +57,9 @@ export function useTasks() {
 
   const deleteTask = useCallback(async (id: string) => {
     const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-    if (!res.ok) {
-      const json = await res.json();
-      throw new Error(json.error ?? "Failed to delete");
-    }
+    const json = await res.json().catch(() => ({})) as { success?: boolean; action?: string; message?: string; error?: string };
+    if (!res.ok) throw new Error(json.error ?? "Failed to delete");
+    return json;
   }, []);
 
   const respondToTask = useCallback(async (id: string, action: "accept" | "reject") => {
