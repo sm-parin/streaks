@@ -9,6 +9,7 @@ import {
 } from "@/lib/types";
 import { useTags } from "@/lib/hooks/use-tags";
 import { usePush } from "@/lib/hooks/use-push";
+import { TagSelector } from "@/components/ui/tag-selector";
 
 // â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -296,15 +297,7 @@ export function RCM({
         : [...s.activeDays, d],
     }));
 
-  const toggleTag = (id: string) =>
-    setState((s) => ({
-      ...s,
-      tagIds: s.tagIds.includes(id)
-        ? s.tagIds.filter((x) => x !== id)
-        : [...s.tagIds, id],
-    }));
-
-  // â”€â”€ Step renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step renderers ──────────────────────────────────────────────────────────
 
   const renderStep = () => {
     const animClass =
@@ -524,27 +517,10 @@ export function RCM({
             </Field>
 
             <Field label="Tags">
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => {
-                  const active = state.tagIds.includes(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      onClick={() => toggleTag(tag.id)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
-                        active ? "text-white" : "border-[var(--color-border)]"
-                      )}
-                      style={active
-                        ? { backgroundColor: tag.color, borderColor: tag.color }
-                        : { color: tag.color, borderColor: tag.color + "66" }
-                      }
-                    >
-                      {tag.name}
-                    </button>
-                  );
-                })}
-              </div>
+              <TagSelector
+                selectedTagIds={state.tagIds}
+                onChange={(ids) => setState((s) => ({ ...s, tagIds: ids }))}
+              />
             </Field>
           </div>
         );
@@ -811,4 +787,3 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
     </div>
   );
 }
-
