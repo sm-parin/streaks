@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToday } from "@/lib/hooks/use-today";
 import { useUser } from "@/lib/hooks/use-user";
 import { useTags } from "@/lib/hooks/use-tags";
+import { useProfileCache } from "@/lib/hooks/use-profile-cache";
 import { type Task, type List } from "@/lib/types";
 import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
-import { RecordCard } from "@/components/records/record-card";
+import { TaskCard } from "@/components/tasks/task-card";
 import { ListCard } from "@/components/records/list-card";
 import { RCM } from "@/components/records/rcm";
 import { PageHeader } from "@/components/layout/page-header";
@@ -21,6 +22,13 @@ export function TodayList() {
   const { tags } = useTags();
   const router = useRouter();
   const [infoTask, setInfoTask] = useState<Task | null>(null);
+
+  // Batch-prefetch assigner profiles so TaskCard doesn't fetch one-by-one
+  const allAssignerIds = useMemo(
+    () => tasks.map((t) => t.assigner_user_id).filter((id): id is string => !!id),
+    [tasks]
+  );
+  useProfileCache(allAssignerIds);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -125,10 +133,10 @@ export function TodayList() {
                 leftLabel="Undo"
                 rightIcon={<CheckCircle className="w-4 h-4" />}
               >
-                <RecordCard
+                <TaskCard
                   task={task}
                   completedToday={completedIds.has(task.id)}
-                  tags={tags}
+                  showDays={false}
                   onClick={() => setInfoTask(task)}
                 />
               </SwipeableWrapper>
@@ -149,4 +157,3 @@ export function TodayList() {
     </>
   );
 }
-

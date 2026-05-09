@@ -4,12 +4,13 @@ import { Plus, Loader2, Trash2, Search, ChevronDown, ChevronRight, Flame } from 
 import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-import { RecordCard } from "@/components/records/record-card";
+import { TaskCard } from "@/components/tasks/task-card";
 import { ListCard } from "@/components/records/list-card";
 import { SwipeableWrapper } from "@/components/records/swipeable-wrapper";
 import { RCM, type RCMMode } from "@/components/records/rcm";
 import { useTasks } from "@/lib/hooks/use-records";
 import { useTags } from "@/lib/hooks/use-tags";
+import { useProfileCache } from "@/lib/hooks/use-profile-cache";
 import { createClient } from "@/lib/supabase/client";
 import { type Task, type List } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
@@ -108,13 +109,11 @@ function CollapsibleList({
                 leftLabel="Delete"
                 leftIcon={<Trash2 className="w-4 h-4" />}
               >
-                <RecordCard
+                <TaskCard
                   task={task}
-                  tags={tags}
-                  healthRate={task.is_recurring ? computeRate(task, completionsByTask) : undefined}
+                  showDays={true}
                   onClick={() => onTaskInfo(task)}
                   onDoubleClick={() => onTaskEdit(task)}
-                  className="rounded-none border-0"
                 />
               </SwipeableWrapper>
             ))
@@ -175,6 +174,13 @@ export default function HabitsPage() {
   const handleDelete = async (id: string) => {
     try { await deleteTask(id); setConfirmDelete(null); refresh(); } catch { /* ignored */ }
   };
+
+  // Batch-prefetch assigner profiles
+  const allAssignerIds = useMemo(
+    () => tasks.map((t) => t.assigner_user_id).filter((id): id is string => !!id),
+    [tasks]
+  );
+  useProfileCache(allAssignerIds);
 
   // Filtered
   const q = search.toLowerCase();
@@ -263,10 +269,9 @@ export default function HabitsPage() {
                     leftLabel="Delete"
                     leftIcon={<Trash2 className="w-4 h-4" />}
                   >
-                    <RecordCard
+                    <TaskCard
                       task={task}
-                      tags={tags}
-                      healthRate={task.is_recurring ? computeRate(task, completionsByTask) : undefined}
+                      showDays={true}
                       onClick={() => openTaskInfo(task)}
                       onDoubleClick={() => openTaskEdit(task)}
                     />
@@ -330,4 +335,3 @@ export default function HabitsPage() {
     </>
   );
 }
-

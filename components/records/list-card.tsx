@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { type List, type Task, PRIORITY_COLORS } from "@/lib/types";
-import { RecordCard } from "./record-card";
+import { TaskCard } from "@/components/tasks/task-card";
 
 interface ListCardProps {
   list: List & { tasks: Task[] };
@@ -119,14 +119,13 @@ export function ListCard({
             ) : (
               <div className="px-2 py-2 space-y-1.5">
                 {sortedTasks.map((task) => (
-                  <RecordCard
+                  <TaskCard
                     key={task.id}
                     task={task}
                     completedToday={completedIds.has(task.id)}
-                    tags={tags}
+                    showDays={false}
                     onClick={() => onTaskClick?.(task)}
                     onDoubleClick={() => onTaskDoubleClick?.(task)}
-                    className="ml-2"
                   />
                 ))}
               </div>
