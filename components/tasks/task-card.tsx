@@ -5,7 +5,7 @@ import { useUser } from "@/lib/hooks/use-user";
 import { useProfileCache } from "@/lib/hooks/use-profile-cache";
 import type { Task } from "@/lib/types";
 
-// ── Priority colour map ────────────────────────────────────────────────────
+// â”€â”€ Priority colour map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const PRIORITY_COLOR_MAP: Record<number, string> = {
   1: "#EF4444", // P1 red
   2: "#EAB308", // P2 yellow-amber
@@ -18,22 +18,24 @@ const PRIORITY_COLOR_MAP: Record<number, string> = {
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 const DAY_INDICES = [0, 1, 2, 3, 4, 5, 6] as const;
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// â”€â”€ Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface TaskCardProps {
   task: Task;
   /** Dims body + strikes title when true. Priority colour system stays intact. */
   completedToday?: boolean;
   /** true = Habits tab (show day row). false = Today/Social/etc. */
   showDays?: boolean;
-  /** Single tap → info modal */
+  /** Single tap â†’ info modal */
   onClick?: () => void;
-  /** Double tap → edit modal */
+  /** Double tap â†’ edit modal */
   onDoubleClick?: () => void;
   /** Group name override; falls back to task.group_name */
   groupName?: string;
+  /** Optional tag list override â€” bypasses useTags() (used in preview / ListCard injection) */
+  tagsOverride?: { id: string; name: string; color: string }[];
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function TaskCard({
   task,
   completedToday = false,
@@ -41,18 +43,19 @@ export function TaskCard({
   onClick,
   onDoubleClick,
   groupName,
+  tagsOverride,
 }: TaskCardProps) {
   const clickCount = useRef(0);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { tags } = useTags();
+  const { tags: hookTags } = useTags();
   const { user } = useUser();
 
-  // Prefetch assigner profile (single-card fallback — list-level batch handles most)
+  // Prefetch assigner profile (single-card fallback â€” list-level batch handles most)
   const assignerId = task.assigner_user_id ?? "";
   const getProfile = useProfileCache(assignerId ? [assignerId] : []);
 
-  // ── Derived ──────────────────────────────────────────────────────────────
+  // â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const priorityColor = PRIORITY_COLOR_MAP[task.priority] ?? "#F07F13";
   const isCompleted = completedToday || (!task.is_recurring && task.status === "completed");
 
@@ -66,7 +69,8 @@ export function TaskCard({
   const groupDisplay = groupName ?? task.group_name ?? null;
   const groupInitial = groupDisplay ? groupDisplay.charAt(0).toUpperCase() : null;
 
-  // Tags for this task (sourced from module-level tag cache — no extra fetch)
+  // Tags for this task (sourced from module-level tag cache â€” no extra fetch)
+  const tags = tagsOverride ?? hookTags;
   const taskTags = tags.filter((t) => task.tag_ids?.includes(t.id));
 
   // Time split for two-line display
@@ -76,7 +80,11 @@ export function TaskCard({
   // Card background: priority colour at ~6% opacity (0F hex)
   const bgTint = priorityColor + "0F";
 
-  // ── Single vs double click ────────────────────────────────────────────────
+  // Visibility: only show assigner if it's a different user; only show group if set
+  const showAssigner = !!assignerId && assignerId !== user?.id;
+  const showGroup = !!groupInitial;
+
+  // â”€â”€ Single vs double click â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleClick = () => {
     clickCount.current += 1;
     if (clickTimer.current) clearTimeout(clickTimer.current);
@@ -87,18 +95,22 @@ export function TaskCard({
     }, 220);
   };
 
-  // ── Left cell shared style ────────────────────────────────────────────────
+  // â”€â”€ Left cell shared style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const cellBase: React.CSSProperties = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    width: "36px",
+    height: "36px",
     fontSize: "13px",
     fontWeight: 500,
     color: "var(--color-text-secondary)",
-    backgroundColor: "var(--color-surface-raised)",
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Whether the left panel should render at all
+  const showLeftPanel = showAssigner;
+
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div
       role="button"
@@ -108,111 +120,109 @@ export function TaskCard({
       style={{
         display: "flex",
         flexDirection: "row",
-        borderRadius: "var(--radius-lg)",
+        height: "72px",
+        borderRadius: "0 var(--radius-lg) var(--radius-lg) 0",
         backgroundColor: bgTint,
-        minHeight: "72px",
         overflow: "hidden",
         position: "relative",
         cursor: "pointer",
         userSelect: "none",
+        opacity: isCompleted ? 0.6 : 1,
       }}
     >
-      {/* ── LEFT PANEL (56px wide) ── */}
-      <div style={{ width: "56px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
-        {/* TOP — assigner initial */}
-        <div
-          style={{
-            ...cellBase,
-            flex: 1,
-            borderRight: "1px solid var(--color-border)",
-            borderBottom: "1px solid var(--color-border)",
-          }}
-          title={assignerId ? "Assigned by" : "Created by you"}
-        >
-          {assignerInitial}
+      {/* â”€â”€ LEFT SIDE â€” time panel or priority strip â”€â”€ */}
+      {task.time_from ? (
+        /* Two-square time panel */
+        <div style={{ width: "36px", flexShrink: 0, alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: priorityColor,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ color: "#FFFFFF", fontSize: "16px", fontWeight: 700, fontFamily: "monospace" }}>
+              {timeHH}
+            </span>
+          </div>
+          {/* Colon separator */}
+          <div style={{ height: "4px", backgroundColor: priorityColor, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: "2px" }}>
+            <div style={{ width: "3px", height: "3px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.8)" }} />
+            <div style={{ width: "3px", height: "3px", borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.8)" }} />
+          </div>
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: priorityColor,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span style={{ color: "#FFFFFF", fontSize: "16px", fontWeight: 700, fontFamily: "monospace" }}>
+              {timeMM}
+            </span>
+          </div>
         </div>
-        {/* BOTTOM — group initial */}
-        <div
-          style={{
-            ...cellBase,
-            flex: 1,
-            borderRight: "1px solid var(--color-border)",
-            opacity: groupInitial ? 1 : 0.3,
-          }}
-          title={groupDisplay ?? undefined}
-        >
-          {groupInitial ?? ""}
-        </div>
-      </div>
+      ) : (
+        /* Thin 4px priority strip */
+        <div style={{ width: "4px", flexShrink: 0, backgroundColor: priorityColor }} />
+      )}
 
-      {/* ── MAIN BODY ── */}
+      {/* â”€â”€ MAIN BODY â”€â”€ */}
       <div
         style={{
           flex: 1,
           padding: "10px 12px",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
           gap: "4px",
-          opacity: isCompleted ? 0.55 : 1,
           minWidth: 0,
           overflow: "hidden",
         }}
       >
-        {/* Row 1 — Title: priority colour, bold */}
+        {/* Row 1 â€” Title: priority colour, bold, 1-line ellipsis */}
         <div
           style={{
             color: priorityColor,
             fontWeight: 700,
             fontSize: "15px",
-            lineHeight: "1.3",
-            wordBreak: "break-word",
+            lineHeight: "1.35",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
             textDecoration: isCompleted ? "line-through" : "none",
           }}
         >
           {task.title}
         </div>
 
-        {/* Row 2 — Description: muted, single-line ellipsis */}
+        {/* Row 2 â€” Description: muted, 2-line ellipsis */}
         {task.description && (
           <div
             style={{
               color: "var(--color-text-secondary)",
-              fontSize: "13px",
-              whiteSpace: "nowrap",
+              fontSize: "12px",
+              lineHeight: "1.35",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
               overflow: "hidden",
-              textOverflow: "ellipsis",
+              wordBreak: "break-word",
             }}
           >
             {task.description}
           </div>
         )}
 
-        {/* Row 3 — Tag pills */}
-        {taskTags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-            {taskTags.map((tag) => (
-              <span
-                key={tag.id}
-                style={{
-                  backgroundColor: tag.color + "33",
-                  color: tag.color,
-                  borderRadius: "var(--radius-sm)",
-                  fontSize: "11px",
-                  padding: "2px 8px",
-                  fontWeight: 500,
-                }}
-              >
-                {tag.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Row 4 — Day indicators (Habits tab only) */}
+        {/* Row 3 â€” Day indicators (Habits tab only) */}
         {showDays && (
           <div style={{ display: "flex", gap: "3px", marginTop: "2px" }}>
             {task.is_global ? (
-              <span style={{ fontSize: "14px", color: "var(--color-text-secondary)" }}>∞</span>
+              <span style={{ fontSize: "14px", color: "var(--color-text-secondary)" }}>âˆž</span>
             ) : (
               DAY_INDICES.map((dayIndex) => {
                 const isActive = task.active_days?.includes(dayIndex) ?? false;
@@ -241,44 +251,34 @@ export function TaskCard({
         )}
       </div>
 
-      {/* ── RIGHT SIDE ── */}
-      {task.time_from ? (
-        /* Full-height coloured time panel */
+      {/* â”€â”€ RIGHT PANEL â€” assigner/group, only when assigner is present â”€â”€ */}
+      {showLeftPanel && (
         <div
           style={{
-            width: "52px",
+            width: "36px",
             flexShrink: 0,
-            backgroundColor: priorityColor,
+            alignSelf: "stretch",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             flexDirection: "column",
+            justifyContent: showGroup ? "flex-start" : "center",
+            backgroundColor: "var(--color-surface-raised)",
+            borderLeft: "1px solid var(--color-border)",
           }}
         >
-          <span
-            style={{
-              color: "#FFFFFF",
-              fontSize: "13px",
-              fontWeight: 700,
-              fontFamily: "monospace",
-              lineHeight: "1.2",
-              textAlign: "center",
-            }}
+          {/* Assigner initial */}
+          <div
+            style={{ ...cellBase, borderBottom: showGroup ? "1px solid var(--color-border)" : undefined }}
+            title="Assigned by"
           >
-            {timeHH}
-            <br />
-            {timeMM}
-          </span>
+            {assignerInitial}
+          </div>
+          {/* Group initial â€” only when both present */}
+          {showGroup && (
+            <div style={{ ...cellBase }} title={groupDisplay ?? undefined}>
+              {groupInitial}
+            </div>
+          )}
         </div>
-      ) : (
-        /* Thin 4px priority strip */
-        <div
-          style={{
-            width: "4px",
-            flexShrink: 0,
-            backgroundColor: priorityColor,
-          }}
-        />
       )}
     </div>
   );

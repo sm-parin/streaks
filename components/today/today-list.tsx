@@ -122,6 +122,7 @@ export function TodayList() {
               list={{ ...list, tasks: listTasks }}
               completedIds={completedIds}
               tags={tags}
+              onTaskToggle={(id, isRecurring) => toggleComplete(id, isRecurring)}
               onTaskClick={(t) => setInfoTask(t)}
             />
           ))}
