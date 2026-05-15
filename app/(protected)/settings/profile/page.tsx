@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { X, Check } from "lucide-react";
+import { useSmartBack } from "@/lib/hooks/use-smart-back";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { getDisplayName, getInitials } from "@/lib/utils/display-name";
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 
 export default function ProfilePage() {
-  const router = useRouter();
+  const goBack = useSmartBack();
   const { user, refetch } = useUser();
   const { showToast } = useToast();
 
@@ -30,9 +30,9 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const displayName = user ? getDisplayName(user) : "â€¦";
+  const displayName = user ? getDisplayName(user) : "...";
   const initials = getInitials(displayName);
-  // Debounced duplicate check for username — warning only, never blocks save
+
   useEffect(() => {
     if (!dirty) { setUsernameWarning(null); return; }
     const q = username.trim().toLowerCase();
@@ -57,6 +57,7 @@ export default function ProfilePage() {
     }, 400);
     return () => { if (usernameCheckRef.current) clearTimeout(usernameCheckRef.current); };
   }, [username, dirty, user?.created_at]);
+
   const handleSave = async () => {
     setLoading(true);
     const r = await fetch("/api/profile", {
@@ -77,19 +78,17 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-md mx-auto">
-      {/* Header row */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => router.back()}
-          className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
-          aria-label="Back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">Edit Profile</h1>
+        <button
+          onClick={goBack}
+          className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* Avatar */}
       <div className="flex flex-col items-center mb-8 gap-2">
         <div className="w-20 h-20 rounded-full bg-[var(--color-brand)] flex items-center justify-center">
           <span className="text-2xl font-bold text-white">{initials}</span>
@@ -98,7 +97,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="space-y-5">
-        {/* Username */}
         <div className="space-y-1.5">
           <Label htmlFor="username">Username</Label>
           <Input
@@ -107,12 +105,13 @@ export default function ProfilePage() {
             onChange={(e) => { setUsername(e.target.value); setDirty(true); }}
             placeholder="Enter a username"
             maxLength={50}
-          />          {usernameWarning && (
+          />
+          {usernameWarning && (
             <p className="text-xs text-amber-500 px-1">{usernameWarning}</p>
-          )}          <p className="text-xs text-[var(--color-text-secondary)]">Your display name across the app.</p>
+          )}
+          <p className="text-xs text-[var(--color-text-secondary)]">Your display name across the app.</p>
         </div>
 
-        {/* Bio */}
         <div className="space-y-1.5">
           <Label htmlFor="bio">Bio</Label>
           <textarea
@@ -127,7 +126,6 @@ export default function ProfilePage() {
           <p className="text-xs text-[var(--color-text-secondary)]">{bio.length}/200</p>
         </div>
 
-        {/* Save */}
         <div className="pt-2">
           <Button
             type="button"
@@ -144,4 +142,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

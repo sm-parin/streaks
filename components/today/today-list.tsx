@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToday } from "@/lib/hooks/use-today";
@@ -17,14 +17,13 @@ import { PageHeader } from "@/components/layout/page-header";
 import { MorningBrief } from "@/components/today/morning-brief";
 import { MilestoneCard } from "@/components/today/milestone-card";
 
-export function TodayList() {
+export function TodayList({ right, onAddHabit }: { right?: React.ReactNode; onAddHabit?: () => void }) {
   const { tasks, completedIds, lists, streaks, todayTotal, todayDone, loading, error, refresh, toggleComplete } = useToday();
   const { user } = useUser();
   const { tags } = useTags();
   const router = useRouter();
   const [infoTask, setInfoTask] = useState<Task | null>(null);
 
-  // Batch-prefetch assigner profiles so TaskCard doesn'\''t fetch one-by-one
   const allAssignerIds = useMemo(
     () => tasks.map((t) => t.assigner_user_id).filter((id): id is string => !!id),
     [tasks]
@@ -37,13 +36,6 @@ export function TodayList() {
   const dateLabel = today.toLocaleDateString(undefined, {
     weekday: "long", month: "long", day: "numeric",
   });
-
-  const progressTitle =
-    todayTotal === 0
-      ? "Nothing scheduled"
-      : todayDone === todayTotal
-      ? "All done today"
-      : `${todayDone} of ${todayTotal} done`;
 
   if (loading) {
     return (
@@ -65,7 +57,6 @@ export function TodayList() {
   const listIds = new Set(lists.map((l) => l.id));
   const standaloneTasks = tasks.filter((t) => !t.list_id || !listIds.has(t.list_id));
 
-  // Separate global (backlog) from scheduled tasks
   const globalTasks = standaloneTasks.filter((t) => t.is_global);
   const scheduledTasks = standaloneTasks.filter((t) => !t.is_global);
   const sortedTasks = [...scheduledTasks].sort((a, b) => {
@@ -79,12 +70,22 @@ export function TodayList() {
     tasks: tasks.filter((t) => t.list_id === l.id),
   }));
 
+  // Complete lists (all tasks done today) sink to the bottom
+  const sortedListItems = [...listItems].sort((a, b) => {
+    const aDone = a.tasks.length > 0 && a.tasks.every(t => completedIds.has(t.id) || t.status === "completed") ? 1 : 0;
+    const bDone = b.tasks.length > 0 && b.tasks.every(t => completedIds.has(t.id) || t.status === "completed") ? 1 : 0;
+    return aDone - bDone;
+  });
+
+  void tags;
+
   return (
     <>
       <PageHeader
-        title={progressTitle}
+        title="Today"
         subtitle={dateLabel}
         progressBar={todayTotal > 0 ? { total: todayTotal, done: todayDone } : undefined}
+        right={right}
       />
 
       <MorningBrief
@@ -98,7 +99,6 @@ export function TodayList() {
 
       {todayTotal === 0 ? (
         <div className="text-center py-16 space-y-3">
-          {/* Calendar SVG icon */}
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
@@ -106,9 +106,9 @@ export function TodayList() {
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
           <p className="text-base font-semibold text-[var(--color-text-primary)]">Nothing scheduled for today</p>
-          <p className="text-sm text-[var(--color-text-secondary)]">Add habits from the Habits tab</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">Add habits from the Goals tab</p>
           <button
-            onClick={() => router.push("/habits")}
+            onClick={() => onAddHabit ? onAddHabit() : router.push("/goals")}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--color-brand)] text-white text-sm font-medium"
           >
             Add a habit
@@ -116,7 +116,7 @@ export function TodayList() {
         </div>
       ) : (
         <div className="space-y-2">
-          {listItems.map(({ list, tasks: listTasks }) => (
+          {sortedListItems.map(({ list, tasks: listTasks }) => (
             <ListCard
               key={list.id}
               list={{ ...list, tasks: listTasks }}
@@ -128,7 +128,6 @@ export function TodayList() {
           ))}
 
           {sortedTasks.map((task) => {
-            // Recurring: completedIds is source of truth. One-off: task.status.
             const isDone = task.is_recurring ? completedIds.has(task.id) : completedIds.has(task.id) || task.status === "completed";
 
             return (

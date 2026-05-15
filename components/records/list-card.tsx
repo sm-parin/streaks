@@ -45,7 +45,10 @@ export function ListCard({
     return aComp - bComp;
   });
 
-  // Derive visual attributes from the first INCOMPLETE task (updates when tasks are toggled)
+  // All tasks in list are done today -> strike through header
+  const allDone = taskCount > 0 && completedCount === taskCount;
+
+    // Derive visual attributes from the first INCOMPLETE task (updates when tasks are toggled)
   const firstTask = sortedTasks[0] ?? null;
 
   const priorityColor = firstTask ? PRIORITY_COLORS[firstTask.priority] : PRIORITY_COLORS[3];
@@ -174,7 +177,7 @@ export function ListCard({
 
           {/* MAIN BODY */}
           <div style={{ flex: 1, padding: "10px 12px", display: "flex", flexDirection: "column", justifyContent: "center", gap: "4px", minWidth: 0, overflow: "hidden" }}>
-            <div style={{ color: priorityColor, fontWeight: 700, fontSize: "15px", lineHeight: "1.3", wordBreak: "break-word" }}>
+            <div style={{ color: priorityColor, fontWeight: 700, fontSize: "15px", lineHeight: "1.3", wordBreak: "break-word", textDecoration: allDone ? "line-through" : "none", opacity: allDone ? 0.6 : 1 }}>
               {list.title}
             </div>
             <div style={{ color: "var(--color-text-secondary)", fontSize: "13px" }}>

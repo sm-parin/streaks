@@ -32,7 +32,7 @@ export default function LoginPage() {
         showToast(error.message, "error");
         setLoading(false);
       } else {
-        window.location.href = "/today";
+        window.location.href = "/goals";
       }
     } catch {
       showToast("Something went wrong. Please try again.", "error");

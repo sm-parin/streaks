@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
 /**
- * Root route ΓÇô immediately redirects to Today's Tasks.
+ * Root route — immediately redirects to Goals tab.
  * The middleware will intercept unauthenticated requests and send them to /login.
  */
 export default function Home() {
-  redirect("/today");
+  redirect("/goals");
 }

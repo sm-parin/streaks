@@ -6,13 +6,12 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const ref  = searchParams.get("ref") ?? "";
-  const next = searchParams.get("next") ?? "/today";
+  const next = searchParams.get("next") ?? "/goals";
 
   if (code) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // If the user registered via an invite link, create a friend request
       if (ref && data.user) {
         try {
           const service = createServiceClient();
@@ -31,7 +30,7 @@ export async function GET(request: Request) {
           // Non-fatal — do not block sign-in
         }
       }
-      const redirectPath = next.startsWith("/") ? next : "/today";
+      const redirectPath = next.startsWith("/") ? next : "/goals";
       return NextResponse.redirect(`${origin}${redirectPath}`);
     }
   }

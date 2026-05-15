@@ -88,7 +88,7 @@ function RegisterForm() {
         return;
       }
       if (data.session) {
-        window.location.href = "/today";
+        window.location.href = "/goals";
       } else {
         setDone(true);
       }
@@ -182,7 +182,6 @@ function RegisterForm() {
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {/* Real-time password constraints */}
             {password.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {[

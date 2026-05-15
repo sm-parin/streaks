@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { User, Monitor, Settings2, LogOut, ChevronRight, ArrowLeft, Lock } from "lucide-react";
+import { useSmartBack } from "@/lib/hooks/use-smart-back";
+import { User, Monitor, Settings2, LogOut, ChevronRight, ArrowLeft, Lock, X } from "lucide-react";
 import type { UserStatsCache } from "@/lib/types";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const TIMEZONES = [
 ];
 
 export default function SettingsPage() {
+  const goBack = useSmartBack();
   const { user, refetch } = useUser();
   const { showToast } = useToast();
   const [screen, setScreen] = useState<Screen>("main");
@@ -199,7 +201,19 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-5">
-      <PageHeader title="Settings" accentColor="var(--color-brand)" />
+      <PageHeader
+        title="Settings"
+        accentColor="var(--color-brand)"
+        right={
+          <button
+            onClick={goBack}
+            className="p-1.5 rounded-full text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        }
+      />
       <div className="space-y-3">
         {navRows.map(({ icon: Icon, label, desc, dest }) => (
           <button key={label} onClick={() => setScreen(dest)}
@@ -221,7 +235,6 @@ export default function SettingsPage() {
           <ThemeToggle />
         </div>
       </div>
-      {/* ── Your Stats ── */}
       {statsLoading ? (
         <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 space-y-3 animate-pulse mt-4">
           {[1, 2, 3, 4].map((i) => (
@@ -274,7 +287,6 @@ export default function SettingsPage() {
       ) : (
         <p className="text-xs text-[var(--color-text-disabled)] text-center mt-4">Stats not available yet. Check back tomorrow.</p>
       )}
-
       <div className="mt-8">
         <Button
           variant="ghost"

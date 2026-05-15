@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { TabTracker } from "@/components/layout/tab-tracker";
 import { TRPCProvider } from "@/lib/trpc-provider";
 
 export default function ProtectedLayout({
@@ -11,6 +12,7 @@ export default function ProtectedLayout({
     <TRPCProvider>
       <div className="min-h-screen flex flex-col bg-[var(--color-bg)]">
         <Header />
+        <TabTracker />
         <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-5 pb-24">
           {children}
         </main>

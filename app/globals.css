@@ -60,6 +60,9 @@
   --tab-habits:  #EAB308;
   --tab-today:   #F07F13;
   --tab-social:  #3B82F6;
+  /* New tab names (map to same colours) */
+  --tab-analytics: #EF4444;
+  --tab-goals:     #F07F13;
 
   /* Priority strip colors (P1=red .. P5=green) */
   --priority-1: #EF4444;
