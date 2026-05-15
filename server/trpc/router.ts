@@ -319,7 +319,7 @@ async function checkAndFireMilestone(userId: string, taskId: string): Promise<vo
   webpush.setVapidDetails(process.env.VAPID_SUBJECT!, process.env.VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
   const { data: subs } = await admin.from("push_subscriptions").select("endpoint, keys_p256dh, keys_auth").eq("user_id", userId);
   if (!subs?.length) return;
-  const payload = JSON.stringify({ title: "Streaks", body: `You hit a ${currentStreak}-day streak on '\''${task.title}'\''!`, url: "/streaks" });
+  const payload = JSON.stringify({ title: "Streaks", body: `You hit a ${currentStreak}-day streak on '\''${task.title}'\''!`, url: "/analytics" });
   const toDelete: string[] = [];
   for (const sub of subs) {
     try { await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } }, payload); }

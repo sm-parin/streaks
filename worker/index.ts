@@ -9,7 +9,7 @@ self.addEventListener("push", (event) => {
       body: data.body ?? "",
       icon: "/icons/icon-192x192.png",
       badge: "/icons/icon-72x72.png",
-      data: { url: data.url ?? "/today" },
+      data: { url: data.url ?? "/goals" },
     })
   );
 });
@@ -17,6 +17,6 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   const clickEvent = event as NotificationEvent;
   clickEvent.notification.close();
-  const url: string = (clickEvent.notification.data as { url?: string })?.url ?? "/today";
+  const url: string = (clickEvent.notification.data as { url?: string })?.url ?? "/goals";
   clickEvent.waitUntil(clients.openWindow(url));
 });

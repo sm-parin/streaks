@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     };
 
     for (const task of pending) {
-      const payload = JSON.stringify({ title: "Streaks", body: task.title as string, url: "/today" });
+      const payload = JSON.stringify({ title: "Streaks", body: task.title as string, url: "/goals" });
       try {
         await webpush.sendNotification(pushSub, payload);
         sent++;
